@@ -1,0 +1,32 @@
+.home-container {
+  display: flex;
+  flex-direction: row; /* Side by side */
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  gap: 24px;
+  padding: 16px;
+  flex-wrap: wrap; /* Responsive wrapping */
+}
+
+.home-btn {
+  width: 100%;
+  max-width: 260px;      /* Increase max-width for bigger buttons */
+  height: 70px;          /* Set a fixed height */
+  font-size: 1.6rem;     /* Larger text */
+  padding: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 600px) {
+  .home-container {
+    flex-direction: column; /* Stack vertically on mobile */
+    gap: 16px;
+  }
+  .home-btn {
+    max-width: 95vw;
+    height: 56px;
+    font-size: 1.2rem;
+  }
+}

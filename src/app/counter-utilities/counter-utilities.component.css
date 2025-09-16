@@ -1,0 +1,13 @@
+.table-container {
+  margin: 24px auto;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
