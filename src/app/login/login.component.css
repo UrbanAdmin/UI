@@ -1,0 +1,21 @@
+/* filepath: c:\Users\danie\Documents\UrbanAdmin\UI\UrbanAdminUI\src\app\login\login.component.css */
+.login-form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
+mat-card {
+  width: 350px;
+  padding: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.error {
+  color: #d32f2f;
+  margin-top: 8px;
+}
