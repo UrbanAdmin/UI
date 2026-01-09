@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Blazor", "Blazor", "{E83BDDD6-600F-B5F0-78FF-47929315255A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C43A7CBF-8860-2DE7-D12F-6FAF7BA90045}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "web", "web", "{37140CB1-D91C-4BB9-E523-46166EFF2D7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "urbanAdminBlazor", "Blazor\src\web\urbanAdminBlazor\urbanAdminBlazor.csproj", "{CDD95E86-D658-A6CB-9E24-A94EE732634D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CDD95E86-D658-A6CB-9E24-A94EE732634D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDD95E86-D658-A6CB-9E24-A94EE732634D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDD95E86-D658-A6CB-9E24-A94EE732634D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDD95E86-D658-A6CB-9E24-A94EE732634D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C43A7CBF-8860-2DE7-D12F-6FAF7BA90045} = {E83BDDD6-600F-B5F0-78FF-47929315255A}
+		{37140CB1-D91C-4BB9-E523-46166EFF2D7C} = {C43A7CBF-8860-2DE7-D12F-6FAF7BA90045}
+		{CDD95E86-D658-A6CB-9E24-A94EE732634D} = {37140CB1-D91C-4BB9-E523-46166EFF2D7C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {564CF55C-4637-430A-B0E6-93D024A26658}
+	EndGlobalSection
+EndGlobal
