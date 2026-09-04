@@ -1,0 +1,19 @@
+mat-card {
+  margin: 16px;
+}
+
+table {
+  width: 100%;
+}
+
+.status-due-soon {
+  background-color: #fff3cd;
+}
+
+.status-due-today {
+  background-color: #ffe0b2;
+}
+
+.status-overdue {
+  background-color: #f8d7da;
+}
