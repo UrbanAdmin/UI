@@ -7,7 +7,7 @@
           @for (service of services; track service) {
             <mat-tab [label]="service">
               <div class="table-container">
-                <table mat-table [dataSource]="getRows(apartment.number, service)" class="mat-elevation-z1">
+                <table mat-table [dataSource]="(getRows$(apartment, service) | async) ?? []" class="mat-elevation-z1">
                   <ng-container matColumnDef="mes">
                     <th mat-header-cell *matHeaderCellDef>Mes</th>
                     <td mat-cell *matCellDef="let row">{{ row.monthLabel }}</td>
@@ -15,7 +15,7 @@
 
                   <ng-container matColumnDef="lectura">
                     <th mat-header-cell *matHeaderCellDef>Lectura</th>
-                    <td mat-cell *matCellDef="let row">{{ row.counterValue ?? '—' }}</td>
+                    <td mat-cell *matCellDef="let row">{{ row.counter ?? '—' }}</td>
                   </ng-container>
 
                   <ng-container matColumnDef="evidencia">

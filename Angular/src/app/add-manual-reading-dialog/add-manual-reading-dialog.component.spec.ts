@@ -1,16 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { AddManualReadingDialogComponent } from './add-manual-reading-dialog.component';
-import { ReadingsService } from '../readings/readings.service';
+import { environment } from '../../environments/environment';
 
 describe('AddManualReadingDialogComponent', () => {
   let component: AddManualReadingDialogComponent;
   let fixture: ComponentFixture<AddManualReadingDialogComponent>;
-  let readingsService: ReadingsService;
   let dialogRef: { close: ReturnType<typeof vi.fn> };
+  let httpMock: HttpTestingController;
 
-  const dialogData = { apartment: '201', owner: 'Bryan', service: 'Agua' as const };
+  const dialogData = { apartmentId: 2, apartment: '201', owner: 'Bryan', service: 'Agua' as const };
 
   beforeEach(async () => {
     dialogRef = { close: vi.fn() };
@@ -18,6 +20,8 @@ describe('AddManualReadingDialogComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AddManualReadingDialogComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: MAT_DIALOG_DATA, useValue: dialogData },
         { provide: MatDialogRef, useValue: dialogRef },
       ],
@@ -25,8 +29,12 @@ describe('AddManualReadingDialogComponent', () => {
 
     fixture = TestBed.createComponent(AddManualReadingDialogComponent);
     component = fixture.componentInstance;
-    readingsService = TestBed.inject(ReadingsService);
+    httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
   it('should create', () => {
@@ -38,14 +46,18 @@ describe('AddManualReadingDialogComponent', () => {
     expect(component.data.service).toBe('Agua');
   });
 
-  it('save should record the reading and close the dialog', () => {
+  it('save should record the reading and close the dialog once the API call completes', () => {
     component.month = 5;
-    component.counterValue = 777;
+    component.counter = '777';
 
     component.save();
 
-    const row = readingsService.getReadings('201', 'Agua').find((r) => r.month === 5);
-    expect(row?.counterValue).toBe(777);
+    httpMock.expectOne(`${environment.apiUrl}/Utilities`).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne(`${environment.apiUrl}/Dates`).flush([{ id: 1, month: 'Mayo', year: String(new Date().getFullYear()) }]);
+    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: 1, utilityId: 1 }]);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush({ id: 0 });
+
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
 });

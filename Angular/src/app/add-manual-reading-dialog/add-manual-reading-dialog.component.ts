@@ -13,6 +13,7 @@ import { MONTH_NAMES } from '../notifications/month-names';
 import { ServiceName } from '../notifications/notification.model';
 
 export interface AddReadingDialogData {
+  apartmentId: number;
   apartment: string;
   owner: string;
   service: ServiceName;
@@ -38,7 +39,7 @@ export class AddManualReadingDialogComponent {
   readonly monthNames = MONTH_NAMES;
 
   month: number = new Date().getMonth() + 1;
-  counterValue: number | null = null;
+  counter: string | null = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: AddReadingDialogData,
@@ -47,14 +48,8 @@ export class AddManualReadingDialogComponent {
   ) {}
 
   save(): void {
-    this.readingsService.recordReading(
-      this.data.apartment,
-      this.data.service,
-      this.month,
-      new Date().getFullYear(),
-      this.counterValue,
-      null,
-    );
-    this.dialogRef.close(true);
+    this.readingsService
+      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), this.counter, null)
+      .subscribe(() => this.dialogRef.close(true));
   }
 }

@@ -36,14 +36,8 @@ export class AddReadingDialogComponent {
   }
 
   save(): void {
-    this.readingsService.recordReading(
-      this.data.apartment,
-      this.data.service,
-      this.month,
-      new Date().getFullYear(),
-      null,
-      this.selectedFileName,
-    );
-    this.dialogRef.close(true);
+    this.readingsService
+      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), null, this.selectedFileName)
+      .subscribe(() => this.dialogRef.close(true));
   }
 }

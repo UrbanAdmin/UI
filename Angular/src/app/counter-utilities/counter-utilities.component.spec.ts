@@ -19,6 +19,15 @@ const MOCK_APARTMENTS: ApartmentDto[] = [
   { id: 6, name: '401', owner: 'Daniel' },
 ];
 
+const MOCK_UTILITIES = [{ id: 1, name: 'Agua' }, { id: 2, name: 'Luz' }, { id: 3, name: 'Gas' }];
+
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+const CURRENT_YEAR = String(new Date().getFullYear());
+const MOCK_DATES = MONTH_NAMES.map((month, i) => ({ id: i + 1, month, year: CURRENT_YEAR }));
+
 describe('CounterUtilitiesComponent', () => {
   let component: CounterUtilitiesComponent;
   let fixture: ComponentFixture<CounterUtilitiesComponent>;
@@ -43,6 +52,15 @@ describe('CounterUtilitiesComponent', () => {
     fixture.detectChanges();
     httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush(MOCK_APARTMENTS);
     fixture.detectChanges();
+
+    // The tab group renders all 6 apartments x 3 services eagerly, each
+    // calling getRows$ - these three fire once each (cached across all 18
+    // combos). Utilities/Dates are flushed fully seeded so no lookup ever
+    // misses and tries to POST-create mid-render.
+    httpMock.expectOne(`${environment.apiUrl}/Utilities`).flush(MOCK_UTILITIES);
+    httpMock.expectOne(`${environment.apiUrl}/Dates`).flush(MOCK_DATES);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush([]);
+    fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -61,9 +79,13 @@ describe('CounterUtilitiesComponent', () => {
     expect(component.services).toEqual(['Agua', 'Luz', 'Gas']);
   });
 
-  it('getRows should return 12 months for a given apartment/service', () => {
-    const rows = component.getRows('101', 'Agua');
-    expect(rows.length).toBe(12);
+  it('getRows$ should return 12 months for a given apartment/service, cached across repeated calls', () => {
+    let rows: unknown[] | undefined;
+    component.getRows$({ id: 1, number: '101', owner: 'TBD' }, 'Agua').subscribe((r) => (rows = r));
+
+    // Already resolved during beforeEach's render pass - shareReplay(1)
+    // replays it synchronously, no further HTTP calls expected here.
+    expect(rows?.length).toBe(12);
   });
 
   it('openAddManualReadingDialog should open the dialog with the apartment/service context', () => {
@@ -74,7 +96,7 @@ describe('CounterUtilitiesComponent', () => {
     expect(dialogOpen).toHaveBeenCalledWith(
       AddManualReadingDialogComponent,
       expect.objectContaining({
-        data: { apartment: apartment.number, owner: apartment.owner, service: 'Luz' },
+        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Luz' },
       }),
     );
   });
@@ -87,7 +109,7 @@ describe('CounterUtilitiesComponent', () => {
     expect(dialogOpen).toHaveBeenCalledWith(
       AddReadingDialogComponent,
       expect.objectContaining({
-        data: { apartment: apartment.number, owner: apartment.owner, service: 'Gas' },
+        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas' },
       }),
     );
   });

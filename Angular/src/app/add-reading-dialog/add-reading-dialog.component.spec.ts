@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AddReadingDialogComponent } from './add-reading-dialog.component';
-import { ReadingsService } from '../readings/readings.service';
 
 describe('AddReadingDialogComponent', () => {
   let component: AddReadingDialogComponent;
   let fixture: ComponentFixture<AddReadingDialogComponent>;
-  let readingsService: ReadingsService;
   let dialogRef: { close: ReturnType<typeof vi.fn> };
 
-  const dialogData = { apartment: '202', owner: 'Yesenia', service: 'Luz' as const };
+  const dialogData = { apartmentId: 3, apartment: '202', owner: 'Yesenia', service: 'Luz' as const };
 
   beforeEach(async () => {
     dialogRef = { close: vi.fn() };
@@ -18,6 +18,8 @@ describe('AddReadingDialogComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AddReadingDialogComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: MAT_DIALOG_DATA, useValue: dialogData },
         { provide: MatDialogRef, useValue: dialogRef },
       ],
@@ -25,7 +27,6 @@ describe('AddReadingDialogComponent', () => {
 
     fixture = TestBed.createComponent(AddReadingDialogComponent);
     component = fixture.componentInstance;
-    readingsService = TestBed.inject(ReadingsService);
     fixture.detectChanges();
   });
 
@@ -44,14 +45,12 @@ describe('AddReadingDialogComponent', () => {
     expect(component.selectedFileName).toBe('medidor.png');
   });
 
-  it('save should record the evidence file name and close the dialog', () => {
+  it('save should close the dialog immediately (evidence-only save has no HTTP call)', () => {
     component.month = 6;
     component.selectedFileName = 'medidor.png';
 
     component.save();
 
-    const row = readingsService.getReadings('202', 'Luz').find((r) => r.month === 6);
-    expect(row?.evidenceFileName).toBe('medidor.png');
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
 });
