@@ -116,4 +116,55 @@ describe('PaymentsComponent', () => {
     component.deadline$.subscribe((d) => (deadline = d));
     expect(deadline?.toDateString()).toBe(newDate.toDateString());
   });
+
+  it('Arriendo has no shared deadline - deadline$ resolves to null without any extra fetch', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+
+    let deadline: Date | null | undefined = undefined;
+    component.deadline$.subscribe((d) => (deadline = d));
+
+    expect(deadline).toBeNull();
+    httpMock.expectNone(DEADLINES_URL);
+
+    // The table's own live binding to rows$ independently reacts to the same
+    // onPeriodChange() and needs 'Arriendo' created as a Utility - drain that
+    // so it doesn't leak into this test's httpMock.verify().
+    flushArriendoUtilityCreation();
+  });
+
+  it('Arriendo rows still load (via a newly created Arriendo utility), each carrying its own dueDate', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+
+    // 'Arriendo' isn't in the cached Utilities list yet, so getOrCreateUtility
+    // creates it - both the table's own live binding to rows$ and this test's
+    // subscribe() below trigger that independently, so drain every matching
+    // request rather than assuming exactly one.
+    flushArriendoUtilityCreation();
+
+    let rows: { apartmentId: number; dueDate: Date }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    flushArriendoUtilityCreation();
+
+    expect(rows?.length).toBe(6);
+    expect(rows?.every((r) => r.dueDate instanceof Date)).toBe(true);
+  });
+
+  function flushArriendoUtilityCreation(): void {
+    let posted = false;
+    for (const req of httpMock.match(UTILITIES_URL)) {
+      if (req.request.method === 'POST') {
+        req.flush({ id: 0 });
+        posted = true;
+      } else {
+        req.flush([...MOCK_UTILITIES, { id: 4, name: 'Arriendo' }]);
+      }
+    }
+    if (posted) {
+      for (const req of httpMock.match(UTILITIES_URL)) {
+        req.flush([...MOCK_UTILITIES, { id: 4, name: 'Arriendo' }]);
+      }
+    }
+  }
 });

@@ -11,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
-import { BehaviorSubject, Observable, switchMap, map } from 'rxjs';
+import { BehaviorSubject, Observable, switchMap, map, of } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
@@ -46,10 +46,10 @@ interface Period {
   styleUrl: './payments.component.css',
 })
 export class PaymentsComponent {
-  readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
+  readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
   readonly monthNames: string[] = MONTH_NAMES;
   readonly years: number[];
-  readonly displayedColumns: string[] = ['apartment', 'owner', 'status', 'paid'];
+  readonly displayedColumns: string[] = ['apartment', 'owner', 'dueDate', 'status', 'paid'];
 
   selectedService: ServiceName = 'Agua';
   selectedMonth: number;
@@ -72,8 +72,11 @@ export class PaymentsComponent {
     });
 
     this.deadline$ = this.period$.pipe(
-      switchMap((p) => this.notificationsService.getDeadline(p.service, p.month, p.year)),
-      map((deadline) => deadline?.dueDate ?? null),
+      switchMap((p) =>
+        p.service === 'Arriendo'
+          ? of(null)
+          : this.notificationsService.getDeadline(p.service, p.month, p.year).pipe(map((d) => d?.dueDate ?? null)),
+      ),
     );
 
     this.rows$ = this.period$.pipe(
