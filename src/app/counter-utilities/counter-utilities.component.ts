@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 
@@ -13,6 +13,7 @@ import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/ad
   standalone: true,
   templateUrl: './counter-utilities.component.html',
   styleUrls: ['./counter-utilities.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     MatButtonModule,
     MatDialogModule,

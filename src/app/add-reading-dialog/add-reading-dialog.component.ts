@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   templateUrl: './add-reading-dialog.component.html',
   styleUrls: ['./add-reading-dialog.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [FormsModule, MatDialogModule]
 })
 export class AddReadingDialogComponent {}
