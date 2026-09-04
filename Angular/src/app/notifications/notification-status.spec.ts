@@ -3,6 +3,7 @@ import { ServicePayment } from './notification.model';
 
 function payment(overrides: Partial<ServicePayment> = {}): ServicePayment {
   return {
+    apartmentId: 2,
     apartment: '201',
     owner: 'Bryan',
     service: 'Agua',

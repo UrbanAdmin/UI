@@ -1,81 +1,108 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+
 import { NotificationsService } from './notifications.service';
+import { environment } from '../../environments/environment';
+
+const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
+const DATES_URL = `${environment.apiUrl}/Dates`;
+const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
+const DEADLINES_URL = `${environment.apiUrl}/Deadlines`;
+const PAYMENT_STATUSES_URL = `${environment.apiUrl}/PaymentStatuses`;
+
+const MOCK_APARTMENTS = [
+  { id: 1, name: '101', owner: 'TBD' },
+  { id: 2, name: '201', owner: 'Bryan' },
+  { id: 3, name: '202', owner: 'Yesenia' },
+  { id: 4, name: '301', owner: 'Oscar' },
+  { id: 5, name: '302', owner: 'Olga' },
+  { id: 6, name: '401', owner: 'Daniel' },
+];
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     service = TestBed.inject(NotificationsService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  it('setDeadline should change the due date used to compute status', () => {
-    const nearFuture = new Date();
-    nearFuture.setDate(nearFuture.getDate() + 2);
+  it('getDeadline resolves utility/date ids and finds the matching Deadline row', () => {
+    let result: { dueDate: Date } | undefined;
+    service.getDeadline('Agua', 9, 2026).subscribe((d) => (result = d));
 
-    service.setDeadline('Agua', currentMonth, currentYear, nearFuture);
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 5, month: 'Septiembre', year: '2026' }]);
+    httpMock.expectOne(DEADLINES_URL).flush([{ id: 9, utilityId: 1, dateId: 5, dueDate: '2026-09-15T00:00:00' }]);
 
-    const deadline = service.getDeadline('Agua', currentMonth, currentYear);
-    expect(deadline?.dueDate.toDateString()).toBe(nearFuture.toDateString());
+    expect(result?.dueDate.toDateString()).toBe(new Date('2026-09-15T00:00:00').toDateString());
   });
 
-  it('setPaid should remove that owner from active notifications', () => {
-    const nearFuture = new Date();
-    nearFuture.setDate(nearFuture.getDate() + 2);
-    service.setDeadline('Agua', currentMonth, currentYear, nearFuture);
-    service.setPaid('101', 'Agua', currentMonth, currentYear, false);
+  it('setDeadline POSTs an underscore-keyed body with an ISO date when none exists yet', () => {
+    const newDate = new Date('2026-09-20T00:00:00');
+    service.setDeadline('Agua', 9, 2026, newDate).subscribe();
 
-    expect(
-      service
-        .getActiveNotifications()
-        .some((n) => n.apartment === '101' && n.service === 'Agua'),
-    ).toBe(true);
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 5, month: 'Septiembre', year: '2026' }]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
 
-    service.setPaid('101', 'Agua', currentMonth, currentYear, true);
-
-    expect(
-      service
-        .getActiveNotifications()
-        .some((n) => n.apartment === '101' && n.service === 'Agua'),
-    ).toBe(false);
+    const postReq = httpMock.expectOne(DEADLINES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Utility_Id: 1, Date_Id: 5, DueDate: newDate.toISOString() });
+    postReq.flush({ id: 0 });
   });
 
-  it('getOwnerPayments should return one row per apartment, defaulting to unpaid for a period with no data yet', () => {
-    const futureYear = currentYear + 5;
-    const rows = service.getOwnerPayments('Gas', 6, futureYear);
+  it('getOwnerPayments returns one row per apartment, defaulting to unpaid/not-due with no deadline set', () => {
+    let result: { paid: boolean; status: string }[] | undefined;
+    service.getOwnerPayments('Gas', 6, 2026).subscribe((rows) => (result = rows));
 
-    expect(rows.length).toBe(6);
-    expect(rows.every((r) => r.paid === false)).toBe(true);
-    expect(rows.every((r) => r.status === 'not-due')).toBe(true);
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 3, name: 'Gas' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 10, month: 'Junio', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
+
+    expect(result?.length).toBe(6);
+    expect(result?.every((r) => r.paid === false)).toBe(true);
+    expect(result?.every((r) => r.status === 'not-due')).toBe(true);
   });
 
-  it('getOwnerPayments should reflect a setPaid call for that period', () => {
-    service.setPaid('201', 'Luz', currentMonth, currentYear, false);
-    const rows = service.getOwnerPayments('Luz', currentMonth, currentYear);
-    const row = rows.find((r) => r.apartment === '201');
-    expect(row?.paid).toBe(false);
+  it('setPaid POSTs an underscore-keyed body when no PaymentStatus row exists yet', () => {
+    service.setPaid(2, 'Luz', 9, 2026, true).subscribe();
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 2, name: 'Luz' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 5, month: 'Septiembre', year: '2026' }]);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 2, Utility_Id: 2, Date_Id: 5, Paid: true });
+    postReq.flush({ id: 0 });
   });
 
-  it('getActiveNotifications should include unpaid deadlines from periods other than the current month', () => {
-    const otherMonth = currentMonth === 1 ? 2 : 1;
-    const pastDue = new Date();
-    pastDue.setMonth(pastDue.getMonth() - 1);
+  it('getActiveNotifications resolves each Deadline back to a service/month/year and keeps only unpaid/due rows', () => {
+    let result: { apartment: string; status: string; month: number; year: number }[] | undefined;
+    service.getActiveNotifications().subscribe((n) => (result = n));
 
-    service.setDeadline('Gas', otherMonth, currentYear, pastDue);
-    service.setPaid('301', 'Gas', otherMonth, currentYear, false);
+    httpMock
+      .expectOne(DEADLINES_URL)
+      .flush([{ id: 1, utilityId: 3, dateId: 10, dueDate: '2026-01-15T00:00:00' }]);
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 3, name: 'Gas' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 10, month: 'Enero', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
 
-    const notification = service
-      .getActiveNotifications()
-      .find((n) => n.apartment === '301' && n.service === 'Gas' && n.month === otherMonth);
-
-    expect(notification).toBeTruthy();
-    expect(notification?.year).toBe(currentYear);
+    expect(result?.length).toBe(6);
+    expect(result?.every((n) => n.status === 'overdue')).toBe(true);
+    expect(result?.every((n) => n.month === 1 && n.year === 2026)).toBe(true);
   });
 });

@@ -1,4 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, forkJoin, map, of, switchMap, tap, shareReplay } from 'rxjs';
+import { environment } from '../../environments/environment';
 import { getNotificationStatus } from './notification-status';
 import {
   NotificationStatus,
@@ -7,137 +10,182 @@ import {
   ServiceName,
   ServicePayment,
 } from './notification.model';
-import { APARTMENTS } from '../shared/apartments';
+import { DeadlineDto, DeadlineWrite } from './deadline.model';
+import { PaymentStatusDto, PaymentStatusWrite } from './payment-status.model';
+import { ApartmentsService } from '../shared/apartments.service';
+import { UtilitiesService } from '../shared/utilities.service';
+import { DatesService } from '../shared/dates.service';
+import { monthNumber } from './month-names';
 
-const SERVICES: ServiceName[] = ['Agua', 'Luz', 'Gas'];
-
-function daysFromToday(days: number): Date {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + days);
-  return date;
-}
-
-function periodKey(service: ServiceName, month: number, year: number): string {
-  return `${service}-${month}-${year}`;
-}
+type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
-  private readonly deadlines: ServiceDeadline[] = [];
-  private readonly ownerPayments: OwnerPayment[] = [];
+  private readonly http = inject(HttpClient);
+  private readonly apartmentsService = inject(ApartmentsService);
+  private readonly utilitiesService = inject(UtilitiesService);
+  private readonly datesService = inject(DatesService);
 
-  constructor() {
-    this.seedMockData();
+  private deadlinesCache$: Observable<DeadlineDto[]> | null = null;
+  private paymentStatusesCache$: Observable<PaymentStatusDto[]> | null = null;
+
+  private fetchDeadlines(): Observable<DeadlineDto[]> {
+    if (!this.deadlinesCache$) {
+      this.deadlinesCache$ = this.http.get<DeadlineDto[]>(`${environment.apiUrl}/Deadlines`).pipe(shareReplay(1));
+    }
+    return this.deadlinesCache$;
   }
 
-  getDeadline(service: ServiceName, month: number, year: number): ServiceDeadline | undefined {
-    return this.deadlines.find(
-      (d) => d.service === service && d.month === month && d.year === year,
+  private fetchPaymentStatuses(): Observable<PaymentStatusDto[]> {
+    if (!this.paymentStatusesCache$) {
+      this.paymentStatusesCache$ = this.http
+        .get<PaymentStatusDto[]>(`${environment.apiUrl}/PaymentStatuses`)
+        .pipe(shareReplay(1));
+    }
+    return this.paymentStatusesCache$;
+  }
+
+  private resolveIds(service: ServiceName, month: number, year: number): Observable<{ utilityId: number; dateId: number }> {
+    return forkJoin([
+      this.utilitiesService.getOrCreateUtility(service),
+      this.datesService.getOrCreateDate(month, year),
+    ]).pipe(map(([utility, date]) => ({ utilityId: utility.id, dateId: date.id })));
+  }
+
+  getDeadline(service: ServiceName, month: number, year: number): Observable<ServiceDeadline | undefined> {
+    return forkJoin([this.resolveIds(service, month, year), this.fetchDeadlines()]).pipe(
+      map(([{ utilityId, dateId }, deadlines]) => {
+        const match = deadlines.find((d) => d.utilityId === utilityId && d.dateId === dateId);
+        return match ? { service, month, year, dueDate: new Date(match.dueDate) } : undefined;
+      }),
     );
   }
 
-  setDeadline(service: ServiceName, month: number, year: number, dueDate: Date): void {
-    const existing = this.getDeadline(service, month, year);
-    if (existing) {
-      existing.dueDate = dueDate;
-    } else {
-      this.deadlines.push({ service, month, year, dueDate });
-    }
+  setDeadline(service: ServiceName, month: number, year: number, dueDate: Date): Observable<void> {
+    return this.resolveIds(service, month, year).pipe(
+      switchMap(({ utilityId, dateId }) =>
+        this.fetchDeadlines().pipe(
+          switchMap((deadlines) => {
+            const existing = deadlines.find((d) => d.utilityId === utilityId && d.dateId === dateId);
+            const write: DeadlineWrite = { Utility_Id: utilityId, Date_Id: dateId, DueDate: dueDate.toISOString() };
+            const request$ = existing
+              ? this.http.put(`${environment.apiUrl}/Deadline/${existing.id}`, write)
+              : this.http.post(`${environment.apiUrl}/Deadlines`, write);
+            return request$.pipe(tap(() => (this.deadlinesCache$ = null)));
+          }),
+        ),
+      ),
+      map(() => undefined),
+    );
   }
 
   getOwnerPayments(
     service: ServiceName,
     month: number,
     year: number,
-  ): (OwnerPayment & { status: NotificationStatus })[] {
-    const deadline = this.getDeadline(service, month, year);
+  ): Observable<(OwnerPayment & { status: NotificationStatus })[]> {
     const today = new Date();
-
-    return APARTMENTS.map((apartment) => {
-      const existing = this.ownerPayments.find(
-        (p) =>
-          p.apartment === apartment.number &&
-          p.service === service &&
-          p.month === month &&
-          p.year === year,
-      );
-      const paid = existing?.paid ?? false;
-      const status = deadline
-        ? getNotificationStatus({ apartment: apartment.number, owner: apartment.owner, service, dueDate: deadline.dueDate, paid }, today)
-        : 'not-due';
-      return {
-        apartment: apartment.number,
-        owner: apartment.owner,
-        service,
-        month,
-        year,
-        paid,
-        status,
-      };
-    });
+    return forkJoin([
+      this.resolveIds(service, month, year),
+      this.apartmentsService.getApartments(),
+      this.fetchPaymentStatuses(),
+      this.getDeadline(service, month, year),
+    ]).pipe(
+      map(([{ utilityId, dateId }, apartments, paymentStatuses, deadline]) =>
+        apartments.map((apartment) => {
+          const existing = paymentStatuses.find(
+            (p) => p.apartmentId === apartment.id && p.utilityId === utilityId && p.dateId === dateId,
+          );
+          const paid = existing?.paid ?? false;
+          const status = deadline
+            ? getNotificationStatus(
+                {
+                  apartmentId: apartment.id,
+                  apartment: apartment.number,
+                  owner: apartment.owner,
+                  service,
+                  dueDate: deadline.dueDate,
+                  paid,
+                },
+                today,
+              )
+            : 'not-due';
+          return {
+            apartmentId: apartment.id,
+            apartment: apartment.number,
+            owner: apartment.owner,
+            service,
+            month,
+            year,
+            paid,
+            status,
+          };
+        }),
+      ),
+    );
   }
 
-  setPaid(apartment: string, service: ServiceName, month: number, year: number, paid: boolean): void {
-    const owner = APARTMENTS.find((a) => a.number === apartment)?.owner ?? '';
-    const existing = this.ownerPayments.find(
-      (p) => p.apartment === apartment && p.service === service && p.month === month && p.year === year,
+  setPaid(apartmentId: number, service: ServiceName, month: number, year: number, paid: boolean): Observable<void> {
+    return this.resolveIds(service, month, year).pipe(
+      switchMap(({ utilityId, dateId }) =>
+        this.fetchPaymentStatuses().pipe(
+          switchMap((paymentStatuses) => {
+            const existing = paymentStatuses.find(
+              (p) => p.apartmentId === apartmentId && p.utilityId === utilityId && p.dateId === dateId,
+            );
+            const write: PaymentStatusWrite = { Apartment_Id: apartmentId, Utility_Id: utilityId, Date_Id: dateId, Paid: paid };
+            const request$ = existing
+              ? this.http.put(`${environment.apiUrl}/PaymentStatus/${existing.id}`, write)
+              : this.http.post(`${environment.apiUrl}/PaymentStatuses`, write);
+            return request$.pipe(tap(() => (this.paymentStatusesCache$ = null)));
+          }),
+        ),
+      ),
+      map(() => undefined),
     );
-    if (existing) {
-      existing.paid = paid;
-    } else {
-      this.ownerPayments.push({ apartment, owner, service, month, year, paid });
-    }
   }
 
   /** Scans every period that has a deadline set (not just the current month), so a
    *  never-marked-paid balance from an earlier or later period still shows up. */
-  getActiveNotifications(): (ServicePayment & { status: NotificationStatus; month: number; year: number })[] {
-    const active: (ServicePayment & { status: NotificationStatus; month: number; year: number })[] = [];
-    for (const deadline of this.deadlines) {
-      const rows = this.getOwnerPayments(deadline.service, deadline.month, deadline.year);
-      for (const row of rows) {
-        if (row.status !== 'paid' && row.status !== 'not-due') {
-          active.push({
-            apartment: row.apartment,
-            owner: row.owner,
-            service: row.service,
-            dueDate: deadline.dueDate,
-            paid: row.paid,
-            status: row.status,
-            month: deadline.month,
-            year: deadline.year,
-          });
+  getActiveNotifications(): Observable<ActiveNotification[]> {
+    return this.fetchDeadlines().pipe(
+      switchMap((deadlines) => {
+        if (deadlines.length === 0) {
+          return of([] as ActiveNotification[]);
         }
-      }
-    }
-    return active;
-  }
-
-  private seedMockData(): void {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-
-    this.setDeadline('Agua', month, year, daysFromToday(2)); // due-soon
-    this.setDeadline('Luz', month, year, daysFromToday(0)); // due-today
-    this.setDeadline('Gas', month, year, daysFromToday(-3)); // overdue
-
-    // A handful of apartments still owe money for the current period;
-    // everyone else is marked paid so they don't show up as notifications.
-    const unpaid = new Set([
-      periodKey('Agua', month, year) + '-101',
-      periodKey('Agua', month, year) + '-401',
-      periodKey('Luz', month, year) + '-201',
-      periodKey('Gas', month, year) + '-202',
-      periodKey('Gas', month, year) + '-302',
-    ]);
-
-    for (const apartment of APARTMENTS) {
-      for (const service of SERVICES) {
-        const key = periodKey(service, month, year) + '-' + apartment.number;
-        this.setPaid(apartment.number, service, month, year, !unpaid.has(key));
-      }
-    }
+        return forkJoin([this.utilitiesService.getUtilities(), this.datesService.getDates()]).pipe(
+          switchMap(([utilities, dates]) => {
+            const perDeadline$ = deadlines.map((deadline) => {
+              const utility = utilities.find((u) => u.id === deadline.utilityId);
+              const date = dates.find((d) => d.id === deadline.dateId);
+              const month = date ? monthNumber(date.month) : null;
+              if (!utility || !date || month === null) {
+                return of([] as ActiveNotification[]);
+              }
+              const service = utility.name as ServiceName;
+              const year = Number(date.year);
+              return this.getOwnerPayments(service, month, year).pipe(
+                map((rows) =>
+                  rows
+                    .filter((row) => row.status !== 'paid' && row.status !== 'not-due')
+                    .map((row) => ({
+                      apartmentId: row.apartmentId,
+                      apartment: row.apartment,
+                      owner: row.owner,
+                      service: row.service,
+                      dueDate: new Date(deadline.dueDate),
+                      paid: row.paid,
+                      status: row.status,
+                      month,
+                      year,
+                    })),
+                ),
+              );
+            });
+            return forkJoin(perDeadline$).pipe(map((groups) => groups.flat()));
+          }),
+        );
+      }),
+    );
   }
 }

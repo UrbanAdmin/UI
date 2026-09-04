@@ -3,6 +3,7 @@ export type ServiceName = 'Agua' | 'Luz' | 'Gas';
 export type NotificationStatus = 'paid' | 'due-soon' | 'due-today' | 'overdue' | 'not-due';
 
 export interface ServicePayment {
+  apartmentId: number;
   apartment: string;
   owner: string;
   service: ServiceName;
@@ -20,6 +21,7 @@ export interface ServiceDeadline {
 
 /** One apartment's paid/unpaid status for a service in one month/year. */
 export interface OwnerPayment {
+  apartmentId: number;
   apartment: string;
   owner: string;
   service: ServiceName;
