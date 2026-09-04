@@ -20,14 +20,23 @@ table {
   width: 100%;
 }
 
+/* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain
+   background-color override - Material's own .mat-mdc-standard-chip rule has higher
+   specificity than a single class and would win otherwise). */
 .status-due-soon {
-  background-color: #fff3cd;
+  --mat-chip-elevated-container-color: #f9a825;
+  --mat-chip-label-text-color: #212121;
+  font-weight: 500;
 }
 
 .status-due-today {
-  background-color: #ffe0b2;
+  --mat-chip-elevated-container-color: #ef6c00;
+  --mat-chip-label-text-color: #ffffff;
+  font-weight: 500;
 }
 
 .status-overdue {
-  background-color: #f8d7da;
+  --mat-chip-elevated-container-color: #c62828;
+  --mat-chip-label-text-color: #ffffff;
+  font-weight: 500;
 }
