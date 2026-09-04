@@ -33,7 +33,7 @@
     <div class="deadline-row">
       <mat-form-field appearance="outline">
         <mat-label>Fecha límite de pago</mat-label>
-        <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline" #deadlineInput="ngModel" />
+        <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
         <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
         <mat-datepicker #deadlinePicker></mat-datepicker>
       </mat-form-field>
@@ -42,7 +42,7 @@
       </button>
     </div>
 
-    <table mat-table [dataSource]="rows" class="mat-elevation-z1">
+    <table mat-table [dataSource]="(rows$ | async) ?? []" class="mat-elevation-z1">
       <ng-container matColumnDef="apartment">
         <th mat-header-cell *matHeaderCellDef>Apartamento</th>
         <td mat-cell *matCellDef="let row">{{ row.apartment }}</td>

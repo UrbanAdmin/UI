@@ -1,23 +1,64 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 import { PaymentsComponent } from './payments.component';
-import { NotificationsService } from '../notifications/notifications.service';
+import { environment } from '../../environments/environment';
+
+const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
+const DATES_URL = `${environment.apiUrl}/Dates`;
+const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
+const DEADLINES_URL = `${environment.apiUrl}/Deadlines`;
+const PAYMENT_STATUSES_URL = `${environment.apiUrl}/PaymentStatuses`;
+
+const MOCK_APARTMENTS = [
+  { id: 1, name: '101', owner: 'TBD' },
+  { id: 2, name: '201', owner: 'Bryan' },
+  { id: 3, name: '202', owner: 'Yesenia' },
+  { id: 4, name: '301', owner: 'Oscar' },
+  { id: 5, name: '302', owner: 'Olga' },
+  { id: 6, name: '401', owner: 'Daniel' },
+];
+const MOCK_UTILITIES = [{ id: 1, name: 'Agua' }, { id: 2, name: 'Luz' }, { id: 3, name: 'Gas' }];
 
 describe('PaymentsComponent', () => {
   let component: PaymentsComponent;
   let fixture: ComponentFixture<PaymentsComponent>;
-  let notificationsService: NotificationsService;
+  let httpMock: HttpTestingController;
+  let currentDateId: number;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PaymentsComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PaymentsComponent);
     component = fixture.componentInstance;
-    notificationsService = TestBed.inject(NotificationsService);
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const now = new Date();
+    currentDateId = 1;
+    httpMock.expectOne(UTILITIES_URL).flush(MOCK_UTILITIES);
+    httpMock.expectOne(DATES_URL).flush([{ id: currentDateId, month: monthNameFor(now), year: String(now.getFullYear()) }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
     fixture.detectChanges();
   });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  function monthNameFor(date: Date): string {
+    const names = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    ];
+    return names[date.getMonth()];
+  }
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -27,36 +68,52 @@ describe('PaymentsComponent', () => {
     const now = new Date();
     expect(component.selectedMonth).toBe(now.getMonth() + 1);
     expect(component.selectedYear).toBe(now.getFullYear());
-    expect(component.rows.length).toBe(6);
+
+    let rows: unknown[] | undefined;
+    component.rows$.subscribe((r) => (rows = r));
+    expect(rows?.length).toBe(6);
   });
 
-  it('togglePaid should update the service and the displayed row', () => {
-    const row = component.rows.find((r) => r.apartment === '101')!;
-    const newPaidValue = !row.paid;
+  it('togglePaid should PUT/POST the new paid state and reload the rows', () => {
+    let rows: { apartmentId: number; paid: boolean }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    const row = rows!.find((r) => r.apartmentId === 1)!;
 
-    component.togglePaid(row, newPaidValue);
+    component.togglePaid(row as never, true);
 
-    const updated = notificationsService.getOwnerPayments(
-      component.selectedService,
-      component.selectedMonth,
-      component.selectedYear,
-    );
-    expect(updated.find((r) => r.apartment === '101')?.paid).toBe(newPaidValue);
-    expect(component.rows.find((r) => r.apartment === '101')?.paid).toBe(newPaidValue);
+    // Utilities/Dates/PaymentStatuses were already fetched (and cached) by
+    // the initial load in beforeEach, so setPaid's existing-row lookup
+    // reuses that cache and goes straight to POST - no new GETs here.
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 1, Utility_Id: 1, Date_Id: currentDateId, Paid: true });
+    postReq.flush({ id: 0 });
+
+    // reload triggered by onPeriodChange(): only PaymentStatuses' cache was
+    // invalidated by the write above, so only it refetches.
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([{ id: 1, apartmentId: 1, utilityId: 1, dateId: currentDateId, paid: true }]);
   });
 
-  it('saveDeadline should update the deadline used for the selected period', () => {
+  it('saveDeadline should POST the new deadline and reload the period', () => {
     const newDate = new Date();
     newDate.setDate(newDate.getDate() + 7);
 
     component.saveDeadline(newDate);
 
-    const deadline = notificationsService.getDeadline(
-      component.selectedService,
-      component.selectedMonth,
-      component.selectedYear,
-    );
-    expect(deadline?.dueDate.toDateString()).toBe(newDate.toDateString());
-    expect(component.deadline?.toDateString()).toBe(newDate.toDateString());
+    // Utilities/Dates/Deadlines were already fetched (and cached) by the
+    // initial load in beforeEach, so setDeadline's existing-row lookup
+    // reuses that cache and goes straight to POST - no new GETs here.
+    const postReq = httpMock.expectOne(DEADLINES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Utility_Id: 1, Date_Id: currentDateId, DueDate: newDate.toISOString() });
+    postReq.flush({ id: 0 });
+
+    // reload triggered by onPeriodChange(): only Deadlines' cache was
+    // invalidated by the write above, so only it refetches.
+    httpMock.expectOne(DEADLINES_URL).flush([{ id: 9, utilityId: 1, dateId: currentDateId, dueDate: newDate.toISOString() }]);
+
+    let deadline: Date | null | undefined;
+    component.deadline$.subscribe((d) => (deadline = d));
+    expect(deadline?.toDateString()).toBe(newDate.toDateString());
   });
 });

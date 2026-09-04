@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -10,16 +11,24 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
+import { BehaviorSubject, Observable, switchMap, map } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 
+interface Period {
+  service: ServiceName;
+  month: number;
+  year: number;
+}
+
 @Component({
   selector: 'app-payments',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     MatButtonModule,
     MatCardModule,
@@ -45,40 +54,47 @@ export class PaymentsComponent {
   selectedService: ServiceName = 'Agua';
   selectedMonth: number;
   selectedYear: number;
-  deadline: Date | null = null;
-  rows: OwnerRow[] = [];
+
+  private readonly period$: BehaviorSubject<Period>;
+  readonly deadline$: Observable<Date | null>;
+  readonly rows$: Observable<OwnerRow[]>;
 
   constructor(private notificationsService: NotificationsService) {
     const now = new Date();
     this.selectedMonth = now.getMonth() + 1;
     this.selectedYear = now.getFullYear();
     this.years = Array.from({ length: 7 }, (_, i) => this.selectedYear - 1 + i);
-    this.reload();
+
+    this.period$ = new BehaviorSubject<Period>({
+      service: this.selectedService,
+      month: this.selectedMonth,
+      year: this.selectedYear,
+    });
+
+    this.deadline$ = this.period$.pipe(
+      switchMap((p) => this.notificationsService.getDeadline(p.service, p.month, p.year)),
+      map((deadline) => deadline?.dueDate ?? null),
+    );
+
+    this.rows$ = this.period$.pipe(
+      switchMap((p) => this.notificationsService.getOwnerPayments(p.service, p.month, p.year)),
+    );
   }
 
   onPeriodChange(): void {
-    this.reload();
+    this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });
   }
 
   saveDeadline(newDate: Date): void {
-    this.notificationsService.setDeadline(
-      this.selectedService,
-      this.selectedMonth,
-      this.selectedYear,
-      newDate,
-    );
-    this.reload();
+    this.notificationsService
+      .setDeadline(this.selectedService, this.selectedMonth, this.selectedYear, newDate)
+      .subscribe(() => this.onPeriodChange());
   }
 
   togglePaid(row: OwnerRow, paid: boolean): void {
-    this.notificationsService.setPaid(
-      row.apartment,
-      this.selectedService,
-      this.selectedMonth,
-      this.selectedYear,
-      paid,
-    );
-    this.reload();
+    this.notificationsService
+      .setPaid(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, paid)
+      .subscribe(() => this.onPeriodChange());
   }
 
   onTogglePaid(row: OwnerRow, event: MatSlideToggleChange): void {
@@ -98,19 +114,5 @@ export class PaymentsComponent {
       default:
         return 'No vence aún';
     }
-  }
-
-  private reload(): void {
-    this.deadline =
-      this.notificationsService.getDeadline(
-        this.selectedService,
-        this.selectedMonth,
-        this.selectedYear,
-      )?.dueDate ?? null;
-    this.rows = this.notificationsService.getOwnerPayments(
-      this.selectedService,
-      this.selectedMonth,
-      this.selectedYear,
-    );
   }
 }
