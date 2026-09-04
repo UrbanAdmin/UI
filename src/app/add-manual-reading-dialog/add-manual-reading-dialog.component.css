@@ -1,13 +1,39 @@
 mat-card {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin: 24px auto;
+  padding: 24px 16px;
   min-width: 340px;
   max-width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 mat-card-title {
-  padding-bottom: 8px;
   font-size: 1.5rem;
+  padding-bottom: 12px;
+  text-align: center;
+}
+
+mat-card-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+mat-card-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+mat-card-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+mat-card-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+mat-card-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .full-width {
@@ -19,6 +45,7 @@ mat-card-actions {
   display: flex;
   justify-content: center;
   gap: 16px;
+  margin-top: 16px;
 }
 
 .button-group {
@@ -32,5 +59,16 @@ mat-card-actions {
   .button-group {
     flex-direction: row;
     justify-content: center;
+  }
+}
+
+@media (max-width: 500px) {
+  mat-card-content {
+    max-height: 70vh;
+  }
+  mat-card {
+    min-width: 95vw;
+    max-width: 98vw;
+    padding: 12px 4px;
   }
 }
