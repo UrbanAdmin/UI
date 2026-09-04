@@ -1,3 +1,4 @@
+@if (apartments$ | async; as apartments) {
 <mat-tab-group>
   @for (apartment of apartments; track apartment.number) {
     <mat-tab [label]="'Apto ' + apartment.number">
@@ -37,3 +38,4 @@
     </mat-tab>
   }
 </mat-tab-group>
+}
