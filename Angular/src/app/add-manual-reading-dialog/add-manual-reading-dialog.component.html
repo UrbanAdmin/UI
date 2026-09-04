@@ -1,59 +1,24 @@
 <mat-card>
-  <mat-card-title>Lectura Gas</mat-card-title>
+  <mat-card-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</mat-card-title>
+  <mat-card-subtitle>{{ data.owner }}</mat-card-subtitle>
   <mat-card-content>
     <form>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Mes</mat-label>
-        <mat-select>
-          <mat-option value="Enero">Enero</mat-option>
-          <mat-option value="Febrero">Febrero</mat-option>
-          <mat-option value="Marzo">Marzo</mat-option>
+        <mat-select [(ngModel)]="month" name="month">
+          @for (name of monthNames; track name; let i = $index) {
+            <mat-option [value]="i + 1">{{ name }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 101</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 201</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 202</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 301</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 302</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Lectura Actual 401</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Total Consumo Factura</mat-label>
-        <input matInput type="number" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Total a pagar</mat-label>
-        <input matInput type="number" />
+        <mat-label>Lectura actual</mat-label>
+        <input matInput type="number" [(ngModel)]="counterValue" name="counterValue" />
       </mat-form-field>
     </form>
   </mat-card-content>
   <mat-card-actions align="end">
-    <button mat-raised-button color="primary">Guardar</button>
-    <button mat-raised-button color="accent">Calcular</button>
+    <button mat-raised-button color="primary" (click)="save()" [disabled]="counterValue === null">Guardar</button>
   </mat-card-actions>
 </mat-card>

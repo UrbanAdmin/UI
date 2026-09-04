@@ -3,10 +3,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/add-manual-reading-dialog.component';
+
+import { Apartment, APARTMENTS } from '../shared/apartments';
+import { ServiceName } from '../notifications/notification.model';
+import { monthName } from '../notifications/month-names';
+import { ReadingsService } from '../readings/readings.service';
+import { MeterReading } from '../readings/reading.model';
 
 @Component({
   selector: 'app-counter-utilities',
@@ -16,38 +21,34 @@ import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/ad
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     MatButtonModule,
-    MatDialogModule,
     MatTabsModule,
     MatTableModule
 ]
 })
 export class CounterUtilitiesComponent {
-  displayedColumns: string[] = ['mes', 'evidencia'];
-  dataSource = [
-    { mes: 'Enero', evidencia: 'Link' },
-    { mes: 'Febrero', evidencia: 'Link' },
-    { mes: 'Marzo', evidencia: 'Link' },
-    { mes: 'Abril', evidencia: 'Link' },
-    { mes: 'Mayo', evidencia: 'Link' },
-    { mes: 'Junio', evidencia: 'Link' },
-    { mes: 'Julio', evidencia: 'Link' },
-    { mes: 'Agosto', evidencia: 'Link' },
-    { mes: 'Septiembre', evidencia: 'Link' },
-    { mes: 'Octubre', evidencia: 'Link' },
-    { mes: 'Noviembre', evidencia: 'Link' },
-    { mes: 'Diciembre', evidencia: 'Link' }
-  ];
+  readonly apartments: Apartment[] = APARTMENTS;
+  readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
+  readonly displayedColumns: string[] = ['mes', 'lectura', 'evidencia'];
 
-  constructor(private dialog: MatDialog) { }
+  constructor(private dialog: MatDialog, private readingsService: ReadingsService) { }
 
-  openAddReadingDialog() {
-    this.dialog.open(AddReadingDialogComponent);
+  getRows(apartment: string, service: ServiceName): (MeterReading & { monthLabel: string })[] {
+    return this.readingsService
+      .getReadings(apartment, service)
+      .map((reading) => ({ ...reading, monthLabel: monthName(reading.month) }));
   }
 
-  openAddManualReadingDialog() {
+  openAddReadingDialog(apartment: Apartment, service: ServiceName) {
+    this.dialog.open(AddReadingDialogComponent, {
+      data: { apartment: apartment.number, owner: apartment.owner, service },
+    });
+  }
+
+  openAddManualReadingDialog(apartment: Apartment, service: ServiceName) {
     this.dialog.open(AddManualReadingDialogComponent, {
       width: '420px',
-      maxHeight: '90vh'
+      maxHeight: '90vh',
+      data: { apartment: apartment.number, owner: apartment.owner, service },
     });
   }
 }

@@ -1,25 +1,24 @@
-<h2 mat-dialog-title>Lectura Gas</h2>
-    <mat-dialog-content>
-      <form>
-        <div>
-          <label>Mes</label>
-          <select>
-            <option>Enero</option>
-            <option>Febrero</option>
-            <option>Marzo</option>
-            <!-- Add more months as needed -->
-          </select>
-        </div>
-        <div>
-          <label>Nombre archivo</label>
-          <input type="text" placeholder="Nombre" />
-        </div>
-        <div>
-          <label>Lectura</label>
-          <input type="file" />
-        </div>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="center">
-      <button mat-raised-button color="primary">Subir</button>
-    </mat-dialog-actions>
+<h2 mat-dialog-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</h2>
+<mat-dialog-content>
+  <form>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Mes</mat-label>
+      <mat-select [(ngModel)]="month" name="month">
+        @for (name of monthNames; track name; let i = $index) {
+          <mat-option [value]="i + 1">{{ name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="file-field">
+      <label>Evidencia</label>
+      <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+      @if (selectedFileName) {
+        <span class="file-name">{{ selectedFileName }}</span>
+      }
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="center">
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!selectedFileName">Subir</button>
+</mat-dialog-actions>
