@@ -16,6 +16,7 @@ import { ApartmentsService } from '../shared/apartments.service';
 import { UtilitiesService } from '../shared/utilities.service';
 import { DatesService } from '../shared/dates.service';
 import { monthNumber } from './month-names';
+import { rentDueDate } from './rent-due-date';
 
 type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
 
@@ -84,6 +85,10 @@ export class NotificationsService {
     month: number,
     year: number,
   ): Observable<(OwnerPayment & { status: NotificationStatus })[]> {
+    if (service === 'Arriendo') {
+      return this.getArriendoOwnerPayments(month, year);
+    }
+
     const today = new Date();
     return forkJoin([
       this.resolveIds(service, month, year),
@@ -97,6 +102,7 @@ export class NotificationsService {
             (p) => p.apartmentId === apartment.id && p.utilityId === utilityId && p.dateId === dateId,
           );
           const paid = existing?.paid ?? false;
+          const dueDate = deadline?.dueDate ?? new Date(9999, 11, 31);
           const status = deadline
             ? getNotificationStatus(
                 {
@@ -104,7 +110,7 @@ export class NotificationsService {
                   apartment: apartment.number,
                   owner: apartment.owner,
                   service,
-                  dueDate: deadline.dueDate,
+                  dueDate,
                   paid,
                 },
                 today,
@@ -118,6 +124,55 @@ export class NotificationsService {
             month,
             year,
             paid,
+            dueDate,
+            status,
+          };
+        }),
+      ),
+    );
+  }
+
+  /** Arriendo has no shared Deadline - each apartment's due date is derived
+   *  from its own contract start date, so this skips getDeadline entirely
+   *  and computes a per-row dueDate instead of using one shared value. */
+  private getArriendoOwnerPayments(
+    month: number,
+    year: number,
+  ): Observable<(OwnerPayment & { status: NotificationStatus })[]> {
+    const today = new Date();
+    return forkJoin([
+      this.resolveIds('Arriendo', month, year),
+      this.apartmentsService.getApartments(),
+      this.fetchPaymentStatuses(),
+    ]).pipe(
+      map(([{ utilityId, dateId }, apartments, paymentStatuses]) =>
+        apartments.map((apartment) => {
+          const existing = paymentStatuses.find(
+            (p) => p.apartmentId === apartment.id && p.utilityId === utilityId && p.dateId === dateId,
+          );
+          const paid = existing?.paid ?? false;
+          const contractStartDate = apartment.contractStartDate ? new Date(apartment.contractStartDate) : null;
+          const dueDate = rentDueDate(contractStartDate, month, year);
+          const status = getNotificationStatus(
+            {
+              apartmentId: apartment.id,
+              apartment: apartment.number,
+              owner: apartment.owner,
+              service: 'Arriendo',
+              dueDate,
+              paid,
+            },
+            today,
+          );
+          return {
+            apartmentId: apartment.id,
+            apartment: apartment.number,
+            owner: apartment.owner,
+            service: 'Arriendo' as const,
+            month,
+            year,
+            paid,
+            dueDate,
             status,
           };
         }),
@@ -146,8 +201,48 @@ export class NotificationsService {
   }
 
   /** Scans every period that has a deadline set (not just the current month), so a
-   *  never-marked-paid balance from an earlier or later period still shows up. */
+   *  never-marked-paid balance from an earlier or later period still shows up.
+   *  Arriendo has no Deadlines-equivalent backlog to scan (see
+   *  getArriendoOwnerPayments), so its notifications only look at the
+   *  current month - a reasonable v1 scope, revisit if a rent backlog view
+   *  turns out to matter. */
   getActiveNotifications(): Observable<ActiveNotification[]> {
+    return forkJoin([this.deadlineDrivenNotifications(), this.arriendoNotifications()]).pipe(
+      map(([deadlineDriven, arriendo]) => [...deadlineDriven, ...arriendo]),
+    );
+  }
+
+  private arriendoNotifications(): Observable<ActiveNotification[]> {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+    return this.apartmentsService.getApartments().pipe(
+      switchMap((apartments) => {
+        if (!apartments.some((a) => a.contractStartDate)) {
+          return of([] as ActiveNotification[]);
+        }
+        return this.getOwnerPayments('Arriendo', month, year).pipe(
+          map((rows) =>
+            rows
+              .filter((row) => row.status !== 'paid' && row.status !== 'not-due')
+              .map((row) => ({
+                apartmentId: row.apartmentId,
+                apartment: row.apartment,
+                owner: row.owner,
+                service: row.service,
+                dueDate: row.dueDate,
+                paid: row.paid,
+                status: row.status,
+                month,
+                year,
+              })),
+          ),
+        );
+      }),
+    );
+  }
+
+  private deadlineDrivenNotifications(): Observable<ActiveNotification[]> {
     return this.fetchDeadlines().pipe(
       switchMap((deadlines) => {
         if (deadlines.length === 0) {

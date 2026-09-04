@@ -23,9 +23,12 @@ describe('HomeComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    // getActiveNotifications() only needs to resolve Deadlines - an empty
-    // list means it never fans out to Utilities/Dates/Apartments/PaymentStatuses.
+    // getActiveNotifications() always resolves Deadlines (the shared-deadline
+    // services) and Apartments (to check for any Arriendo contract dates) in
+    // parallel; with no contracts set, the Arriendo pass stops there and
+    // never fans out to Utilities/Dates/PaymentStatuses.
     httpMock.expectOne(`${environment.apiUrl}/Deadlines`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([]);
     fixture.detectChanges();
   });
 

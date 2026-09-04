@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { NotificationsService } from './notifications.service';
 import { environment } from '../../environments/environment';
+import { monthName } from './month-names';
 
 const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
 const DATES_URL = `${environment.apiUrl}/Dates`;
@@ -87,6 +88,52 @@ describe('NotificationsService', () => {
     expect(postReq.request.method).toBe('POST');
     expect(postReq.request.body).toEqual({ Apartment_Id: 2, Utility_Id: 2, Date_Id: 5, Paid: true });
     postReq.flush({ id: 0 });
+  });
+
+  it('getOwnerPayments for Arriendo derives each row\'s own due date from its contract start date, skipping Deadlines', () => {
+    const apartmentsWithContracts = [
+      { id: 1, name: '101', owner: 'TBD', contractStartDate: '2026-01-10T00:00:00' },
+      { id: 2, name: '201', owner: 'Bryan', contractStartDate: '2026-01-31T00:00:00' },
+      { id: 3, name: '202', owner: 'Yesenia', contractStartDate: null },
+    ];
+    let result: { apartmentId: number; dueDate: Date }[] | undefined;
+
+    service.getOwnerPayments('Arriendo', 2, 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 4, name: 'Arriendo' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 11, month: 'Febrero', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(apartmentsWithContracts);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    // Deadlines is never consulted for Arriendo - only Utilities/Dates/Apartments/PaymentStatuses fire.
+    httpMock.expectNone(DEADLINES_URL);
+
+    expect(result?.length).toBe(3);
+    expect(result?.find((r) => r.apartmentId === 1)!.dueDate).toEqual(new Date(2026, 1, 10));
+    // Contract day 31 clamped to February's 28 days (2026 is not a leap year).
+    expect(result?.find((r) => r.apartmentId === 2)!.dueDate).toEqual(new Date(2026, 1, 28));
+  });
+
+  it('getActiveNotifications includes an overdue Arriendo row for the current month when unpaid', () => {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    // Contract due on the 1st: overdue for every "today" past the 1st of the month.
+    const overdueContract = new Date(2020, 0, 1).toISOString();
+    const apartmentsWithContract = [{ id: 1, name: '101', owner: 'TBD', contractStartDate: overdueContract }];
+    let result: { service: string; status: string }[] | undefined;
+
+    service.getActiveNotifications().subscribe((n) => (result = n));
+
+    httpMock.expectOne(DEADLINES_URL).flush([]);
+    httpMock.expectOne(APARTMENTS_URL).flush(apartmentsWithContract);
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 4, name: 'Arriendo' }]);
+    httpMock
+      .expectOne(DATES_URL)
+      .flush([{ id: 20, month: monthName(currentMonth), year: String(currentYear) }]);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    expect(result?.some((n) => n.service === 'Arriendo' && n.status === 'overdue')).toBe(true);
   });
 
   it('getActiveNotifications resolves each Deadline back to a service/month/year and keeps only unpaid/due rows', () => {
