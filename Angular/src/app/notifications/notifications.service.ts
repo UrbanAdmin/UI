@@ -7,20 +7,7 @@ import {
   ServiceName,
   ServicePayment,
 } from './notification.model';
-
-interface Apartment {
-  number: string;
-  owner: string;
-}
-
-const APARTMENTS: Apartment[] = [
-  { number: '101', owner: 'TBD' },
-  { number: '201', owner: 'Bryan' },
-  { number: '202', owner: 'Yesenia' },
-  { number: '301', owner: 'Oscar' },
-  { number: '302', owner: 'Olga' },
-  { number: '401', owner: 'Daniel' },
-];
+import { APARTMENTS } from '../shared/apartments';
 
 const SERVICES: ServiceName[] = ['Agua', 'Luz', 'Gas'];
 
