@@ -26,8 +26,8 @@
         }
       </mat-card-content>
       <mat-card-actions>
-        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loginForm.invalid">
-          Ingresar
+        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loginForm.invalid || loading">
+          {{ loading ? 'Ingresando...' : 'Ingresar' }}
         </button>
       </mat-card-actions>
     </mat-card>

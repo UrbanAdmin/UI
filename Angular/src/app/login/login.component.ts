@@ -28,11 +28,14 @@ export class LoginComponent {
   username = '';
   password = '';
   errorMessage = '';
+  loading = false;
 
   constructor(private router: Router, private authService: AuthService) {}
 
   onSubmit() {
+    this.loading = true;
     this.authService.login(this.username, this.password).subscribe((success) => {
+      this.loading = false;
       if (success) {
         this.errorMessage = '';
         this.router.navigate(['/']);

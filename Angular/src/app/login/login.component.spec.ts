@@ -56,4 +56,54 @@ describe('LoginComponent', () => {
 
     expect(component.errorMessage).toBe('Invalid username or password');
   });
+
+  it('is loading while the request is pending and stops once it succeeds', () => {
+    component.username = 'admin';
+    component.password = 'secret';
+
+    component.onSubmit();
+    expect(component.loading).toBe(true);
+
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'fake-token' });
+
+    expect(component.loading).toBe(false);
+  });
+
+  it('stops loading even when the backend rejects the credentials', () => {
+    component.username = 'admin';
+    component.password = 'wrong';
+
+    component.onSubmit();
+    expect(component.loading).toBe(true);
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/auth/login`)
+      .flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(component.loading).toBe(false);
+  });
+
+  it('disables the submit button and relabels it while logging in', async () => {
+    component.username = 'admin';
+    component.password = 'secret';
+    fixture.detectChanges();
+    // Template-driven forms register each NgModel with its NgForm via a
+    // microtask (to avoid ExpressionChangedAfterItHasBeenCheckedError), so
+    // loginForm.invalid isn't accurate until that microtask has flushed.
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.onSubmit();
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[type="submit"]');
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toContain('Ingresando');
+
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'fake-token' });
+    fixture.detectChanges();
+
+    expect(button.disabled).toBe(false);
+    expect(button.textContent).toContain('Ingresar');
+  });
 });
