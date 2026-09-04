@@ -22,4 +22,13 @@ describe('HomeComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should expose the count of active notifications', () => {
+    expect(component.pendingNotificationsCount).toBeGreaterThan(0);
+  });
+
+  it('should render 3 quick-access cards', () => {
+    const cards = fixture.nativeElement.querySelectorAll('[data-testid="quick-access-card"]');
+    expect(cards.length).toBe(3);
+  });
 });

@@ -1,0 +1,36 @@
+.shell-container {
+  height: 100vh;
+}
+
+.shell-sidenav {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidenav-footer {
+  margin-top: auto;
+}
+
+.toolbar-title {
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.username {
+  margin-right: 8px;
+  opacity: 0.85;
+}
+
+.active-link {
+  background: var(--mat-sys-secondary-container);
+}
+
+.shell-body {
+  padding: 16px;
+  box-sizing: border-box;
+}

@@ -32,7 +32,7 @@ export class LoginComponent {
   onSubmit() {
     if (this.username === 'admin' && this.password === 'password') {
       this.errorMessage = '';
-      this.authService.login(); // Mark user as logged in
+      this.authService.login(this.username); // Mark user as logged in
       this.router.navigate(['/']); // Redirect to homepage
     } else {
       this.errorMessage = 'Invalid username or password';
