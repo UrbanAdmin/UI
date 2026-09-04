@@ -1,0 +1,37 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.deadline-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+table {
+  width: 100%;
+}
+
+.status-paid {
+  background-color: #d4edda;
+}
+
+.status-due-soon {
+  background-color: #fff3cd;
+}
+
+.status-due-today {
+  background-color: #ffe0b2;
+}
+
+.status-overdue {
+  background-color: #f8d7da;
+}
+
+.status-not-due {
+  background-color: #e0e0e0;
+}
