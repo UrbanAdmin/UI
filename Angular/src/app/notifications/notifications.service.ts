@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { getNotificationStatus } from './notification-status';
-import { NotificationStatus, ServiceName, ServicePayment } from './notification.model';
+import {
+  NotificationStatus,
+  OwnerPayment,
+  ServiceDeadline,
+  ServiceName,
+  ServicePayment,
+} from './notification.model';
 
 interface Apartment {
   number: string;
@@ -25,46 +31,127 @@ function daysFromToday(days: number): Date {
   return date;
 }
 
+function periodKey(service: ServiceName, month: number, year: number): string {
+  return `${service}-${month}-${year}`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
-  private readonly payments: ServicePayment[] = this.buildMockPayments();
+  private readonly deadlines: ServiceDeadline[] = [];
+  private readonly ownerPayments: OwnerPayment[] = [];
 
-  getPayments(): ServicePayment[] {
-    return this.payments;
+  constructor() {
+    this.seedMockData();
+  }
+
+  getDeadline(service: ServiceName, month: number, year: number): ServiceDeadline | undefined {
+    return this.deadlines.find(
+      (d) => d.service === service && d.month === month && d.year === year,
+    );
+  }
+
+  setDeadline(service: ServiceName, month: number, year: number, dueDate: Date): void {
+    const existing = this.getDeadline(service, month, year);
+    if (existing) {
+      existing.dueDate = dueDate;
+    } else {
+      this.deadlines.push({ service, month, year, dueDate });
+    }
+  }
+
+  getOwnerPayments(
+    service: ServiceName,
+    month: number,
+    year: number,
+  ): (OwnerPayment & { status: NotificationStatus })[] {
+    const deadline = this.getDeadline(service, month, year);
+    const today = new Date();
+
+    return APARTMENTS.map((apartment) => {
+      const existing = this.ownerPayments.find(
+        (p) =>
+          p.apartment === apartment.number &&
+          p.service === service &&
+          p.month === month &&
+          p.year === year,
+      );
+      const paid = existing?.paid ?? false;
+      const status = deadline
+        ? getNotificationStatus({ apartment: apartment.number, owner: apartment.owner, service, dueDate: deadline.dueDate, paid }, today)
+        : 'not-due';
+      return {
+        apartment: apartment.number,
+        owner: apartment.owner,
+        service,
+        month,
+        year,
+        paid,
+        status,
+      };
+    });
+  }
+
+  setPaid(apartment: string, service: ServiceName, month: number, year: number, paid: boolean): void {
+    const owner = APARTMENTS.find((a) => a.number === apartment)?.owner ?? '';
+    const existing = this.ownerPayments.find(
+      (p) => p.apartment === apartment && p.service === service && p.month === month && p.year === year,
+    );
+    if (existing) {
+      existing.paid = paid;
+    } else {
+      this.ownerPayments.push({ apartment, owner, service, month, year, paid });
+    }
   }
 
   getActiveNotifications(): (ServicePayment & { status: NotificationStatus })[] {
     const today = new Date();
-    return this.payments
-      .map((payment) => ({ ...payment, status: getNotificationStatus(payment, today) }))
-      .filter((payment) => payment.status !== 'paid' && payment.status !== 'not-due');
-  }
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
 
-  private buildMockPayments(): ServicePayment[] {
-    // A handful of apartment+service combos are deliberately unpaid with
-    // due dates chosen to hit each notification state; everything else is
-    // paid, with a due date far enough out to be unremarkable either way.
-    const unpaidDueDateOffsets: Record<string, number> = {
-      '101-Agua': 2, // due-soon
-      '201-Luz': 0, // due-today
-      '202-Gas': -3, // overdue
-      '302-Gas': 10, // not-due
-    };
-
-    const payments: ServicePayment[] = [];
-    for (const apartment of APARTMENTS) {
-      for (const service of SERVICES) {
-        const key = `${apartment.number}-${service}`;
-        const isUnpaid = key in unpaidDueDateOffsets;
-        payments.push({
-          apartment: apartment.number,
-          owner: apartment.owner,
-          service,
-          dueDate: daysFromToday(isUnpaid ? unpaidDueDateOffsets[key] : 15),
-          paid: !isUnpaid,
-        });
+    const active: (ServicePayment & { status: NotificationStatus })[] = [];
+    for (const service of SERVICES) {
+      const rows = this.getOwnerPayments(service, month, year);
+      for (const row of rows) {
+        if (row.status !== 'paid' && row.status !== 'not-due') {
+          const deadline = this.getDeadline(service, month, year)!;
+          active.push({
+            apartment: row.apartment,
+            owner: row.owner,
+            service: row.service,
+            dueDate: deadline.dueDate,
+            paid: row.paid,
+            status: row.status,
+          });
+        }
       }
     }
-    return payments;
+    return active;
+  }
+
+  private seedMockData(): void {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    this.setDeadline('Agua', month, year, daysFromToday(2)); // due-soon
+    this.setDeadline('Luz', month, year, daysFromToday(0)); // due-today
+    this.setDeadline('Gas', month, year, daysFromToday(-3)); // overdue
+
+    // A handful of apartments still owe money for the current period;
+    // everyone else is marked paid so they don't show up as notifications.
+    const unpaid = new Set([
+      periodKey('Agua', month, year) + '-101',
+      periodKey('Agua', month, year) + '-401',
+      periodKey('Luz', month, year) + '-201',
+      periodKey('Gas', month, year) + '-202',
+      periodKey('Gas', month, year) + '-302',
+    ]);
+
+    for (const apartment of APARTMENTS) {
+      for (const service of SERVICES) {
+        const key = periodKey(service, month, year) + '-' + apartment.number;
+        this.setPaid(apartment.number, service, month, year, !unpaid.has(key));
+      }
+    }
   }
 }

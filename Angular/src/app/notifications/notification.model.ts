@@ -9,3 +9,21 @@ export interface ServicePayment {
   dueDate: Date;
   paid: boolean;
 }
+
+/** A single deadline shared by every apartment for one service in one month/year. */
+export interface ServiceDeadline {
+  service: ServiceName;
+  month: number; // 1-12
+  year: number;
+  dueDate: Date;
+}
+
+/** One apartment's paid/unpaid status for a service in one month/year. */
+export interface OwnerPayment {
+  apartment: string;
+  owner: string;
+  service: ServiceName;
+  month: number; // 1-12
+  year: number;
+  paid: boolean;
+}
