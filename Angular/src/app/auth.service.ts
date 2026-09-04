@@ -7,6 +7,23 @@ interface LoginResponse {
   token: string;
 }
 
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+
+// JWT signature isn't verified here - the backend is the real enforcement
+// point (see the AdminOnly policy on Apartments' write endpoints). This
+// decode is only used to decide what the UI shows, never to authorize
+// anything by itself.
+function decodeRole(token: string): string | null {
+  try {
+    const payload = token.split('.')[1];
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const claims = JSON.parse(json);
+    return claims[ROLE_CLAIM] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -16,6 +33,7 @@ export class AuthService {
   // exposure to token theft via XSS.
   private readonly token = signal<string | null>(null);
   private readonly username = signal<string | null>(null);
+  private readonly role = signal<string | null>(null);
 
   login(username: string, password: string): Observable<boolean> {
     return this.http
@@ -24,11 +42,13 @@ export class AuthService {
         tap((response) => {
           this.token.set(response.token);
           this.username.set(username);
+          this.role.set(decodeRole(response.token));
         }),
         map(() => true),
         catchError(() => {
           this.token.set(null);
           this.username.set(null);
+          this.role.set(null);
           return of(false);
         }),
       );
@@ -37,6 +57,11 @@ export class AuthService {
   logout(): void {
     this.token.set(null);
     this.username.set(null);
+    this.role.set(null);
+  }
+
+  isAdmin(): boolean {
+    return this.role() === 'Admin';
   }
 
   isLoggedIn(): boolean {

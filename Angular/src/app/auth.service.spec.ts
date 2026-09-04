@@ -5,6 +5,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { environment } from '../environments/environment';
 
+const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
+
+function fakeJwt(payload: Record<string, unknown>): string {
+  const base64url = (obj: unknown) =>
+    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${base64url({ alg: 'HS256', typ: 'JWT' })}.${base64url(payload)}.fake-signature`;
+}
+
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
@@ -60,5 +68,38 @@ describe('AuthService', () => {
 
     expect(service.isLoggedIn()).toBe(false);
     expect(service.getUsername()).toBeNull();
+  });
+
+  it('isAdmin() is true when the JWT role claim is Admin', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'Admin' });
+    service.login('admin', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(service.isAdmin()).toBe(true);
+  });
+
+  it('isAdmin() is false for a non-admin role', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'Owner' });
+    service.login('owner', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(service.isAdmin()).toBe(false);
+  });
+
+  it('isAdmin() is false when the token cannot be decoded', () => {
+    service.login('admin', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'fake-token' });
+
+    expect(service.isAdmin()).toBe(false);
+  });
+
+  it('isAdmin() is false after logout', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'Admin' });
+    service.login('admin', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    service.logout();
+
+    expect(service.isAdmin()).toBe(false);
   });
 });
