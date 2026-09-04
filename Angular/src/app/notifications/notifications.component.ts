@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
+import { Observable, map } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { NotificationStatus, ServicePayment } from './notification.model';
 import { monthName } from './month-names';
@@ -25,16 +26,18 @@ interface ApartmentGroup {
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [DatePipe, MatCardModule, MatChipsModule, MatTableModule],
+  imports: [CommonModule, DatePipe, MatCardModule, MatChipsModule, MatTableModule],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css',
 })
 export class NotificationsComponent {
   displayedColumns: string[] = ['service', 'dueDate', 'status'];
-  groups: ApartmentGroup[];
+  readonly groups$: Observable<ApartmentGroup[]>;
 
   constructor(private notificationsService: NotificationsService) {
-    this.groups = this.groupByApartmentAndPeriod(this.notificationsService.getActiveNotifications());
+    this.groups$ = this.notificationsService
+      .getActiveNotifications()
+      .pipe(map((notifications) => this.groupByApartmentAndPeriod(notifications)));
   }
 
   statusLabel(status: NotificationStatus): string {

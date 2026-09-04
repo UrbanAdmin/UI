@@ -4,8 +4,8 @@
       <mat-card-content>
         <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
         <span class="card-label">{{ card.label }}</span>
-        @if (card.path === '/notifications' && pendingNotificationsCount > 0) {
-          <span class="card-badge">{{ pendingNotificationsCount }}</span>
+        @if (card.path === '/notifications' && pendingNotificationsCount() > 0) {
+          <span class="card-badge">{{ pendingNotificationsCount() }}</span>
         }
       </mat-card-content>
     </mat-card>
