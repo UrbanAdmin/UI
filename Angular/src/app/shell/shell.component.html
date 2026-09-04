@@ -7,17 +7,19 @@
   >
     <mat-nav-list>
       @for (link of navLinks; track link.path) {
-        <a
-          mat-list-item
-          [routerLink]="link.path"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: link.path === '/' }"
-          data-testid="nav-link"
-          (click)="closeIfOver(sidenav)"
-        >
-          <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-          <span matListItemTitle>{{ link.label }}</span>
-        </a>
+        @if (!link.adminOnly || isAdmin) {
+          <a
+            mat-list-item
+            [routerLink]="link.path"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+            data-testid="nav-link"
+            (click)="closeIfOver(sidenav)"
+          >
+            <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+            <span matListItemTitle>{{ link.label }}</span>
+          </a>
+        }
       }
     </mat-nav-list>
     <mat-action-list class="sidenav-footer">

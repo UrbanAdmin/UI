@@ -2,9 +2,11 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { authGuard } from './auth.guard';
+import { adminGuard } from './admin.guard';
 import { CounterUtilitiesComponent } from './counter-utilities/counter-utilities.component';
 import { PaymentsComponent } from './payments/payments.component';
 import { NotificationsComponent } from './notifications/notifications.component';
+import { ManageApartmentsComponent } from './manage-apartments/manage-apartments.component';
 import { ShellComponent } from './shell/shell.component';
 
 export const routes: Routes = [
@@ -18,6 +20,7 @@ export const routes: Routes = [
       { path: 'counter-utilities', component: CounterUtilitiesComponent }, // Counter Utilities page
       { path: 'payments', component: PaymentsComponent }, // Pagos page
       { path: 'notifications', component: NotificationsComponent }, // Notifications page
+      { path: 'apartments', component: ManageApartmentsComponent, canActivate: [adminGuard] }, // Manage Apartments page (admin only)
     ],
   },
 ];

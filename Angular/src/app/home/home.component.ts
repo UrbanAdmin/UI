@@ -5,11 +5,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { map } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AuthService } from '../auth.service';
 
 interface QuickAccessCard {
   path: string;
   label: string;
   icon: string;
+  adminOnly?: boolean;
 }
 
 @Component({
@@ -21,11 +23,15 @@ interface QuickAccessCard {
 })
 export class HomeComponent {
   private readonly notificationsService = inject(NotificationsService);
+  private readonly authService = inject(AuthService);
+
+  readonly isAdmin = this.authService.isAdmin();
 
   readonly quickAccessCards: QuickAccessCard[] = [
     { path: '/counter-utilities', label: 'Lecturas', icon: 'speed' },
     { path: '/payments', label: 'Pagos', icon: 'payments' },
     { path: '/notifications', label: 'Notificaciones', icon: 'notifications' },
+    { path: '/apartments', label: 'Apartamentos', icon: 'apartment', adminOnly: true },
   ];
 
   // toSignal (not the async pipe) so the template can compare the count to

@@ -1,13 +1,15 @@
 <div class="dashboard">
   @for (card of quickAccessCards; track card.path) {
-    <mat-card class="quick-access-card" [routerLink]="[card.path]" data-testid="quick-access-card">
-      <mat-card-content>
-        <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
-        <span class="card-label">{{ card.label }}</span>
-        @if (card.path === '/notifications' && pendingNotificationsCount() > 0) {
-          <span class="card-badge">{{ pendingNotificationsCount() }}</span>
-        }
-      </mat-card-content>
-    </mat-card>
+    @if (!card.adminOnly || isAdmin) {
+      <mat-card class="quick-access-card" [routerLink]="[card.path]" data-testid="quick-access-card">
+        <mat-card-content>
+          <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
+          <span class="card-label">{{ card.label }}</span>
+          @if (card.path === '/notifications' && pendingNotificationsCount() > 0) {
+            <span class="card-badge">{{ pendingNotificationsCount() }}</span>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
   }
 </div>

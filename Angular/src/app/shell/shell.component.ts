@@ -15,6 +15,7 @@ interface NavLink {
   path: string;
   label: string;
   icon: string;
+  adminOnly?: boolean;
 }
 
 @Component({
@@ -40,6 +41,7 @@ export class ShellComponent {
     { path: '/counter-utilities', label: 'Lecturas', icon: 'speed' },
     { path: '/payments', label: 'Pagos', icon: 'payments' },
     { path: '/notifications', label: 'Notificaciones', icon: 'notifications' },
+    { path: '/apartments', label: 'Apartamentos', icon: 'apartment', adminOnly: true },
   ];
 
   readonly isMobile$: Observable<boolean>;
@@ -56,6 +58,10 @@ export class ShellComponent {
 
   get username(): string | null {
     return this.authService.getUsername();
+  }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 
   logout(): void {
