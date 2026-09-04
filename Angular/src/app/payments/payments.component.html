@@ -22,16 +22,22 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Año</mat-label>
-        <input matInput type="number" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()" />
+        <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
+          @for (year of years; track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
     </div>
 
     <div class="deadline-row">
       <mat-form-field appearance="outline">
         <mat-label>Fecha límite de pago</mat-label>
-        <input matInput type="date" [ngModel]="deadlineInputValue" #deadlineInput="ngModel" />
+        <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline" #deadlineInput="ngModel" />
+        <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
+        <mat-datepicker #deadlinePicker></mat-datepicker>
       </mat-form-field>
-      <button mat-flat-button color="primary" (click)="onSaveDeadlineClick(deadlineInput.value)" [disabled]="!deadlineInput.value">
+      <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
         Guardar
       </button>
     </div>

@@ -3,6 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -22,12 +24,14 @@ type OwnerRow = OwnerPayment & { status: NotificationStatus };
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
+    MatDatepickerModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
     MatTableModule,
   ],
+  providers: [provideNativeDateAdapter()],
   templateUrl: './payments.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './payments.component.css',
@@ -35,6 +39,7 @@ type OwnerRow = OwnerPayment & { status: NotificationStatus };
 export class PaymentsComponent {
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
   readonly monthNames: string[] = MONTH_NAMES;
+  readonly years: number[];
   readonly displayedColumns: string[] = ['apartment', 'owner', 'status', 'paid'];
 
   selectedService: ServiceName = 'Agua';
@@ -47,6 +52,7 @@ export class PaymentsComponent {
     const now = new Date();
     this.selectedMonth = now.getMonth() + 1;
     this.selectedYear = now.getFullYear();
+    this.years = Array.from({ length: 7 }, (_, i) => this.selectedYear - 1 + i);
     this.reload();
   }
 
@@ -62,25 +68,6 @@ export class PaymentsComponent {
       newDate,
     );
     this.reload();
-  }
-
-  /** Native <input type="date"> works with 'yyyy-MM-dd' strings, not Date objects. */
-  get deadlineInputValue(): string {
-    if (!this.deadline) {
-      return '';
-    }
-    const y = this.deadline.getFullYear();
-    const m = String(this.deadline.getMonth() + 1).padStart(2, '0');
-    const d = String(this.deadline.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  onSaveDeadlineClick(value: string): void {
-    if (!value) {
-      return;
-    }
-    const [year, month, day] = value.split('-').map(Number);
-    this.saveDeadline(new Date(year, month - 1, day));
   }
 
   togglePaid(row: OwnerRow, paid: boolean): void {
