@@ -1,0 +1,19 @@
+<mat-card>
+  <mat-card-title>{{ isEdit ? 'Editar apartamento' : 'Nuevo apartamento' }}</mat-card-title>
+  <mat-card-content>
+    <form>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Número</mat-label>
+        <input matInput type="text" [(ngModel)]="number" name="number" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Propietario</mat-label>
+        <input matInput type="text" [(ngModel)]="owner" name="owner" />
+      </mat-form-field>
+    </form>
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button mat-raised-button color="primary" (click)="save()" [disabled]="!number || !owner">Guardar</button>
+  </mat-card-actions>
+</mat-card>
