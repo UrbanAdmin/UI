@@ -5,6 +5,22 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
 import { NotificationsService } from './notifications.service';
 import { NotificationStatus, ServicePayment } from './notification.model';
+import { monthName } from './month-names';
+
+type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
+
+interface PeriodGroup {
+  month: number;
+  year: number;
+  monthLabel: string;
+  items: ActiveNotification[];
+}
+
+interface ApartmentGroup {
+  apartment: string;
+  owner: string;
+  periods: PeriodGroup[];
+}
 
 @Component({
   selector: 'app-notifications',
@@ -14,11 +30,11 @@ import { NotificationStatus, ServicePayment } from './notification.model';
   styleUrl: './notifications.component.css',
 })
 export class NotificationsComponent {
-  displayedColumns: string[] = ['apartment', 'owner', 'service', 'dueDate', 'status'];
-  notifications: (ServicePayment & { status: NotificationStatus })[];
+  displayedColumns: string[] = ['service', 'dueDate', 'status'];
+  groups: ApartmentGroup[];
 
   constructor(private notificationsService: NotificationsService) {
-    this.notifications = this.notificationsService.getActiveNotifications();
+    this.groups = this.groupByApartmentAndPeriod(this.notificationsService.getActiveNotifications());
   }
 
   statusLabel(status: NotificationStatus): string {
@@ -32,5 +48,34 @@ export class NotificationsComponent {
       default:
         return status;
     }
+  }
+
+  private groupByApartmentAndPeriod(notifications: ActiveNotification[]): ApartmentGroup[] {
+    const byApartment = new Map<string, ApartmentGroup>();
+
+    for (const notification of notifications) {
+      let apartmentGroup = byApartment.get(notification.apartment);
+      if (!apartmentGroup) {
+        apartmentGroup = { apartment: notification.apartment, owner: notification.owner, periods: [] };
+        byApartment.set(notification.apartment, apartmentGroup);
+      }
+
+      let periodGroup = apartmentGroup.periods.find(
+        (p) => p.month === notification.month && p.year === notification.year,
+      );
+      if (!periodGroup) {
+        periodGroup = {
+          month: notification.month,
+          year: notification.year,
+          monthLabel: monthName(notification.month),
+          items: [],
+        };
+        apartmentGroup.periods.push(periodGroup);
+      }
+
+      periodGroup.items.push(notification);
+    }
+
+    return Array.from(byApartment.values());
   }
 }

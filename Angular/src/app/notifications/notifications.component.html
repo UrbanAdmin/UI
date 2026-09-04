@@ -1,42 +1,43 @@
-<mat-card>
-  <mat-card-title>Notificaciones</mat-card-title>
-  <mat-card-content>
-    @if (notifications.length === 0) {
+@if (groups.length === 0) {
+  <mat-card>
+    <mat-card-content>
       <p>No hay notificaciones pendientes.</p>
-    } @else {
-      <table mat-table [dataSource]="notifications" class="mat-elevation-z1">
-        <ng-container matColumnDef="apartment">
-          <th mat-header-cell *matHeaderCellDef>Apartamento</th>
-          <td mat-cell *matCellDef="let n">{{ n.apartment }}</td>
-        </ng-container>
+    </mat-card-content>
+  </mat-card>
+} @else {
+  @for (group of groups; track group.apartment) {
+    <mat-card class="apartment-card">
+      <mat-card-title>Apto {{ group.apartment }} &middot; {{ group.owner }}</mat-card-title>
+      <mat-card-content>
+        @for (period of group.periods; track period.month + '-' + period.year) {
+          <div class="period-group">
+            <h4 class="period-title">{{ period.monthLabel }} {{ period.year }}</h4>
+            <table mat-table [dataSource]="period.items" class="mat-elevation-z1">
+              <ng-container matColumnDef="service">
+                <th mat-header-cell *matHeaderCellDef>Servicio</th>
+                <td mat-cell *matCellDef="let n">{{ n.service }}</td>
+              </ng-container>
 
-        <ng-container matColumnDef="owner">
-          <th mat-header-cell *matHeaderCellDef>Propietario</th>
-          <td mat-cell *matCellDef="let n">{{ n.owner }}</td>
-        </ng-container>
+              <ng-container matColumnDef="dueDate">
+                <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
+                <td mat-cell *matCellDef="let n">{{ n.dueDate | date: 'mediumDate' }}</td>
+              </ng-container>
 
-        <ng-container matColumnDef="service">
-          <th mat-header-cell *matHeaderCellDef>Servicio</th>
-          <td mat-cell *matCellDef="let n">{{ n.service }}</td>
-        </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let n">
+                  <mat-chip-set>
+                    <mat-chip [class]="'status-' + n.status">{{ statusLabel(n.status) }}</mat-chip>
+                  </mat-chip-set>
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="dueDate">
-          <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
-          <td mat-cell *matCellDef="let n">{{ n.dueDate | date: 'mediumDate' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Estado</th>
-          <td mat-cell *matCellDef="let n">
-            <mat-chip-set>
-              <mat-chip [class]="'status-' + n.status">{{ statusLabel(n.status) }}</mat-chip>
-            </mat-chip-set>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns" data-testid="notification-row"></tr>
-      </table>
-    }
-  </mat-card-content>
-</mat-card>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns" data-testid="notification-row"></tr>
+            </table>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+}

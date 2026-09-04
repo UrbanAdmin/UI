@@ -103,17 +103,14 @@ export class NotificationsService {
     }
   }
 
-  getActiveNotifications(): (ServicePayment & { status: NotificationStatus })[] {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-
-    const active: (ServicePayment & { status: NotificationStatus })[] = [];
-    for (const service of SERVICES) {
-      const rows = this.getOwnerPayments(service, month, year);
+  /** Scans every period that has a deadline set (not just the current month), so a
+   *  never-marked-paid balance from an earlier or later period still shows up. */
+  getActiveNotifications(): (ServicePayment & { status: NotificationStatus; month: number; year: number })[] {
+    const active: (ServicePayment & { status: NotificationStatus; month: number; year: number })[] = [];
+    for (const deadline of this.deadlines) {
+      const rows = this.getOwnerPayments(deadline.service, deadline.month, deadline.year);
       for (const row of rows) {
         if (row.status !== 'paid' && row.status !== 'not-due') {
-          const deadline = this.getDeadline(service, month, year)!;
           active.push({
             apartment: row.apartment,
             owner: row.owner,
@@ -121,6 +118,8 @@ export class NotificationsService {
             dueDate: deadline.dueDate,
             paid: row.paid,
             status: row.status,
+            month: deadline.month,
+            year: deadline.year,
           });
         }
       }

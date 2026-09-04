@@ -1,3 +1,21 @@
+.apartment-card {
+  margin-bottom: 16px;
+}
+
+.period-group {
+  margin-bottom: 16px;
+}
+
+.period-group:last-child {
+  margin-bottom: 0;
+}
+
+.period-title {
+  margin: 0 0 8px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
 table {
   width: 100%;
 }

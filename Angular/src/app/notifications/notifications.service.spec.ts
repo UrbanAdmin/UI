@@ -62,4 +62,20 @@ describe('NotificationsService', () => {
     const row = rows.find((r) => r.apartment === '201');
     expect(row?.paid).toBe(false);
   });
+
+  it('getActiveNotifications should include unpaid deadlines from periods other than the current month', () => {
+    const otherMonth = currentMonth === 1 ? 2 : 1;
+    const pastDue = new Date();
+    pastDue.setMonth(pastDue.getMonth() - 1);
+
+    service.setDeadline('Gas', otherMonth, currentYear, pastDue);
+    service.setPaid('301', 'Gas', otherMonth, currentYear, false);
+
+    const notification = service
+      .getActiveNotifications()
+      .find((n) => n.apartment === '301' && n.service === 'Gas' && n.month === otherMonth);
+
+    expect(notification).toBeTruthy();
+    expect(notification?.year).toBe(currentYear);
+  });
 });
