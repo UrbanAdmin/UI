@@ -1,24 +1,35 @@
-<!-- Simple Login Form -->
-<form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Login</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Username</mat-label>
-        <input matInput type="text" name="username" [(ngModel)]="username" required />
-      </mat-form-field>
-      <mat-form-field appearance="fill" class="full-width">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" name="password" [(ngModel)]="password" required />
-      </mat-form-field>
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid">Login</button>
-    </mat-card-actions>
-  </mat-card>
-</form>
+<div class="login-page">
+  <div class="login-brand">
+    <mat-icon class="brand-icon">apartment</mat-icon>
+    <h1 class="brand-title">UrbanAdmin</h1>
+    <p class="brand-subtitle">Gestión de edificios y condominios</p>
+  </div>
+
+  <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+    <mat-card appearance="outlined" class="login-card">
+      <mat-card-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Usuario</mat-label>
+          <mat-icon matPrefix>person</mat-icon>
+          <input matInput type="text" name="username" [(ngModel)]="username" required />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput type="password" name="password" [(ngModel)]="password" required />
+        </mat-form-field>
+        @if (errorMessage) {
+          <div class="error">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loginForm.invalid">
+          Ingresar
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

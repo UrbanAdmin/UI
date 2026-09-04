@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service'; // <-- Import AuthService
 
@@ -19,7 +20,8 @@ import { AuthService } from '../auth.service'; // <-- Import AuthService
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    MatIconModule
 ]
 })
 export class LoginComponent {

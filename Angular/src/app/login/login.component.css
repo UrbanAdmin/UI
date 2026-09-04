@@ -1,14 +1,52 @@
-/* filepath: c:\Users\danie\Documents\UrbanAdmin\UI\UrbanAdminUI\src\app\login\login.component.css */
-.login-form {
+.login-page {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 80vh;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 24px;
+  background: linear-gradient(135deg, var(--mat-sys-primary-container), var(--mat-sys-surface) 60%);
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-mat-card {
-  width: 350px;
-  padding: 16px;
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--mat-sys-on-primary-container);
+}
+
+.brand-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  color: var(--mat-sys-primary);
+}
+
+.brand-title {
+  margin: 8px 0 0;
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+.brand-subtitle {
+  margin: 4px 0 0;
+  opacity: 0.8;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  border-radius: 16px;
+  padding: 8px;
 }
 
 .full-width {
@@ -16,6 +54,9 @@ mat-card {
 }
 
 .error {
-  color: #d32f2f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mat-sys-error);
   margin-top: 8px;
 }
