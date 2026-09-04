@@ -10,6 +10,7 @@ import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/sl
 import { MatTableModule } from '@angular/material/table';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
+import { MONTH_NAMES } from '../notifications/month-names';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 
@@ -33,6 +34,7 @@ type OwnerRow = OwnerPayment & { status: NotificationStatus };
 })
 export class PaymentsComponent {
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
+  readonly monthNames: string[] = MONTH_NAMES;
   readonly displayedColumns: string[] = ['apartment', 'owner', 'status', 'paid'];
 
   selectedService: ServiceName = 'Agua';

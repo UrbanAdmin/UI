@@ -13,7 +13,11 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Mes</mat-label>
-        <input matInput type="number" min="1" max="12" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()" />
+        <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
+          @for (name of monthNames; track name; let i = $index) {
+            <mat-option [value]="i + 1">{{ name }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
