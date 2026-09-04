@@ -23,8 +23,15 @@ export class ManageApartmentsComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly dialog = inject(MatDialog);
 
-  readonly displayedColumns: string[] = ['number', 'owner', 'actions'];
+  readonly displayedColumns: string[] = ['number', 'owner', 'contractStartDate', 'contract', 'actions'];
   apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
+
+  viewContract(apartment: Apartment): void {
+    this.apartmentsService.downloadContract(apartment.id).subscribe((blob) => {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
 
   openCreateDialog(): void {
     this.dialog

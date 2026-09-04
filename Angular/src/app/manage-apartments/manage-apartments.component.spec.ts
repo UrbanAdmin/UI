@@ -15,9 +15,10 @@ describe('ManageApartmentsComponent', () => {
   let dialogOpen: ReturnType<typeof vi.fn>;
 
   const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
+  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
   const MOCK_APARTMENTS = [
-    { id: 1, name: '101', owner: 'Eduardo' },
-    { id: 2, name: '201', owner: 'Hilda' },
+    { id: 1, name: '101', owner: 'Eduardo', ...CONTRACT_FIELDS },
+    { id: 2, name: '201', owner: 'Hilda', ...CONTRACT_FIELDS },
   ];
 
   beforeEach(async () => {
@@ -53,8 +54,8 @@ describe('ManageApartmentsComponent', () => {
     component.apartments$.subscribe((apartments) => (rows = apartments));
 
     expect(rows).toEqual([
-      { id: 1, number: '101', owner: 'Eduardo' },
-      { id: 2, number: '201', owner: 'Hilda' },
+      { id: 1, number: '101', owner: 'Eduardo', ...CONTRACT_FIELDS },
+      { id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS },
     ]);
   });
 
@@ -75,7 +76,7 @@ describe('ManageApartmentsComponent', () => {
     dialogOpen.mockReturnValue({ afterClosed: () => of(true) });
     const apartmentsService = TestBed.inject(ApartmentsService);
     const getApartmentsSpy = vi.spyOn(apartmentsService, 'getApartments');
-    const apartment = { id: 2, number: '201', owner: 'Hilda' };
+    const apartment = { id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS };
 
     component.openEditDialog(apartment);
 
@@ -96,7 +97,7 @@ describe('ManageApartmentsComponent', () => {
   it('deleteApartment asks for confirmation, then DELETEs and refreshes', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    component.deleteApartment({ id: 2, number: '201', owner: 'Hilda' });
+    component.deleteApartment({ id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS });
 
     expect(confirmSpy).toHaveBeenCalled();
     httpMock.expectOne(`${environment.apiUrl}/Apartment/2`).flush(null);
@@ -111,8 +112,20 @@ describe('ManageApartmentsComponent', () => {
   it('deleteApartment does nothing when the confirmation is declined', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-    component.deleteApartment({ id: 2, number: '201', owner: 'Hilda' });
+    component.deleteApartment({ id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS });
 
     httpMock.expectNone(`${environment.apiUrl}/Apartment/2`);
+  });
+
+  it('viewContract downloads the contract and opens it in a new tab', () => {
+    const objectUrl = 'blob:fake-url';
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl);
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    component.viewContract({ id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS });
+
+    httpMock.expectOne(`${environment.apiUrl}/Apartments/2/Contract`).flush(new Blob(['contents']));
+
+    expect(openSpy).toHaveBeenCalledWith(objectUrl, '_blank');
   });
 });

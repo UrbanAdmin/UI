@@ -10,13 +10,15 @@ import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dia
 import { ApartmentDto } from '../shared/apartment.model';
 import { environment } from '../../environments/environment';
 
+const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
+
 const MOCK_APARTMENTS: ApartmentDto[] = [
-  { id: 1, name: '101', owner: 'TBD' },
-  { id: 2, name: '201', owner: 'Bryan' },
-  { id: 3, name: '202', owner: 'Yesenia' },
-  { id: 4, name: '301', owner: 'Oscar' },
-  { id: 5, name: '302', owner: 'Olga' },
-  { id: 6, name: '401', owner: 'Daniel' },
+  { id: 1, name: '101', owner: 'TBD', ...CONTRACT_FIELDS },
+  { id: 2, name: '201', owner: 'Bryan', ...CONTRACT_FIELDS },
+  { id: 3, name: '202', owner: 'Yesenia', ...CONTRACT_FIELDS },
+  { id: 4, name: '301', owner: 'Oscar', ...CONTRACT_FIELDS },
+  { id: 5, name: '302', owner: 'Olga', ...CONTRACT_FIELDS },
+  { id: 6, name: '401', owner: 'Daniel', ...CONTRACT_FIELDS },
 ];
 
 const MOCK_UTILITIES = [{ id: 1, name: 'Agua' }, { id: 2, name: 'Luz' }, { id: 3, name: 'Gas' }];
@@ -81,7 +83,7 @@ describe('CounterUtilitiesComponent', () => {
 
   it('getRows$ should return 12 months for a given apartment/service, cached across repeated calls', () => {
     let rows: unknown[] | undefined;
-    component.getRows$({ id: 1, number: '101', owner: 'TBD' }, 'Agua').subscribe((r) => (rows = r));
+    component.getRows$({ id: 1, number: '101', owner: 'TBD', ...CONTRACT_FIELDS }, 'Agua').subscribe((r) => (rows = r));
 
     // Already resolved during beforeEach's render pass - shareReplay(1)
     // replays it synchronously, no further HTTP calls expected here.
@@ -89,7 +91,7 @@ describe('CounterUtilitiesComponent', () => {
   });
 
   it('openAddManualReadingDialog should open the dialog with the apartment/service context', () => {
-    const apartment = { id: 2, number: '201', owner: 'Bryan' };
+    const apartment = { id: 2, number: '201', owner: 'Bryan', ...CONTRACT_FIELDS };
 
     component.openAddManualReadingDialog(apartment, 'Luz');
 
@@ -102,7 +104,7 @@ describe('CounterUtilitiesComponent', () => {
   });
 
   it('openAddReadingDialog should open the dialog with the apartment/service context', () => {
-    const apartment = { id: 3, number: '202', owner: 'Yesenia' };
+    const apartment = { id: 3, number: '202', owner: 'Yesenia', ...CONTRACT_FIELDS };
 
     component.openAddReadingDialog(apartment, 'Gas');
 

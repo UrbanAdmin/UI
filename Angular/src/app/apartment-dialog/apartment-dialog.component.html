@@ -11,6 +11,24 @@
         <mat-label>Propietario</mat-label>
         <input matInput type="text" [(ngModel)]="owner" name="owner" />
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Fecha inicio contrato</mat-label>
+        <input matInput [matDatepicker]="contractPicker" [(ngModel)]="contractStartDate" name="contractStartDate" />
+        <mat-datepicker-toggle matIconSuffix [for]="contractPicker"></mat-datepicker-toggle>
+        <mat-datepicker #contractPicker></mat-datepicker>
+      </mat-form-field>
+
+      <div class="contract-row">
+        @if (hasContract) {
+          <button mat-stroked-button type="button" (click)="viewContract()">
+            Ver contrato ({{ contractFileName }})
+          </button>
+        }
+        <label class="file-input-label">
+          <input type="file" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,image/*" />
+        </label>
+      </div>
     </form>
   </mat-card-content>
   <mat-card-actions align="end">

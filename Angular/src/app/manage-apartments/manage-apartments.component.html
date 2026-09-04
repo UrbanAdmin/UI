@@ -19,6 +19,24 @@
         <td mat-cell *matCellDef="let apartment">{{ apartment.owner }}</td>
       </ng-container>
 
+      <ng-container matColumnDef="contractStartDate">
+        <th mat-header-cell *matHeaderCellDef>Fecha inicio</th>
+        <td mat-cell *matCellDef="let apartment">
+          {{ apartment.contractStartDate ? (apartment.contractStartDate | date: 'dd/MM/yyyy') : 'Sin definir' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="contract">
+        <th mat-header-cell *matHeaderCellDef>Contrato</th>
+        <td mat-cell *matCellDef="let apartment">
+          @if (apartment.hasContract) {
+            <button mat-button (click)="viewContract(apartment)">{{ apartment.contractFileName }}</button>
+          } @else {
+            Sin contrato
+          }
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let apartment" class="actions-cell">
