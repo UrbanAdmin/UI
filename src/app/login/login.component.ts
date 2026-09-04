@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -14,13 +14,12 @@ import { AuthService } from '../auth.service'; // <-- Import AuthService
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   imports: [
-    CommonModule,
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatCardModule
-  ]
+]
 })
 export class LoginComponent {
   username = '';

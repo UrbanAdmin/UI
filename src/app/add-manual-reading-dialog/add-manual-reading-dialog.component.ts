@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,12 +12,11 @@ import { MatButtonModule } from '@angular/material/button';
   templateUrl: './add-manual-reading-dialog.component.html',
   styleUrls: ['./add-manual-reading-dialog.component.css'],
   imports: [
-    CommonModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatButtonModule
-  ]
+]
 })
 export class AddManualReadingDialogComponent {}

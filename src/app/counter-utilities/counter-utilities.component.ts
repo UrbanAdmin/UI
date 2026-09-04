@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
-import { CommonModule } from '@angular/common';
+
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -14,12 +14,11 @@ import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/ad
   templateUrl: './counter-utilities.component.html',
   styleUrls: ['./counter-utilities.component.css'],
   imports: [
-    CommonModule,
     MatButtonModule,
     MatDialogModule,
     MatTabsModule,
     MatTableModule
-  ]
+]
 })
 export class CounterUtilitiesComponent {
   displayedColumns: string[] = ['mes', 'evidencia'];
