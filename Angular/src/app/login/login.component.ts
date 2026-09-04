@@ -32,12 +32,13 @@ export class LoginComponent {
   constructor(private router: Router, private authService: AuthService) {}
 
   onSubmit() {
-    if (this.username === 'admin' && this.password === 'password') {
-      this.errorMessage = '';
-      this.authService.login(this.username); // Mark user as logged in
-      this.router.navigate(['/']); // Redirect to homepage
-    } else {
-      this.errorMessage = 'Invalid username or password';
-    }
+    this.authService.login(this.username, this.password).subscribe((success) => {
+      if (success) {
+        this.errorMessage = '';
+        this.router.navigate(['/']);
+      } else {
+        this.errorMessage = 'Invalid username or password';
+      }
+    });
   }
 }
