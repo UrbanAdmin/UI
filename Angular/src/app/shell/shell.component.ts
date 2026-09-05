@@ -42,6 +42,7 @@ export class ShellComponent {
     { path: '/payments', label: 'Pagos', icon: 'payments' },
     { path: '/notifications', label: 'Notificaciones', icon: 'notifications' },
     { path: '/apartments', label: 'Apartamentos', icon: 'apartment', adminOnly: true },
+    { path: '/users', label: 'Usuarios', icon: 'people', adminOnly: true },
   ];
 
   readonly isMobile$: Observable<boolean>;

@@ -32,6 +32,7 @@ export class HomeComponent {
     { path: '/payments', label: 'Pagos', icon: 'payments' },
     { path: '/notifications', label: 'Notificaciones', icon: 'notifications' },
     { path: '/apartments', label: 'Apartamentos', icon: 'apartment', adminOnly: true },
+    { path: '/users', label: 'Usuarios', icon: 'people', adminOnly: true },
   ];
 
   // toSignal (not the async pipe) so the template can compare the count to

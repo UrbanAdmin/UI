@@ -1,0 +1,18 @@
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 500px;
+}
+
+.actions-cell {
+  text-align: right;
+}
