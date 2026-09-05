@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
+<mat-dialog-content>
+  <form>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Usuario</mat-label>
+      <input matInput type="text" [(ngModel)]="username" name="username" [disabled]="isEdit" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</mat-label>
+      <input matInput type="password" [(ngModel)]="password" name="password" />
+      @if (isEdit) {
+        <mat-hint>Dejar en blanco para no cambiarla</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Rol</mat-label>
+      <mat-select [(ngModel)]="role" name="role">
+        <mat-option value="Admin">Administrador</mat-option>
+        <mat-option value="ApartmentOwner">Propietario</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (role === 'ApartmentOwner') {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Apartamento</mat-label>
+        <mat-select [(ngModel)]="apartmentId" name="apartmentId">
+          @for (apartment of apartments(); track apartment.id) {
+            <mat-option [value]="apartment.id">{{ apartment.number }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (errorMessage) {
+      <p class="error">{{ errorMessage }}</p>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!canSave">Guardar</button>
+</mat-dialog-actions>
