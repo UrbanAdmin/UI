@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { PaymentsComponent } from './payments.component';
+import { AuthService } from '../auth.service';
 import { environment } from '../../environments/environment';
 
 const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
@@ -27,10 +28,14 @@ describe('PaymentsComponent', () => {
   let httpMock: HttpTestingController;
   let currentDateId: number;
 
-  beforeEach(async () => {
+  async function setup(isApartmentOwner = false) {
     await TestBed.configureTestingModule({
       imports: [PaymentsComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { isApartmentOwner: () => isApartmentOwner } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(PaymentsComponent);
@@ -46,7 +51,9 @@ describe('PaymentsComponent', () => {
     httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
     httpMock.expectOne(DEADLINES_URL).flush([]);
     fixture.detectChanges();
-  });
+  }
+
+  beforeEach(() => setup());
 
   afterEach(() => {
     httpMock.verify();
@@ -149,6 +156,19 @@ describe('PaymentsComponent', () => {
 
     expect(rows?.length).toBe(6);
     expect(rows?.every((r) => r.dueDate instanceof Date)).toBe(true);
+  });
+
+  it('shows the Pagado toggle for an Admin', () => {
+    expect(component.isReadOnly).toBe(false);
+    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeTruthy();
+  });
+
+  it('hides the Pagado toggle for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(component.isReadOnly).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeFalsy();
   });
 
   function flushArriendoUtilityCreation(): void {

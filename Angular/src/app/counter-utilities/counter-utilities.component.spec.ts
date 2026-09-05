@@ -8,6 +8,7 @@ import { CounterUtilitiesComponent } from './counter-utilities.component';
 import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/add-manual-reading-dialog.component';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 import { ApartmentDto } from '../shared/apartment.model';
+import { AuthService } from '../auth.service';
 import { environment } from '../../environments/environment';
 
 const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
@@ -36,7 +37,7 @@ describe('CounterUtilitiesComponent', () => {
   let dialogOpen: ReturnType<typeof vi.fn>;
   let httpMock: HttpTestingController;
 
-  beforeEach(async () => {
+  async function setup(isApartmentOwner = false) {
     dialogOpen = vi.fn().mockReturnValue({ afterClosed: () => of(null) });
 
     await TestBed.configureTestingModule({
@@ -45,6 +46,7 @@ describe('CounterUtilitiesComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MatDialog, useValue: { open: dialogOpen } },
+        { provide: AuthService, useValue: { isApartmentOwner: () => isApartmentOwner } },
       ],
     }).compileComponents();
 
@@ -63,7 +65,9 @@ describe('CounterUtilitiesComponent', () => {
     httpMock.expectOne(`${environment.apiUrl}/Dates`).flush(MOCK_DATES);
     httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush([]);
     fixture.detectChanges();
-  });
+  }
+
+  beforeEach(() => setup());
 
   afterEach(() => {
     httpMock.verify();
@@ -114,5 +118,18 @@ describe('CounterUtilitiesComponent', () => {
         data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas' },
       }),
     );
+  });
+
+  it('shows the add-reading buttons for an Admin', () => {
+    expect(component.isReadOnly).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Agregar Lectura');
+  });
+
+  it('hides the add-reading buttons for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(component.isReadOnly).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('Agregar Lectura');
   });
 });

@@ -15,6 +15,7 @@ import { ServiceName } from '../notifications/notification.model';
 import { monthName } from '../notifications/month-names';
 import { ReadingsService } from '../readings/readings.service';
 import { MeterReading } from '../readings/reading.model';
+import { AuthService } from '../auth.service';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -33,10 +34,12 @@ type ReadingRow = MeterReading & { monthLabel: string };
 })
 export class CounterUtilitiesComponent {
   private readonly apartmentsService = inject(ApartmentsService);
+  private readonly authService = inject(AuthService);
 
   readonly apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
   readonly displayedColumns: string[] = ['mes', 'lectura', 'evidencia'];
+  readonly isReadOnly = this.authService.isApartmentOwner();
 
   // getRows$ is called directly from the template on every apartment x
   // service tab, which re-evaluates on every change-detection cycle -

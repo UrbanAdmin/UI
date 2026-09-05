@@ -27,10 +27,12 @@
                   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
                 </table>
               </div>
-              <div class="button-container-inline">
-                <button mat-raised-button color="primary" (click)="openAddReadingDialog(apartment, service)">Agregar Lectura (Imagen)</button>
-                <button mat-raised-button color="primary" (click)="openAddManualReadingDialog(apartment, service)">Agregar Lectura (Manual)</button>
-              </div>
+              @if (!isReadOnly) {
+                <div class="button-container-inline">
+                  <button mat-raised-button color="primary" (click)="openAddReadingDialog(apartment, service)">Agregar Lectura (Imagen)</button>
+                  <button mat-raised-button color="primary" (click)="openAddManualReadingDialog(apartment, service)">Agregar Lectura (Manual)</button>
+                </div>
+              }
             </mat-tab>
           }
         </mat-tab-group>

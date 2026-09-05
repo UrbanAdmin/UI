@@ -7,6 +7,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
@@ -15,6 +16,7 @@ import { BehaviorSubject, Observable, switchMap, map, of } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
+import { AuthService } from '../auth.service';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 
@@ -35,6 +37,7 @@ interface Period {
     MatChipsModule,
     MatDatepickerModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
@@ -58,8 +61,13 @@ export class PaymentsComponent {
   private readonly period$: BehaviorSubject<Period>;
   readonly deadline$: Observable<Date | null>;
   readonly rows$: Observable<OwnerRow[]>;
+  readonly isReadOnly: boolean;
 
-  constructor(private notificationsService: NotificationsService) {
+  constructor(
+    private notificationsService: NotificationsService,
+    private authService: AuthService,
+  ) {
+    this.isReadOnly = this.authService.isApartmentOwner();
     const now = new Date();
     this.selectedMonth = now.getMonth() + 1;
     this.selectedYear = now.getFullYear();
