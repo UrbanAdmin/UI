@@ -102,4 +102,29 @@ describe('AuthService', () => {
 
     expect(service.isAdmin()).toBe(false);
   });
+
+  it('isApartmentOwner() is true when the JWT role claim is ApartmentOwner', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'ApartmentOwner', ApartmentId: '3' });
+    service.login('owner101', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(service.isApartmentOwner()).toBe(true);
+    expect(service.isAdmin()).toBe(false);
+  });
+
+  it('getOwnApartmentId() reads the ApartmentId claim as a number', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'ApartmentOwner', ApartmentId: '3' });
+    service.login('owner101', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(service.getOwnApartmentId()).toBe(3);
+  });
+
+  it('getOwnApartmentId() is null for an Admin token with no ApartmentId claim', () => {
+    const token = fakeJwt({ [ROLE_CLAIM]: 'Admin' });
+    service.login('admin', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(service.getOwnApartmentId()).toBeNull();
+  });
 });

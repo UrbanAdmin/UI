@@ -10,15 +10,14 @@ interface LoginResponse {
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
 // JWT signature isn't verified here - the backend is the real enforcement
-// point (see the AdminOnly policy on Apartments' write endpoints). This
-// decode is only used to decide what the UI shows, never to authorize
-// anything by itself.
-function decodeRole(token: string): string | null {
+// point (see the AdminOnly policy on Apartments' write endpoints, and the
+// owner-scoped filtering on GET /Apartments et al). This decode is only
+// used to decide what the UI shows, never to authorize anything by itself.
+function decodeClaims(token: string): Record<string, unknown> | null {
   try {
     const payload = token.split('.')[1];
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    const claims = JSON.parse(json);
-    return claims[ROLE_CLAIM] ?? null;
+    return JSON.parse(json);
   } catch {
     return null;
   }
@@ -34,21 +33,26 @@ export class AuthService {
   private readonly token = signal<string | null>(null);
   private readonly username = signal<string | null>(null);
   private readonly role = signal<string | null>(null);
+  private readonly apartmentId = signal<number | null>(null);
 
   login(username: string, password: string): Observable<boolean> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { username, password })
       .pipe(
         tap((response) => {
+          const claims = decodeClaims(response.token);
           this.token.set(response.token);
           this.username.set(username);
-          this.role.set(decodeRole(response.token));
+          this.role.set((claims?.[ROLE_CLAIM] as string) ?? null);
+          const apartmentId = claims?.['ApartmentId'];
+          this.apartmentId.set(typeof apartmentId === 'string' ? Number(apartmentId) : null);
         }),
         map(() => true),
         catchError(() => {
           this.token.set(null);
           this.username.set(null);
           this.role.set(null);
+          this.apartmentId.set(null);
           return of(false);
         }),
       );
@@ -58,10 +62,19 @@ export class AuthService {
     this.token.set(null);
     this.username.set(null);
     this.role.set(null);
+    this.apartmentId.set(null);
   }
 
   isAdmin(): boolean {
     return this.role() === 'Admin';
+  }
+
+  isApartmentOwner(): boolean {
+    return this.role() === 'ApartmentOwner';
+  }
+
+  getOwnApartmentId(): number | null {
+    return this.apartmentId();
   }
 
   isLoggedIn(): boolean {
