@@ -7,13 +7,19 @@
 
 .deadline-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
+  min-width: 560px;
 }
 
 /* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain

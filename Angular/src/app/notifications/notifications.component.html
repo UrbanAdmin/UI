@@ -13,6 +13,7 @@
         @for (period of group.periods; track period.month + '-' + period.year) {
           <div class="period-group">
             <h4 class="period-title">{{ period.monthLabel }} {{ period.year }}</h4>
+            <div class="table-scroll">
             <table mat-table [dataSource]="period.items" class="mat-elevation-z1">
               <ng-container matColumnDef="service">
                 <th mat-header-cell *matHeaderCellDef>Servicio</th>
@@ -36,6 +37,7 @@
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns" data-testid="notification-row"></tr>
             </table>
+            </div>
           </div>
         }
       </mat-card-content>

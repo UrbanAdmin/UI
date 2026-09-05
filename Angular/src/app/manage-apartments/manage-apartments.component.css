@@ -4,8 +4,13 @@
   margin-bottom: 16px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
+  min-width: 640px;
 }
 
 .actions-cell {

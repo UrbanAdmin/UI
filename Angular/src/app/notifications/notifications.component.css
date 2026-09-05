@@ -16,8 +16,13 @@
   opacity: 0.8;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
+  min-width: 420px;
 }
 
 /* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain

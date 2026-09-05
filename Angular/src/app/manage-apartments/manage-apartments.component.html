@@ -8,6 +8,7 @@
       </button>
     </div>
 
+    <div class="table-scroll">
     <table mat-table [dataSource]="(apartments$ | async) ?? []" class="mat-elevation-z1">
       <ng-container matColumnDef="number">
         <th mat-header-cell *matHeaderCellDef>Apartamento</th>
@@ -52,5 +53,6 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+    </div>
   </mat-card-content>
 </mat-card>
