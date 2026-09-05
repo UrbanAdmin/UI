@@ -1,7 +1,6 @@
-<mat-card>
-  <mat-card-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</mat-card-title>
-  <mat-card-subtitle>{{ data.owner }}</mat-card-subtitle>
-  <mat-card-content>
+<h2 mat-dialog-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</h2>
+<mat-dialog-content>
+    <p class="owner-subtitle">{{ data.owner }}</p>
     <form>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Mes</mat-label>
@@ -17,8 +16,7 @@
         <input matInput type="text" [(ngModel)]="counter" name="counter" />
       </mat-form-field>
     </form>
-  </mat-card-content>
-  <mat-card-actions align="end">
-    <button mat-raised-button color="primary" (click)="save()" [disabled]="!counter">Guardar</button>
-  </mat-card-actions>
-</mat-card>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!counter">Guardar</button>
+</mat-dialog-actions>

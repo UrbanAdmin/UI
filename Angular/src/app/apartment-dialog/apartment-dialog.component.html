@@ -1,6 +1,5 @@
-<mat-card>
-  <mat-card-title>{{ isEdit ? 'Editar apartamento' : 'Nuevo apartamento' }}</mat-card-title>
-  <mat-card-content>
+<h2 mat-dialog-title>{{ isEdit ? 'Editar apartamento' : 'Nuevo apartamento' }}</h2>
+<mat-dialog-content>
     <form>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Número</mat-label>
@@ -30,8 +29,7 @@
         </label>
       </div>
     </form>
-  </mat-card-content>
-  <mat-card-actions align="end">
-    <button mat-raised-button color="primary" (click)="save()" [disabled]="!number || !owner">Guardar</button>
-  </mat-card-actions>
-</mat-card>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!number || !owner">Guardar</button>
+</mat-dialog-actions>

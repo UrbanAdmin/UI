@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -27,7 +26,6 @@ export interface AddReadingDialogData {
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     FormsModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
