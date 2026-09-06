@@ -171,6 +171,18 @@ describe('PaymentsComponent', () => {
     expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeFalsy();
   });
 
+  it('shows the editable Fecha límite de pago control for an Admin', () => {
+    expect(fixture.nativeElement.textContent).toContain('Guardar');
+  });
+
+  it('hides the Fecha límite de pago editor for an ApartmentOwner, showing it as read-only text instead', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(fixture.nativeElement.textContent).not.toContain('Guardar');
+    expect(fixture.nativeElement.textContent).toContain('Fecha límite de pago');
+  });
+
   function flushArriendoUtilityCreation(): void {
     let posted = false;
     for (const req of httpMock.match(UTILITIES_URL)) {

@@ -31,17 +31,23 @@
     </div>
 
     @if (selectedService !== 'Arriendo') {
-      <div class="deadline-row">
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha límite de pago</mat-label>
-          <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
-          <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
-          <mat-datepicker #deadlinePicker></mat-datepicker>
-        </mat-form-field>
-        <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
-          Guardar
-        </button>
-      </div>
+      @if (!isReadOnly) {
+        <div class="deadline-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha límite de pago</mat-label>
+            <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
+            <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
+            <mat-datepicker #deadlinePicker></mat-datepicker>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
+            Guardar
+          </button>
+        </div>
+      } @else if (deadline$ | async; as deadline) {
+        <p class="deadline-readonly">Fecha límite de pago: {{ deadline | date: 'dd/MM/yyyy' }}</p>
+      } @else {
+        <p class="deadline-readonly">Fecha límite de pago: No definida</p>
+      }
     } @else {
       <p class="arriendo-hint">El vencimiento del arriendo depende de la fecha de inicio de contrato de cada apartamento.</p>
     }
