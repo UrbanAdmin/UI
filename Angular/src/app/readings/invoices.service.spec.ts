@@ -50,4 +50,19 @@ describe('InvoicesService', () => {
 
     expect(result).toEqual({ id: 9, totalCounter: '', total: '', dateId: 5, utilityId: 3 });
   });
+
+  it('clearCache forces the next getOrCreateInvoice lookup to refetch instead of replaying stale data', () => {
+    service.getOrCreateInvoice(1, 1).subscribe();
+    httpMock.expectOne(invoicesUrl).flush([{ id: 1, totalCounter: '15', total: '30000', dateId: 1, utilityId: 1 }]);
+
+    service.clearCache();
+
+    let result: InvoiceDto | undefined;
+    service.getOrCreateInvoice(1, 1).subscribe((i) => (result = i));
+    httpMock.expectOne(invoicesUrl).flush([]);
+    httpMock.expectOne(invoicesUrl).flush({ id: 0, totalCounter: '', total: '', dateId: 1, utilityId: 1 });
+    httpMock.expectOne(invoicesUrl).flush([{ id: 2, totalCounter: '', total: '', dateId: 1, utilityId: 1 }]);
+
+    expect(result).toEqual({ id: 2, totalCounter: '', total: '', dateId: 1, utilityId: 1 });
+  });
 });

@@ -47,4 +47,8 @@ export class UtilitiesService {
       }),
     );
   }
+
+  clearCache(): void {
+    this.cache$ = null;
+  }
 }

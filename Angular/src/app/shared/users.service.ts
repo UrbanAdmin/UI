@@ -38,4 +38,8 @@ export class UsersService {
       map(() => undefined),
     );
   }
+
+  clearCache(): void {
+    this.cache$ = null;
+  }
 }

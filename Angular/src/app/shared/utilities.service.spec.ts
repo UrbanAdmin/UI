@@ -56,4 +56,17 @@ describe('UtilitiesService', () => {
     service.getUtilities().subscribe();
     httpMock.expectNone(utilitiesUrl);
   });
+
+  it('clearCache forces the next getUtilities call to refetch instead of replaying stale data', () => {
+    service.getUtilities().subscribe();
+    httpMock.expectOne(utilitiesUrl).flush([{ id: 1, name: 'Agua' }]);
+
+    service.clearCache();
+
+    let result: UtilityDto[] | undefined;
+    service.getUtilities().subscribe((r) => (result = r));
+    httpMock.expectOne(utilitiesUrl).flush([]);
+
+    expect(result).toEqual([]);
+  });
 });

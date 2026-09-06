@@ -73,6 +73,19 @@ describe('UsersService', () => {
     httpMock.expectOne(`${environment.apiUrl}/Users`).flush([]);
   });
 
+  it('clearCache forces the next getUsers call to refetch instead of replaying stale data', () => {
+    service.getUsers().subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/Users`).flush([{ id: 1, username: 'admin', role: 'Admin', apartmentId: null }]);
+
+    service.clearCache();
+
+    let result: User[] | undefined;
+    service.getUsers().subscribe((r) => (result = r));
+    httpMock.expectOne(`${environment.apiUrl}/Users`).flush([]);
+
+    expect(result).toEqual([]);
+  });
+
   it('deleteUser DELETEs /User/{id} and invalidates the cache', () => {
     service.getUsers().subscribe();
     httpMock.expectOne(`${environment.apiUrl}/Users`).flush([]);

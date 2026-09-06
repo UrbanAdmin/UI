@@ -3,6 +3,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { AuthService } from './auth.service';
+import { ApartmentsService } from './shared/apartments.service';
+import { UsersService } from './shared/users.service';
+import { NotificationsService } from './notifications/notifications.service';
+import { ReadingsService } from './readings/readings.service';
+import { InvoicesService } from './readings/invoices.service';
+import { DatesService } from './shared/dates.service';
+import { UtilitiesService } from './shared/utilities.service';
 import { environment } from '../environments/environment';
 
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
@@ -16,10 +23,29 @@ function fakeJwt(payload: Record<string, unknown>): string {
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
+  let clearCacheSpies: ReturnType<typeof vi.fn>[];
+
+  function cacheClearingServiceProviders() {
+    clearCacheSpies = [];
+    const mock = () => {
+      const spy = vi.fn();
+      clearCacheSpies.push(spy);
+      return { clearCache: spy };
+    };
+    return [
+      { provide: ApartmentsService, useValue: mock() },
+      { provide: UsersService, useValue: mock() },
+      { provide: NotificationsService, useValue: mock() },
+      { provide: ReadingsService, useValue: mock() },
+      { provide: InvoicesService, useValue: mock() },
+      { provide: DatesService, useValue: mock() },
+      { provide: UtilitiesService, useValue: mock() },
+    ];
+  }
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), ...cacheClearingServiceProviders()],
     });
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -126,5 +152,18 @@ describe('AuthService', () => {
     httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
 
     expect(service.getOwnApartmentId()).toBeNull();
+  });
+
+  it('logout clears every cross-session cache, so a different role logging in next does not see stale data', () => {
+    service.logout();
+
+    clearCacheSpies.forEach((spy) => expect(spy).toHaveBeenCalled());
+  });
+
+  it('a successful login clears every cross-session cache before the app fetches anything new', () => {
+    service.login('owner101', 'password').subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token: 'fake-token' });
+
+    clearCacheSpies.forEach((spy) => expect(spy).toHaveBeenCalled());
   });
 });

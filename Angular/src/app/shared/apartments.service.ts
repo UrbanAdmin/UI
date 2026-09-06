@@ -67,4 +67,8 @@ export class ApartmentsService {
   downloadContract(id: number): Observable<Blob> {
     return this.http.get(`${environment.apiUrl}/Apartments/${id}/Contract`, { responseType: 'blob' });
   }
+
+  clearCache(): void {
+    this.cache$ = null;
+  }
 }

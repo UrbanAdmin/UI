@@ -125,4 +125,19 @@ describe('ReadingsService', () => {
     expect(result?.find((r) => r.month === 3)?.evidenceFileName).toBe('foto.jpg');
     expect(result?.find((r) => r.month === 1)?.evidenceFileName).toBeNull();
   });
+
+  it('clearCache forces the next getReadings call to refetch CounterUtilities and drops in-memory evidence filenames', () => {
+    service.recordReading(1, 'Agua', 3, 2026, null, 'foto.jpg').subscribe();
+
+    service.clearCache();
+
+    let result: { month: number; counter: string | null; evidenceFileName: string | null }[] | undefined;
+    service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
+    httpMock.expectOne(COUNTER_UTILITIES_URL).flush([]);
+
+    expect(result?.find((r) => r.month === 3)?.evidenceFileName).toBeNull();
+  });
 });

@@ -50,4 +50,17 @@ describe('DatesService', () => {
 
     expect(result).toEqual({ id: 8, month: 'Septiembre', year: '2026' });
   });
+
+  it('clearCache forces the next getDates call to refetch instead of replaying stale data', () => {
+    service.getDates().subscribe();
+    httpMock.expectOne(datesUrl).flush([{ id: 7, month: 'Diciembre', year: '2025' }]);
+
+    service.clearCache();
+
+    let result: DateRecordDto[] | undefined;
+    service.getDates().subscribe((r) => (result = r));
+    httpMock.expectOne(datesUrl).flush([]);
+
+    expect(result).toEqual([]);
+  });
 });

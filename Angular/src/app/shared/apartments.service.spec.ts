@@ -128,6 +128,19 @@ describe('ApartmentsService', () => {
     httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([]);
   });
 
+  it('clearCache forces the next getApartments call to refetch instead of replaying stale data', () => {
+    service.getApartments().subscribe();
+    httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([{ id: 1, name: '101', owner: 'Daniel', ...({ contractStartDate: null, hasContract: false, contractFileName: null }) }]);
+
+    service.clearCache();
+
+    let result: unknown[] | undefined;
+    service.getApartments().subscribe((apartments) => (result = apartments));
+    httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([]);
+
+    expect(result).toEqual([]);
+  });
+
   it('downloadContract GETs /Apartments/{id}/Contract as a blob', () => {
     let result: Blob | undefined;
     service.downloadContract(3).subscribe((blob) => (result = blob));

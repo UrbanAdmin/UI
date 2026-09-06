@@ -2,6 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../environments/environment';
+import { ApartmentsService } from './shared/apartments.service';
+import { UsersService } from './shared/users.service';
+import { NotificationsService } from './notifications/notifications.service';
+import { ReadingsService } from './readings/readings.service';
+import { InvoicesService } from './readings/invoices.service';
+import { DatesService } from './shared/dates.service';
+import { UtilitiesService } from './shared/utilities.service';
 
 interface LoginResponse {
   token: string;
@@ -27,6 +34,22 @@ function decodeClaims(token: string): Record<string, unknown> | null {
 export class AuthService {
   private readonly http = inject(HttpClient);
 
+  // Every service below holds an in-memory HTTP response cache
+  // (shareReplay/cache$) that has no idea a login/logout happened - without
+  // clearing them here, a second identity in the same tab could silently
+  // reuse the previous identity's cached responses (e.g. an ApartmentOwner
+  // seeing an Admin's full apartments list that was fetched and cached
+  // before the switch).
+  private readonly cacheClearingServices = [
+    inject(ApartmentsService),
+    inject(UsersService),
+    inject(NotificationsService),
+    inject(ReadingsService),
+    inject(InvoicesService),
+    inject(DatesService),
+    inject(UtilitiesService),
+  ];
+
   // In-memory only, by design: never persisted to localStorage/sessionStorage
   // so a page refresh logs the user out, trading convenience for reduced
   // exposure to token theft via XSS.
@@ -35,11 +58,16 @@ export class AuthService {
   private readonly role = signal<string | null>(null);
   private readonly apartmentId = signal<number | null>(null);
 
+  private clearAllCaches(): void {
+    this.cacheClearingServices.forEach((service) => service.clearCache());
+  }
+
   login(username: string, password: string): Observable<boolean> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { username, password })
       .pipe(
         tap((response) => {
+          this.clearAllCaches();
           const claims = decodeClaims(response.token);
           this.token.set(response.token);
           this.username.set(username);
@@ -49,6 +77,7 @@ export class AuthService {
         }),
         map(() => true),
         catchError(() => {
+          this.clearAllCaches();
           this.token.set(null);
           this.username.set(null);
           this.role.set(null);
@@ -59,6 +88,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearAllCaches();
     this.token.set(null);
     this.username.set(null);
     this.role.set(null);

@@ -44,4 +44,8 @@ export class InvoicesService {
       }),
     );
   }
+
+  clearCache(): void {
+    this.cache$ = null;
+  }
 }

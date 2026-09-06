@@ -50,4 +50,8 @@ export class DatesService {
       }),
     );
   }
+
+  clearCache(): void {
+    this.cache$ = null;
+  }
 }

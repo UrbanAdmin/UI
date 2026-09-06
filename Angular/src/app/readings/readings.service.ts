@@ -114,4 +114,9 @@ export class ReadingsService {
       map(() => undefined),
     );
   }
+
+  clearCache(): void {
+    this.counterUtilitiesCache$ = null;
+    this.evidenceByKey.clear();
+  }
 }
