@@ -1,3 +1,60 @@
+@if (!isReadOnly) {
+  <mat-card class="receipt-card">
+    <mat-card-title>Recibo del servicio</mat-card-title>
+    <mat-card-content>
+      <div class="receipt-filters">
+        <mat-form-field appearance="outline">
+          <mat-label>Servicio</mat-label>
+          <mat-select [(ngModel)]="selectedReceiptService">
+            @for (service of services; track service) {
+              <mat-option [value]="service">{{ service }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Mes</mat-label>
+          <mat-select [(ngModel)]="selectedReceiptMonth">
+            @for (name of monthNames; track name; let i = $index) {
+              <mat-option [value]="i + 1">{{ name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Año</mat-label>
+          <mat-select [(ngModel)]="selectedReceiptYear">
+            @for (year of years; track year) {
+              <mat-option [value]="year">{{ year }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="file-field">
+        <label>Recibo (PDF o foto)</label>
+        <input type="file" accept="application/pdf,image/*" (change)="onReceiptFileSelected($event)" />
+        @if (receiptFile) {
+          <span class="file-name">{{ receiptFile.name }}</span>
+        }
+        @if (receiptOcrLoading) {
+          <span class="ocr-loading">
+            <mat-spinner diameter="16"></mat-spinner>
+            Leyendo el recibo&hellip;
+          </span>
+        }
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Total del recibo</mat-label>
+        <input matInput type="text" [(ngModel)]="receiptTotal" />
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" (click)="saveReceiptTotal()" [disabled]="!receiptTotal">Guardar Total</button>
+    </mat-card-content>
+  </mat-card>
+}
+
 @if (apartments$ | async; as apartments) {
 <mat-tab-group>
   @for (apartment of apartments; track apartment.number) {

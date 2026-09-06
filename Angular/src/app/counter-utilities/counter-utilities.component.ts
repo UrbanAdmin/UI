@@ -3,16 +3,25 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
 
-import { Observable, map, shareReplay } from 'rxjs';
+import { Observable, forkJoin, map, shareReplay } from 'rxjs';
 import { Apartment } from '../shared/apartment.model';
 import { ApartmentsService } from '../shared/apartments.service';
+import { DatesService } from '../shared/dates.service';
+import { UtilitiesService } from '../shared/utilities.service';
 import { ServiceName } from '../notifications/notification.model';
-import { monthName } from '../notifications/month-names';
+import { MONTH_NAMES, monthName } from '../notifications/month-names';
 import { ReadingsService } from '../readings/readings.service';
+import { InvoicesService } from '../readings/invoices.service';
 import { MeterReading } from '../readings/reading.model';
 import { AuthService } from '../auth.service';
 
@@ -26,19 +35,40 @@ type ReadingRow = MeterReading & { monthLabel: string };
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
     MatTabsModule,
-    MatTableModule
-]
+    MatTableModule,
+  ],
 })
 export class CounterUtilitiesComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly authService = inject(AuthService);
+  private readonly utilitiesService = inject(UtilitiesService);
+  private readonly datesService = inject(DatesService);
+  private readonly invoicesService = inject(InvoicesService);
 
   readonly apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
   readonly displayedColumns: string[] = ['mes', 'lectura', 'evidencia'];
   readonly isReadOnly = this.authService.isApartmentOwner();
+
+  // Not per-apartment: Invoice.Total is one shared bill per (Servicio, Mes,
+  // Año), split across every apartment's consumption server-side - shown
+  // once here rather than repeated identically inside every apartment tab.
+  readonly monthNames = MONTH_NAMES;
+  readonly years: number[];
+  selectedReceiptService: ServiceName = 'Agua';
+  selectedReceiptMonth: number = new Date().getMonth() + 1;
+  selectedReceiptYear: number = new Date().getFullYear();
+  receiptTotal: string | null = null;
+  receiptFile: File | null = null;
+  receiptOcrLoading = false;
 
   // getRows$ is called directly from the template on every apartment x
   // service tab, which re-evaluates on every change-detection cycle -
@@ -50,7 +80,9 @@ export class CounterUtilitiesComponent {
   constructor(
     private dialog: MatDialog,
     private readingsService: ReadingsService,
-  ) { }
+  ) {
+    this.years = Array.from({ length: 7 }, (_, i) => this.selectedReceiptYear - 1 + i);
+  }
 
   getRows$(apartment: Apartment, service: ServiceName): Observable<ReadingRow[]> {
     const key = `${apartment.id}|${service}`;
@@ -83,5 +115,50 @@ export class CounterUtilitiesComponent {
           this.invalidateRows(apartment, service);
         }
       });
+  }
+
+  onReceiptFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    this.receiptFile = file;
+    if (!file) {
+      return;
+    }
+
+    this.receiptOcrLoading = true;
+    this.invoicesService.ocrPreviewTotal(file).subscribe({
+      next: (result) => {
+        this.receiptOcrLoading = false;
+        if (result.suggestedTotal) {
+          this.receiptTotal = result.suggestedTotal;
+        }
+      },
+      error: () => (this.receiptOcrLoading = false),
+    });
+  }
+
+  saveReceiptTotal(): void {
+    const total = this.receiptTotal;
+    if (!total) {
+      return;
+    }
+
+    forkJoin([
+      this.utilitiesService.getOrCreateUtility(this.selectedReceiptService),
+      this.datesService.getOrCreateDate(this.selectedReceiptMonth, this.selectedReceiptYear),
+    ]).subscribe(([utility, date]) => {
+      this.invoicesService.setTotal(utility.id, date.id, total).subscribe((invoiceId) => {
+        if (this.receiptFile) {
+          this.invoicesService.uploadReceipt(invoiceId, this.receiptFile).subscribe(() => this.resetReceiptForm());
+        } else {
+          this.resetReceiptForm();
+        }
+      });
+    });
+  }
+
+  private resetReceiptForm(): void {
+    this.receiptTotal = null;
+    this.receiptFile = null;
   }
 }

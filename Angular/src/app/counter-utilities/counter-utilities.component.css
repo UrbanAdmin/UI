@@ -1,3 +1,43 @@
+.receipt-card {
+  margin-bottom: 16px;
+}
+
+.receipt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.file-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.file-field label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.file-name {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.ocr-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.full-width {
+  width: 100%;
+}
+
 mat-tab-group {
   position: relative;
 }

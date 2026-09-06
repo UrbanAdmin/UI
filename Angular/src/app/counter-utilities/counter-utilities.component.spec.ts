@@ -118,4 +118,58 @@ describe('CounterUtilitiesComponent', () => {
     expect(component.isReadOnly).toBe(true);
     expect(fixture.nativeElement.textContent).not.toContain('Agregar Lectura');
   });
+
+  it('shows the receipt card for an Admin', () => {
+    expect(fixture.nativeElement.textContent).toContain('Recibo del servicio');
+  });
+
+  it('hides the receipt card for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(fixture.nativeElement.textContent).not.toContain('Recibo del servicio');
+  });
+
+  it('onReceiptFileSelected requests an OCR preview and pre-fills the receipt total', () => {
+    const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
+
+    component.onReceiptFileSelected({ target: { files: [file] } } as unknown as Event);
+
+    expect(component.receiptFile).toBe(file);
+    httpMock.expectOne(`${environment.apiUrl}/Invoices/OcrPreview`).flush({ suggestedTotal: '95000' });
+
+    expect(component.receiptTotal).toBe('95000');
+  });
+
+  it('saveReceiptTotal sets the Invoice total then uploads the receipt when a file was chosen', () => {
+    const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
+    component.onReceiptFileSelected({ target: { files: [file] } } as unknown as Event);
+    httpMock.expectOne(`${environment.apiUrl}/Invoices/OcrPreview`).flush({ suggestedTotal: '95000' });
+
+    component.saveReceiptTotal();
+
+    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: component.selectedReceiptMonth, utilityId: 1 }]);
+    const putReq = httpMock.expectOne(`${environment.apiUrl}/Invoice/5`);
+    expect(putReq.request.body).toEqual({ Total_counter: '', Total: '95000', Date_id: component.selectedReceiptMonth, Utility_id: 1 });
+    putReq.flush({});
+
+    const receiptReq = httpMock.expectOne(`${environment.apiUrl}/Invoice/5/Receipt`);
+    expect(receiptReq.request.body instanceof FormData).toBe(true);
+    receiptReq.flush(null);
+
+    expect(component.receiptTotal).toBeNull();
+    expect(component.receiptFile).toBeNull();
+  });
+
+  it('saveReceiptTotal sets the Invoice total without uploading anything when no file was chosen', () => {
+    component.receiptTotal = '95000';
+
+    component.saveReceiptTotal();
+
+    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: component.selectedReceiptMonth, utilityId: 1 }]);
+    httpMock.expectOne(`${environment.apiUrl}/Invoice/5`).flush({});
+
+    httpMock.expectNone(`${environment.apiUrl}/Invoice/5/Receipt`);
+    expect(component.receiptTotal).toBeNull();
+  });
 });
