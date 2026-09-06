@@ -51,6 +51,30 @@ describe('DatesService', () => {
     expect(result).toEqual({ id: 8, month: 'Septiembre', year: '2026' });
   });
 
+  it('two concurrent getOrCreateDate calls for the same missing period share one POST instead of racing into duplicates', () => {
+    let resultA: DateRecordDto | undefined;
+    let resultB: DateRecordDto | undefined;
+
+    // Mirrors counter-utilities.component's eager render, which fires many
+    // concurrent getOrCreateDate calls for the same month across apartments -
+    // without de-duping in-flight creates, each one independently sees "not
+    // found" (before the first POST's refetch lands) and creates its own
+    // duplicate Dates row.
+    service.getOrCreateDate(9, 2026).subscribe((d) => (resultA = d));
+    service.getOrCreateDate(9, 2026).subscribe((d) => (resultB = d));
+
+    httpMock.expectOne(datesUrl).flush([]);
+
+    const postReq = httpMock.expectOne(datesUrl);
+    expect(postReq.request.method).toBe('POST');
+    postReq.flush({ id: 0, month: 'Septiembre', year: '2026' });
+
+    httpMock.expectOne(datesUrl).flush([{ id: 8, month: 'Septiembre', year: '2026' }]);
+
+    expect(resultA).toEqual({ id: 8, month: 'Septiembre', year: '2026' });
+    expect(resultB).toEqual({ id: 8, month: 'Septiembre', year: '2026' });
+  });
+
   it('clearCache forces the next getDates call to refetch instead of replaying stale data', () => {
     service.getDates().subscribe();
     httpMock.expectOne(datesUrl).flush([{ id: 7, month: 'Diciembre', year: '2025' }]);
