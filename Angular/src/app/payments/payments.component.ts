@@ -91,11 +91,7 @@ export class PaymentsComponent {
     );
   }
 
-  get displayedColumns(): string[] {
-    return this.selectedService === 'Arriendo'
-      ? ['apartment', 'owner', 'dueDate', 'status', 'amount', 'paid']
-      : ['apartment', 'owner', 'dueDate', 'status', 'paid'];
-  }
+  readonly displayedColumns: string[] = ['apartment', 'owner', 'dueDate', 'status', 'amount', 'paid'];
 
   onPeriodChange(): void {
     this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });

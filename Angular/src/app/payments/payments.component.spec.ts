@@ -169,11 +169,21 @@ describe('PaymentsComponent', () => {
     expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
   });
 
-  it('does not show a "Cantidad a pagar" column for non-Arriendo services', () => {
-    expect(component.displayedColumns).not.toContain('amount');
+  it('shows an editable "Cantidad a pagar" column for every servicio, not just Arriendo', () => {
+    expect(component.displayedColumns).toContain('amount');
+    expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
   });
 
-  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner', async () => {
+  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner regardless of servicio', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(component.displayedColumns).toContain('amount');
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
+  });
+
+  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner on Arriendo', async () => {
     TestBed.resetTestingModule();
     await setup(true);
     component.selectedService = 'Arriendo';
