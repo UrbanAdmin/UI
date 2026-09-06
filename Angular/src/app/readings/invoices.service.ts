@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap, of, tap, shareReplay } from 'rxjs';
+import { Observable, switchMap, map, of, tap, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { InvoiceDto, InvoiceWrite } from './invoice.model';
 
@@ -43,6 +43,35 @@ export class InvoicesService {
         );
       }),
     );
+  }
+
+  /** Sets the real bill Total (get-or-create the placeholder Invoice first),
+   *  triggering Backend's fee recalculation for every apartment on that
+   *  Utility+Date - returns the Invoice id so a receipt can be attached next. */
+  setTotal(utilityId: number, dateId: number, total: string): Observable<number> {
+    return this.getOrCreateInvoice(utilityId, dateId).pipe(
+      switchMap((invoice) => {
+        const write: InvoiceWrite = { Total_counter: invoice.totalCounter, Total: total, Date_id: dateId, Utility_id: utilityId };
+        return this.http.put(`${environment.apiUrl}/Invoice/${invoice.id}`, write).pipe(
+          tap(() => (this.cache$ = null)),
+          map(() => invoice.id),
+        );
+      }),
+    );
+  }
+
+  /** Sends a receipt (real digital PDF or a photo) to Backend, which extracts
+   *  the PDF's real text or runs OCR on a photo - a suggestion only. */
+  ocrPreviewTotal(file: File): Observable<{ suggestedTotal: string | null }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ suggestedTotal: string | null }>(`${environment.apiUrl}/Invoices/OcrPreview`, formData);
+  }
+
+  uploadReceipt(invoiceId: number, file: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${environment.apiUrl}/Invoice/${invoiceId}/Receipt`, formData).pipe(map(() => undefined));
   }
 
   clearCache(): void {

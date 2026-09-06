@@ -66,6 +66,8 @@ export class ReadingsService {
     );
   }
 
+  /** Returns the saved reading's CounterUtility id (null for an evidence-only
+   *  save), so a photo can be attached to it right after via uploadPhoto(). */
   recordReading(
     apartmentId: number,
     service: ServiceName,
@@ -73,13 +75,13 @@ export class ReadingsService {
     year: number,
     counter: string | null,
     evidenceFileName: string | null,
-  ): Observable<void> {
+  ): Observable<number | null> {
     if (evidenceFileName !== null) {
       this.evidenceByKey.set(this.key(apartmentId, service, month, year), evidenceFileName);
     }
     if (counter === null) {
       // Evidence-only save (photo dialog) - nothing to persist server-side.
-      return of(undefined);
+      return of(null);
     }
 
     return forkJoin([
@@ -95,6 +97,9 @@ export class ReadingsService {
             const existing = all.find(
               (cu) => cu.apartmentId === apartmentId && cu.utilityId === utility.id && cu.dateId === date.id,
             );
+            // Difference/Fee are server-computed (see Backend's
+            // DifferenceCalculator/RecalculateFeesForPeriodHandler) - these
+            // values are ignored on save, kept only to satisfy the write shape.
             const write: CounterUtilityWrite = {
               Apartment_Id: apartmentId,
               Date_Id: date.id,
@@ -104,15 +109,43 @@ export class ReadingsService {
               Difference: existing?.difference ?? '0',
               Fee: existing?.fee ?? '0',
             };
-            const request$ = existing
-              ? this.http.put(`${environment.apiUrl}/CounterUtility/${existing.id}`, write)
-              : this.http.post(`${environment.apiUrl}/CounterUtilities`, write);
-            return request$.pipe(tap(() => (this.counterUtilitiesCache$ = null)));
+
+            if (existing) {
+              return this.http.put(`${environment.apiUrl}/CounterUtility/${existing.id}`, write).pipe(
+                tap(() => (this.counterUtilitiesCache$ = null)),
+                map(() => existing.id),
+              );
+            }
+            return this.http.post(`${environment.apiUrl}/CounterUtilities`, write).pipe(
+              tap(() => (this.counterUtilitiesCache$ = null)),
+              switchMap(() => this.fetchCounterUtilities()),
+              map((refreshed) => {
+                const created = refreshed.find(
+                  (cu) => cu.apartmentId === apartmentId && cu.utilityId === utility.id && cu.dateId === date.id,
+                );
+                if (!created) {
+                  throw new Error('Failed to create CounterUtility reading');
+                }
+                return created.id;
+              }),
+            );
           }),
         ),
       ),
-      map(() => undefined),
     );
+  }
+
+  /** Sends a meter photo to Backend's Tesseract OCR - a suggestion only, never trusted blind. */
+  ocrPreviewCounter(file: File): Observable<{ suggestedCounter: string | null }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ suggestedCounter: string | null }>(`${environment.apiUrl}/CounterUtilities/OcrPreview`, formData);
+  }
+
+  uploadCounterUtilityPhoto(counterUtilityId: number, file: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${environment.apiUrl}/CounterUtility/${counterUtilityId}/Photo`, formData).pipe(map(() => undefined));
   }
 
   clearCache(): void {

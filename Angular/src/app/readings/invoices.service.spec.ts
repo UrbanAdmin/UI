@@ -65,4 +65,46 @@ describe('InvoicesService', () => {
 
     expect(result).toEqual({ id: 2, totalCounter: '', total: '', dateId: 1, utilityId: 1 });
   });
+
+  it('setTotal gets-or-creates the invoice then PUTs the confirmed Total', () => {
+    let result: number | undefined;
+
+    service.setTotal(3, 5, '95000').subscribe((id) => (result = id));
+
+    httpMock.expectOne(invoicesUrl).flush([{ id: 9, totalCounter: '', total: '', dateId: 5, utilityId: 3 }]);
+    const putReq = httpMock.expectOne(`${environment.apiUrl}/Invoice/9`);
+    expect(putReq.request.method).toBe('PUT');
+    expect(putReq.request.body).toEqual({ Total_counter: '', Total: '95000', Date_id: 5, Utility_id: 3 });
+    putReq.flush({});
+
+    expect(result).toBe(9);
+  });
+
+  it('ocrPreviewTotal POSTs the file as FormData and returns the suggestion', () => {
+    let result: { suggestedTotal: string | null } | undefined;
+    const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
+
+    service.ocrPreviewTotal(file).subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/Invoices/OcrPreview`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush({ suggestedTotal: '95000' });
+
+    expect(result?.suggestedTotal).toBe('95000');
+  });
+
+  it('uploadReceipt POSTs the file as FormData to the Invoice receipt endpoint', () => {
+    let done = false;
+    const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
+
+    service.uploadReceipt(9, file).subscribe(() => (done = true));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/Invoice/9/Receipt`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush(null);
+
+    expect(done).toBe(true);
+  });
 });

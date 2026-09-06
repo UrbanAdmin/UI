@@ -53,9 +53,9 @@ describe('ReadingsService', () => {
     expect(result?.find((r) => r.month === 1)?.counter).toBeNull();
   });
 
-  it('recordReading creates a new CounterUtility with underscore-keyed body when none exists', () => {
-    let done = false;
-    service.recordReading(1, 'Agua', 3, 2026, '1520', null).subscribe(() => (done = true));
+  it('recordReading creates a new CounterUtility with underscore-keyed body when none exists, resolving the new id after a refetch', () => {
+    let result: number | null | undefined;
+    service.recordReading(1, 'Agua', 3, 2026, '1520', null).subscribe((id) => (result = id));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
@@ -73,13 +73,19 @@ describe('ReadingsService', () => {
       Difference: '0',
       Fee: '0',
     });
+    // POST's response body echoes the request, not the server-assigned id -
+    // recordReading refetches to find it, same as UtilitiesService.getOrCreateUtility.
     postReq.flush({ id: 0 });
+    httpMock
+      .expectOne(COUNTER_UTILITIES_URL)
+      .flush([{ id: 42, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 5, counter: '1520', difference: '0', fee: '0' }]);
 
-    expect(done).toBe(true);
+    expect(result).toBe(42);
   });
 
-  it('recordReading updates the existing CounterUtility (PUT) when one already exists', () => {
-    service.recordReading(1, 'Agua', 3, 2026, '1600', null).subscribe();
+  it('recordReading updates the existing CounterUtility (PUT) when one already exists, resolving its id', () => {
+    let result: number | null | undefined;
+    service.recordReading(1, 'Agua', 3, 2026, '1600', null).subscribe((id) => (result = id));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
@@ -101,6 +107,36 @@ describe('ReadingsService', () => {
       Fee: '12500',
     });
     putReq.flush({});
+
+    expect(result).toBe(9);
+  });
+
+  it('ocrPreviewCounter POSTs the file as FormData and returns the suggestion', () => {
+    let result: { suggestedCounter: string | null } | undefined;
+    const file = new File(['x'], 'meter.jpg', { type: 'image/jpeg' });
+
+    service.ocrPreviewCounter(file).subscribe((r) => (result = r));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/CounterUtilities/OcrPreview`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush({ suggestedCounter: '1523' });
+
+    expect(result?.suggestedCounter).toBe('1523');
+  });
+
+  it('uploadCounterUtilityPhoto POSTs the file as FormData to the CounterUtility photo endpoint', () => {
+    let done = false;
+    const file = new File(['x'], 'meter.jpg', { type: 'image/jpeg' });
+
+    service.uploadCounterUtilityPhoto(42, file).subscribe(() => (done = true));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/CounterUtility/42/Photo`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush(null);
+
+    expect(done).toBe(true);
   });
 
   it('recordReading with a null counter (evidence-only save) never calls the CounterUtilities API', () => {
