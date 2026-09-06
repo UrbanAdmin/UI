@@ -21,6 +21,10 @@
   overflow-x: auto;
 }
 
+.amount-field {
+  width: 120px;
+}
+
 table {
   width: 100%;
   min-width: 560px;

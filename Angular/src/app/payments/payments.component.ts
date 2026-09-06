@@ -52,7 +52,6 @@ export class PaymentsComponent {
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
   readonly monthNames: string[] = MONTH_NAMES;
   readonly years: number[];
-  readonly displayedColumns: string[] = ['apartment', 'owner', 'dueDate', 'status', 'paid'];
 
   selectedService: ServiceName = 'Agua';
   selectedMonth: number;
@@ -92,6 +91,12 @@ export class PaymentsComponent {
     );
   }
 
+  get displayedColumns(): string[] {
+    return this.selectedService === 'Arriendo'
+      ? ['apartment', 'owner', 'dueDate', 'status', 'amount', 'paid']
+      : ['apartment', 'owner', 'dueDate', 'status', 'paid'];
+  }
+
   onPeriodChange(): void {
     this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });
   }
@@ -110,6 +115,12 @@ export class PaymentsComponent {
 
   onTogglePaid(row: OwnerRow, event: MatSlideToggleChange): void {
     this.togglePaid(row, event.checked);
+  }
+
+  onAmountChange(row: OwnerRow, amount: string): void {
+    this.notificationsService
+      .setAmount(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, amount)
+      .subscribe(() => this.onPeriodChange());
   }
 
   statusLabel(status: NotificationStatus): string {

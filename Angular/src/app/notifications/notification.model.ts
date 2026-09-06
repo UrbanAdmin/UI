@@ -32,4 +32,7 @@ export interface OwnerPayment {
    *  deadline; for Arriendo it's derived per-apartment from the contract
    *  start date, so every row can have a different value. */
   dueDate: Date;
+  /** Admin-only "cantidad a pagar" for this apartment/period - only used by
+   *  the Arriendo view today. */
+  amount: string | null;
 }

@@ -102,6 +102,7 @@ export class NotificationsService {
             (p) => p.apartmentId === apartment.id && p.utilityId === utilityId && p.dateId === dateId,
           );
           const paid = existing?.paid ?? false;
+          const amount = existing?.amount ?? null;
           const dueDate = deadline?.dueDate ?? new Date(9999, 11, 31);
           const status = deadline
             ? getNotificationStatus(
@@ -126,6 +127,7 @@ export class NotificationsService {
             paid,
             dueDate,
             status,
+            amount,
           };
         }),
       ),
@@ -151,6 +153,7 @@ export class NotificationsService {
             (p) => p.apartmentId === apartment.id && p.utilityId === utilityId && p.dateId === dateId,
           );
           const paid = existing?.paid ?? false;
+          const amount = existing?.amount ?? null;
           const contractStartDate = apartment.contractStartDate ? new Date(apartment.contractStartDate) : null;
           const dueDate = rentDueDate(contractStartDate, month, year);
           const status = getNotificationStatus(
@@ -174,6 +177,7 @@ export class NotificationsService {
             paid,
             dueDate,
             status,
+            amount,
           };
         }),
       ),
@@ -188,14 +192,44 @@ export class NotificationsService {
             const existing = paymentStatuses.find(
               (p) => p.apartmentId === apartmentId && p.utilityId === utilityId && p.dateId === dateId,
             );
-            const write: PaymentStatusWrite = { Apartment_Id: apartmentId, Utility_Id: utilityId, Date_Id: dateId, Paid: paid };
-            const request$ = existing
-              ? this.http.put(`${environment.apiUrl}/PaymentStatus/${existing.id}`, write)
-              : this.http.post(`${environment.apiUrl}/PaymentStatuses`, write);
-            return request$.pipe(tap(() => (this.paymentStatusesCache$ = null)));
+            return this.upsertPaymentStatus(apartmentId, utilityId, dateId, paid, existing?.amount ?? null, existing);
           }),
         ),
       ),
+    );
+  }
+
+  /** Admin-only "cantidad a pagar" - only meaningful for Arriendo today, but
+   *  stored on the same per-apartment/period PaymentStatus row as Paid. */
+  setAmount(apartmentId: number, service: ServiceName, month: number, year: number, amount: string): Observable<void> {
+    return this.resolveIds(service, month, year).pipe(
+      switchMap(({ utilityId, dateId }) =>
+        this.fetchPaymentStatuses().pipe(
+          switchMap((paymentStatuses) => {
+            const existing = paymentStatuses.find(
+              (p) => p.apartmentId === apartmentId && p.utilityId === utilityId && p.dateId === dateId,
+            );
+            return this.upsertPaymentStatus(apartmentId, utilityId, dateId, existing?.paid ?? false, amount, existing);
+          }),
+        ),
+      ),
+    );
+  }
+
+  private upsertPaymentStatus(
+    apartmentId: number,
+    utilityId: number,
+    dateId: number,
+    paid: boolean,
+    amount: string | null,
+    existing: PaymentStatusDto | undefined,
+  ): Observable<void> {
+    const write: PaymentStatusWrite = { Apartment_Id: apartmentId, Utility_Id: utilityId, Date_Id: dateId, Paid: paid, Amount: amount };
+    const request$ = existing
+      ? this.http.put(`${environment.apiUrl}/PaymentStatus/${existing.id}`, write)
+      : this.http.post(`${environment.apiUrl}/PaymentStatuses`, write);
+    return request$.pipe(
+      tap(() => (this.paymentStatusesCache$ = null)),
       map(() => undefined),
     );
   }
@@ -282,5 +316,10 @@ export class NotificationsService {
         );
       }),
     );
+  }
+
+  clearCache(): void {
+    this.deadlinesCache$ = null;
+    this.paymentStatusesCache$ = null;
   }
 }

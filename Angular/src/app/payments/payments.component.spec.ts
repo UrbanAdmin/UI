@@ -93,7 +93,7 @@ describe('PaymentsComponent', () => {
     // reuses that cache and goes straight to POST - no new GETs here.
     const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
     expect(postReq.request.method).toBe('POST');
-    expect(postReq.request.body).toEqual({ Apartment_Id: 1, Utility_Id: 1, Date_Id: currentDateId, Paid: true });
+    expect(postReq.request.body).toEqual({ Apartment_Id: 1, Utility_Id: 1, Date_Id: currentDateId, Paid: true, Amount: null });
     postReq.flush({ id: 0 });
 
     // reload triggered by onPeriodChange(): only PaymentStatuses' cache was
@@ -156,6 +156,53 @@ describe('PaymentsComponent', () => {
 
     expect(rows?.length).toBe(6);
     expect(rows?.every((r) => r.dueDate instanceof Date)).toBe(true);
+  });
+
+  it('shows an editable "Cantidad a pagar" column for Arriendo when an Admin', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+    fixture.detectChanges();
+
+    expect(component.displayedColumns).toContain('amount');
+    expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
+  });
+
+  it('does not show a "Cantidad a pagar" column for non-Arriendo services', () => {
+    expect(component.displayedColumns).not.toContain('amount');
+  });
+
+  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+    fixture.detectChanges();
+
+    expect(component.displayedColumns).toContain('amount');
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
+  });
+
+  it('onAmountChange calls setAmount and reloads the rows', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+
+    let rows: { apartmentId: number }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    flushArriendoUtilityCreation();
+    const row = rows!.find((r) => r.apartmentId === 1)!;
+
+    component.onAmountChange(row as never, '750000');
+
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 1, Utility_Id: 4, Date_Id: currentDateId, Paid: false, Amount: '750000' });
+    postReq.flush({ id: 0 });
+
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
   });
 
   it('shows the Pagado toggle for an Admin', () => {

@@ -4,6 +4,7 @@ export interface PaymentStatusDto {
   utilityId: number;
   dateId: number;
   paid: boolean;
+  amount: string | null;
 }
 
 /** See CounterUtilityWrite (readings/counter-utility.model.ts) for why these keys carry underscores. */
@@ -12,4 +13,5 @@ export interface PaymentStatusWrite {
   Utility_Id: number;
   Date_Id: number;
   Paid: boolean;
+  Amount: string | null;
 }
