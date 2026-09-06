@@ -12,16 +12,22 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
-import { BehaviorSubject, Observable, switchMap, map, of } from 'rxjs';
+import { BehaviorSubject, Observable, forkJoin, switchMap, map, of } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
+type OwnerServiceRow = OwnerRow & { service: ServiceName };
 
 interface Period {
   service: ServiceName;
+  month: number;
+  year: number;
+}
+
+interface MonthYear {
   month: number;
   year: number;
 }
@@ -58,9 +64,17 @@ export class PaymentsComponent {
   selectedYear: number;
 
   private readonly period$: BehaviorSubject<Period>;
+  private readonly ownerPeriod$: BehaviorSubject<MonthYear>;
   readonly deadline$: Observable<Date | null>;
   readonly rows$: Observable<OwnerRow[]>;
   readonly isReadOnly: boolean;
+
+  /** An arrendatario only ever sees their own apartment (server-scoped
+   *  already), so instead of a Servicio filter they get every servicio's
+   *  row on one page - grouped by an extra "Servicio" column. */
+  readonly ownerServices: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
+  readonly ownerDisplayedColumns: string[] = ['service', 'dueDate', 'status', 'amount', 'paid'];
+  readonly ownerRows$: Observable<OwnerServiceRow[]>;
 
   constructor(
     private notificationsService: NotificationsService,
@@ -89,12 +103,27 @@ export class PaymentsComponent {
     this.rows$ = this.period$.pipe(
       switchMap((p) => this.notificationsService.getOwnerPayments(p.service, p.month, p.year)),
     );
+
+    this.ownerPeriod$ = new BehaviorSubject<MonthYear>({ month: this.selectedMonth, year: this.selectedYear });
+
+    this.ownerRows$ = this.ownerPeriod$.pipe(
+      switchMap(({ month, year }) =>
+        forkJoin(
+          this.ownerServices.map((service) =>
+            this.notificationsService
+              .getOwnerPayments(service, month, year)
+              .pipe(map((rows) => rows.map((row) => ({ ...row, service })))),
+          ),
+        ).pipe(map((groups) => groups.flat())),
+      ),
+    );
   }
 
   readonly displayedColumns: string[] = ['apartment', 'owner', 'dueDate', 'status', 'amount', 'paid'];
 
   onPeriodChange(): void {
     this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });
+    this.ownerPeriod$.next({ month: this.selectedMonth, year: this.selectedYear });
   }
 
   saveDeadline(newDate: Date): void {

@@ -53,6 +53,36 @@ describe('PaymentsComponent', () => {
     fixture.detectChanges();
   }
 
+  /** An ApartmentOwner's page loads every servicio (including Arriendo) at
+   *  once instead of one selected servicio, so its initial HTTP exchange
+   *  differs from the admin setup() above: no separate rows$ subscription,
+   *  and Arriendo's utility-creation dance happens on the very first load
+   *  rather than only after switching selectedService. */
+  async function setupOwner() {
+    await TestBed.configureTestingModule({
+      imports: [PaymentsComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { isApartmentOwner: () => true } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PaymentsComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    const now = new Date();
+    currentDateId = 1;
+    flushArriendoUtilityCreation();
+    httpMock.expectOne(DATES_URL).flush([{ id: currentDateId, month: monthNameFor(now), year: String(now.getFullYear()) }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
+    fixture.detectChanges();
+  }
+
   beforeEach(() => setup());
 
   afterEach(() => {
@@ -175,26 +205,6 @@ describe('PaymentsComponent', () => {
     expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
   });
 
-  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner regardless of servicio', async () => {
-    TestBed.resetTestingModule();
-    await setup(true);
-
-    expect(component.displayedColumns).toContain('amount');
-    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
-  });
-
-  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner on Arriendo', async () => {
-    TestBed.resetTestingModule();
-    await setup(true);
-    component.selectedService = 'Arriendo';
-    component.onPeriodChange();
-    flushArriendoUtilityCreation();
-    fixture.detectChanges();
-
-    expect(component.displayedColumns).toContain('amount');
-    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
-  });
-
   it('onAmountChange calls setAmount and reloads the rows', () => {
     component.selectedService = 'Arriendo';
     component.onPeriodChange();
@@ -220,24 +230,57 @@ describe('PaymentsComponent', () => {
     expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeTruthy();
   });
 
-  it('hides the Pagado toggle for an ApartmentOwner', async () => {
-    TestBed.resetTestingModule();
-    await setup(true);
-
-    expect(component.isReadOnly).toBe(true);
-    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeFalsy();
-  });
-
   it('shows the editable Fecha límite de pago control for an Admin', () => {
     expect(fixture.nativeElement.textContent).toContain('Guardar');
   });
 
-  it('hides the Fecha límite de pago editor for an ApartmentOwner, showing it as read-only text instead', async () => {
+  it('hides the Servicio filter for an ApartmentOwner but keeps Mes/Año', async () => {
     TestBed.resetTestingModule();
-    await setup(true);
+    await setupOwner();
+
+    const labels: string[] = Array.from(fixture.nativeElement.querySelectorAll('mat-label')).map(
+      (el) => (el as Element).textContent ?? '',
+    );
+    expect(labels).not.toContain('Servicio');
+    expect(labels).toContain('Mes');
+    expect(labels).toContain('Año');
+  });
+
+  it('groups every servicio (including Arriendo) into one table for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setupOwner();
+
+    let rows: { service: string }[] | undefined;
+    component.ownerRows$.subscribe((r) => (rows = r as typeof rows));
+
+    expect(Array.from(new Set(rows?.map((r) => r.service))).sort()).toEqual(['Agua', 'Arriendo', 'Gas', 'Luz']);
+    expect(component.ownerDisplayedColumns).toContain('service');
+    expect(fixture.nativeElement.textContent).toContain('Servicio');
+  });
+
+  it('hides the Pagado toggle for an ApartmentOwner, showing a check/cancel icon instead', async () => {
+    TestBed.resetTestingModule();
+    await setupOwner();
+
+    expect(component.isReadOnly).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('mat-icon')).toBeTruthy();
+  });
+
+  it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setupOwner();
+
+    expect(component.ownerDisplayedColumns).toContain('amount');
+    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
+    expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
+  });
+
+  it('does not show a Servicio-select-driven Fecha límite de pago/Guardar control for an ApartmentOwner', async () => {
+    TestBed.resetTestingModule();
+    await setupOwner();
 
     expect(fixture.nativeElement.textContent).not.toContain('Guardar');
-    expect(fixture.nativeElement.textContent).toContain('Fecha límite de pago');
   });
 
   function flushArriendoUtilityCreation(): void {
