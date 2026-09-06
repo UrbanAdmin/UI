@@ -36,8 +36,8 @@ describe('ReadingsService', () => {
     httpMock.verify();
   });
 
-  it('getReadings returns 12 months, gap-filled with null counter where no CounterUtility row matches', () => {
-    let result: { month: number; counter: string | null }[] | undefined;
+  it('getReadings returns 12 months, gap-filled with null counter/fee where no CounterUtility row matches', () => {
+    let result: { month: number; counter: string | null; fee: string | null }[] | undefined;
 
     service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
 
@@ -50,7 +50,9 @@ describe('ReadingsService', () => {
 
     expect(result?.length).toBe(12);
     expect(result?.find((r) => r.month === 3)?.counter).toBe('1520');
+    expect(result?.find((r) => r.month === 3)?.fee).toBe('12500');
     expect(result?.find((r) => r.month === 1)?.counter).toBeNull();
+    expect(result?.find((r) => r.month === 1)?.fee).toBeNull();
   });
 
   it('recordReading creates a new CounterUtility with underscore-keyed body when none exists, resolving the new id after a refetch', () => {

@@ -60,6 +60,7 @@ export class ReadingsService {
             year,
             counter: match?.counter ?? null,
             evidenceFileName: this.evidenceByKey.get(this.key(apartmentId, service, month, year)) ?? null,
+            fee: match?.fee ?? null,
           };
         }),
       ),

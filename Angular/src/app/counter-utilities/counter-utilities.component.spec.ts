@@ -130,6 +130,17 @@ describe('CounterUtilitiesComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Recibo del servicio');
   });
 
+  it('shows a Valor a pagar column for an ApartmentOwner (inquilino) but not for an Admin', async () => {
+    expect(component.displayedColumns).not.toContain('valorAPagar');
+    expect(fixture.nativeElement.textContent).not.toContain('Valor a pagar');
+
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(component.displayedColumns).toContain('valorAPagar');
+    expect(fixture.nativeElement.textContent).toContain('Valor a pagar');
+  });
+
   it('onReceiptFileSelected requests an OCR preview and pre-fills the receipt total', () => {
     const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
 

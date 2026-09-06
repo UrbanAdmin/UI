@@ -3,4 +3,5 @@ export interface MeterReading {
   year: number;
   counter: string | null;
   evidenceFileName: string | null;
+  fee: string | null;
 }

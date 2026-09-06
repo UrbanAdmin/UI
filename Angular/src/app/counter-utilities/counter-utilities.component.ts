@@ -55,8 +55,13 @@ export class CounterUtilitiesComponent {
 
   readonly apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
-  readonly displayedColumns: string[] = ['mes', 'lectura', 'evidencia'];
   readonly isReadOnly = this.authService.isApartmentOwner();
+  // Inquilino sees what each reading translates into: its share of that
+  // period's bill (CounterUtility.Fee). Admin edits raw readings here and
+  // already sees the bill split elsewhere, so it stays off their view.
+  readonly displayedColumns: string[] = this.isReadOnly
+    ? ['mes', 'lectura', 'evidencia', 'valorAPagar']
+    : ['mes', 'lectura', 'evidencia'];
 
   // Not per-apartment: Invoice.Total is one shared bill per (Servicio, Mes,
   // Año), split across every apartment's consumption server-side - shown
