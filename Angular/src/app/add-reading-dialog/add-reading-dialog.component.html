@@ -1,5 +1,6 @@
 <h2 mat-dialog-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</h2>
 <mat-dialog-content>
+  <p class="owner-subtitle">{{ data.owner }}</p>
   <form>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Mes</mat-label>
@@ -11,14 +12,25 @@
     </mat-form-field>
 
     <div class="file-field">
-      <label>Evidencia</label>
+      <label>Foto del medidor (opcional)</label>
       <input type="file" accept="image/*" (change)="onFileSelected($event)" />
-      @if (selectedFileName) {
-        <span class="file-name">{{ selectedFileName }}</span>
+      @if (selectedFile) {
+        <span class="file-name">{{ selectedFile.name }}</span>
+      }
+      @if (ocrLoading) {
+        <span class="ocr-loading">
+          <mat-spinner diameter="16"></mat-spinner>
+          Leyendo el medidor&hellip;
+        </span>
       }
     </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Lectura actual</mat-label>
+      <input matInput type="text" [(ngModel)]="counter" name="counter" />
+    </mat-form-field>
   </form>
 </mat-dialog-content>
-<mat-dialog-actions align="center">
-  <button mat-raised-button color="primary" (click)="save()" [disabled]="!selectedFileName">Subir</button>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!counter">Guardar</button>
 </mat-dialog-actions>

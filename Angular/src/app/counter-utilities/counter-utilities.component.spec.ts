@@ -5,7 +5,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { CounterUtilitiesComponent } from './counter-utilities.component';
-import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/add-manual-reading-dialog.component';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 import { ApartmentDto } from '../shared/apartment.model';
 import { AuthService } from '../auth.service';
@@ -92,19 +91,6 @@ describe('CounterUtilitiesComponent', () => {
     // Already resolved during beforeEach's render pass - shareReplay(1)
     // replays it synchronously, no further HTTP calls expected here.
     expect(rows?.length).toBe(12);
-  });
-
-  it('openAddManualReadingDialog should open the dialog with the apartment/service context', () => {
-    const apartment = { id: 2, number: '201', owner: 'Bryan', ...CONTRACT_FIELDS };
-
-    component.openAddManualReadingDialog(apartment, 'Luz');
-
-    expect(dialogOpen).toHaveBeenCalledWith(
-      AddManualReadingDialogComponent,
-      expect.objectContaining({
-        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Luz' },
-      }),
-    );
   });
 
   it('openAddReadingDialog should open the dialog with the apartment/service context', () => {

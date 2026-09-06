@@ -6,7 +6,6 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
-import { AddManualReadingDialogComponent } from '../add-manual-reading-dialog/add-manual-reading-dialog.component';
 
 import { Observable, map, shareReplay } from 'rxjs';
 import { Apartment } from '../shared/apartment.model';
@@ -74,19 +73,6 @@ export class CounterUtilitiesComponent {
   openAddReadingDialog(apartment: Apartment, service: ServiceName) {
     this.dialog
       .open(AddReadingDialogComponent, {
-        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service },
-      })
-      .afterClosed()
-      .subscribe((saved) => {
-        if (saved) {
-          this.invalidateRows(apartment, service);
-        }
-      });
-  }
-
-  openAddManualReadingDialog(apartment: Apartment, service: ServiceName) {
-    this.dialog
-      .open(AddManualReadingDialogComponent, {
         width: '420px',
         maxHeight: '90vh',
         data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service },

@@ -1,14 +1,22 @@
 import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ReadingsService } from '../readings/readings.service';
 import { MONTH_NAMES } from '../notifications/month-names';
-import { AddReadingDialogData } from '../add-manual-reading-dialog/add-manual-reading-dialog.component';
+import { ServiceName } from '../notifications/notification.model';
+
+export interface AddReadingDialogData {
+  apartmentId: number;
+  apartment: string;
+  owner: string;
+  service: ServiceName;
+}
 
 @Component({
   selector: 'app-add-reading-dialog',
@@ -16,13 +24,23 @@ import { AddReadingDialogData } from '../add-manual-reading-dialog/add-manual-re
   templateUrl: './add-reading-dialog.component.html',
   styleUrls: ['./add-reading-dialog.component.css'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatSelectModule],
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+  ],
 })
 export class AddReadingDialogComponent {
   readonly monthNames = MONTH_NAMES;
 
   month: number = new Date().getMonth() + 1;
-  selectedFileName: string | null = null;
+  counter: string | null = null;
+  selectedFile: File | null = null;
+  ocrLoading = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: AddReadingDialogData,
@@ -32,12 +50,37 @@ export class AddReadingDialogComponent {
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.selectedFileName = input.files?.[0]?.name ?? null;
+    const file = input.files?.[0] ?? null;
+    this.selectedFile = file;
+    if (!file) {
+      return;
+    }
+
+    this.ocrLoading = true;
+    this.readingsService.ocrPreviewCounter(file).subscribe({
+      next: (result) => {
+        this.ocrLoading = false;
+        // A suggestion pre-fills the field - never overwrites silently,
+        // the admin still reviews/edits it before Guardar.
+        if (result.suggestedCounter) {
+          this.counter = result.suggestedCounter;
+        }
+      },
+      error: () => (this.ocrLoading = false),
+    });
   }
 
   save(): void {
     this.readingsService
-      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), null, this.selectedFileName)
-      .subscribe(() => this.dialogRef.close(true));
+      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), this.counter, this.selectedFile?.name ?? null)
+      .subscribe((counterUtilityId) => {
+        if (this.selectedFile && counterUtilityId) {
+          this.readingsService
+            .uploadCounterUtilityPhoto(counterUtilityId, this.selectedFile)
+            .subscribe(() => this.dialogRef.close(true));
+        } else {
+          this.dialogRef.close(true);
+        }
+      });
   }
 }

@@ -1,12 +1,18 @@
+.owner-subtitle {
+  margin: -8px 0 12px;
+  opacity: 0.7;
+}
+
 .full-width {
   width: 100%;
+  margin-bottom: 8px;
 }
 
 .file-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 8px;
+  margin-bottom: 16px;
 }
 
 .file-field label {
@@ -15,6 +21,14 @@
 }
 
 .file-name {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.ocr-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.85rem;
   opacity: 0.85;
 }
