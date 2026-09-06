@@ -34,7 +34,7 @@ export class ManageUsersComponent {
   private readonly apartments = toSignal(this.apartmentsService.getApartments(), { initialValue: [] as Apartment[] });
 
   roleLabel(role: string): string {
-    return role === 'Admin' ? 'Administrador' : 'Propietario';
+    return role === 'Admin' ? 'Administrador' : 'Arrendatario';
   }
 
   apartmentNumber(apartmentId: number | null): string {
