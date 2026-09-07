@@ -36,28 +36,33 @@ describe('ReadingsService', () => {
     httpMock.verify();
   });
 
-  it('getReadings returns 12 months, gap-filled with null counter/fee where no CounterUtility row matches', () => {
-    let result: { month: number; counter: string | null; fee: string | null }[] | undefined;
+  it('getReadings returns 12 months, gap-filled with null counter/fee/evidence where no CounterUtility row matches', () => {
+    let result: { month: number; counter: string | null; fee: string | null; evidenceFileName: string | null }[] | undefined;
 
     service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
     const counterUtilities: CounterUtilityDto[] = [
-      { id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 1, counter: '1520', difference: '15', fee: '12500' },
+      { id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 1, counter: '1520', difference: '15', fee: '12500', photoFileName: 'medidor.jpg' },
     ];
     httpMock.expectOne(COUNTER_UTILITIES_URL).flush(counterUtilities);
 
     expect(result?.length).toBe(12);
     expect(result?.find((r) => r.month === 3)?.counter).toBe('1520');
     expect(result?.find((r) => r.month === 3)?.fee).toBe('12500');
+    // Evidencia reflects the backend's stored photo, not an in-memory guess -
+    // it must survive a page reload (a fresh ReadingsService instance), which
+    // this test's isolated TestBed setup already exercises.
+    expect(result?.find((r) => r.month === 3)?.evidenceFileName).toBe('medidor.jpg');
     expect(result?.find((r) => r.month === 1)?.counter).toBeNull();
     expect(result?.find((r) => r.month === 1)?.fee).toBeNull();
+    expect(result?.find((r) => r.month === 1)?.evidenceFileName).toBeNull();
   });
 
   it('recordReading creates a new CounterUtility with underscore-keyed body when none exists, resolving the new id after a refetch', () => {
-    let result: number | null | undefined;
-    service.recordReading(1, 'Agua', 3, 2026, '1520', null).subscribe((id) => (result = id));
+    let result: number | undefined;
+    service.recordReading(1, 'Agua', 3, 2026, '1520').subscribe((id) => (result = id));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
@@ -86,8 +91,8 @@ describe('ReadingsService', () => {
   });
 
   it('recordReading updates the existing CounterUtility (PUT) when one already exists, resolving its id', () => {
-    let result: number | null | undefined;
-    service.recordReading(1, 'Agua', 3, 2026, '1600', null).subscribe((id) => (result = id));
+    let result: number | undefined;
+    service.recordReading(1, 'Agua', 3, 2026, '1600').subscribe((id) => (result = id));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
@@ -141,41 +146,23 @@ describe('ReadingsService', () => {
     expect(done).toBe(true);
   });
 
-  it('recordReading with a null counter (evidence-only save) never calls the CounterUtilities API', () => {
-    let done = false;
-    service.recordReading(1, 'Agua', 3, 2026, null, 'foto.jpg').subscribe(() => (done = true));
-
-    httpMock.expectNone(UTILITIES_URL);
-    httpMock.expectNone(COUNTER_UTILITIES_URL);
-    expect(done).toBe(true);
-  });
-
-  it('getReadings overlays an in-memory evidenceFileName after an evidence-only recordReading', () => {
-    service.recordReading(1, 'Agua', 3, 2026, null, 'foto.jpg').subscribe();
-
-    let result: { month: number; evidenceFileName: string | null }[] | undefined;
-    service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
-
+  it('clearCache forces the next getReadings call to refetch CounterUtilities instead of replaying stale data', () => {
+    service.getReadings(1, 'Agua', 2026).subscribe();
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
     httpMock.expectOne(COUNTER_UTILITIES_URL).flush([]);
-
-    expect(result?.find((r) => r.month === 3)?.evidenceFileName).toBe('foto.jpg');
-    expect(result?.find((r) => r.month === 1)?.evidenceFileName).toBeNull();
-  });
-
-  it('clearCache forces the next getReadings call to refetch CounterUtilities and drops in-memory evidence filenames', () => {
-    service.recordReading(1, 'Agua', 3, 2026, null, 'foto.jpg').subscribe();
 
     service.clearCache();
 
-    let result: { month: number; counter: string | null; evidenceFileName: string | null }[] | undefined;
+    let result: { month: number; counter: string | null }[] | undefined;
     service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
 
-    httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
-    httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
-    httpMock.expectOne(COUNTER_UTILITIES_URL).flush([]);
+    // Utilities/Dates are unaffected by clearCache (only counterUtilitiesCache$
+    // is invalidated) - already cached from the first getReadings call above.
+    httpMock
+      .expectOne(COUNTER_UTILITIES_URL)
+      .flush([{ id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 1, counter: '1520', difference: '15', fee: '12500' }]);
 
-    expect(result?.find((r) => r.month === 3)?.evidenceFileName).toBeNull();
+    expect(result?.find((r) => r.month === 3)?.counter).toBe('1520');
   });
 });

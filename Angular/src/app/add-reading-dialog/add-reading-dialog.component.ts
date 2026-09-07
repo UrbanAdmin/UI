@@ -80,10 +80,14 @@ export class AddReadingDialogComponent {
   }
 
   save(): void {
+    if (!this.counter) {
+      return;
+    }
+
     this.readingsService
-      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), this.counter, this.selectedFile?.name ?? null)
+      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), this.counter)
       .subscribe((counterUtilityId) => {
-        if (this.selectedFile && counterUtilityId) {
+        if (this.selectedFile) {
           this.readingsService
             .uploadCounterUtilityPhoto(counterUtilityId, this.selectedFile)
             .subscribe(() => this.dialogRef.close(true));

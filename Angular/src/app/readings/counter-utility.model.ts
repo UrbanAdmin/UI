@@ -8,6 +8,7 @@ export interface CounterUtilityDto {
   counter: string;
   difference: string;
   fee: string;
+  photoFileName?: string | null;
 }
 
 /**
