@@ -196,13 +196,13 @@ describe('PaymentsComponent', () => {
 
     expect(component.displayedColumns).toContain('amount');
     expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
-    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('input[inputmode="numeric"]')).toBeTruthy();
   });
 
   it('shows an editable "Cantidad a pagar" column for every servicio, not just Arriendo', () => {
     expect(component.displayedColumns).toContain('amount');
     expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
-    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('input[inputmode="numeric"]')).toBeTruthy();
   });
 
   it('onAmountChange calls setAmount and reloads the rows', () => {
@@ -272,7 +272,7 @@ describe('PaymentsComponent', () => {
     await setupOwner();
 
     expect(component.ownerDisplayedColumns).toContain('amount');
-    expect(fixture.nativeElement.querySelector('input[type="number"]')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('input[inputmode="numeric"]')).toBeFalsy();
     expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
   });
 

@@ -17,6 +17,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
+import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
+import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 type OwnerServiceRow = OwnerRow & { service: ServiceName };
@@ -48,6 +50,8 @@ interface MonthYear {
     MatSelectModule,
     MatSlideToggleModule,
     MatTableModule,
+    CopCurrencyPipe,
+    CopCurrencyInputDirective,
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './payments.component.html',

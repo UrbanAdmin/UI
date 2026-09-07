@@ -25,6 +25,8 @@ import { ReadingsService } from '../readings/readings.service';
 import { InvoicesService } from '../readings/invoices.service';
 import { MeterReading } from '../readings/reading.model';
 import { AuthService } from '../auth.service';
+import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
+import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -46,6 +48,8 @@ type ReadingRow = MeterReading & { monthLabel: string };
     MatSelectModule,
     MatTabsModule,
     MatTableModule,
+    CopCurrencyPipe,
+    CopCurrencyInputDirective,
   ],
 })
 export class CounterUtilitiesComponent {

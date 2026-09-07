@@ -79,7 +79,7 @@
           <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
           <td mat-cell *matCellDef="let row">
             <mat-form-field appearance="outline" class="amount-field">
-              <input matInput type="number" min="0" [ngModel]="row.amount" (change)="onAmountChange(row, $any($event.target).value)" />
+              <input matInput type="text" inputmode="numeric" [copCurrencyInput]="row.amount" (copCurrencyInputChange)="onAmountChange(row, $event)" />
             </mat-form-field>
           </td>
         </ng-container>
@@ -119,7 +119,7 @@
 
         <ng-container matColumnDef="amount">
           <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
-          <td mat-cell *matCellDef="let row">{{ row.amount ?? 'No definido' }}</td>
+          <td mat-cell *matCellDef="let row">{{ row.amount ? (row.amount | copCurrency) : 'No definido' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="paid">
