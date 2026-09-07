@@ -36,7 +36,7 @@ describe('CounterUtilitiesComponent', () => {
   let dialogOpen: ReturnType<typeof vi.fn>;
   let httpMock: HttpTestingController;
 
-  async function setup(isApartmentOwner = false) {
+  async function setup(isApartmentOwner = false, invoices: unknown[] = []) {
     dialogOpen = vi.fn().mockReturnValue({ afterClosed: () => of(null) });
 
     await TestBed.configureTestingModule({
@@ -59,9 +59,14 @@ describe('CounterUtilitiesComponent', () => {
     // The tab group renders all 6 apartments x 3 services eagerly, each
     // calling getRows$ - these three fire once each (cached across all 18
     // combos). Utilities/Dates are flushed fully seeded so no lookup ever
-    // misses and tries to POST-create mid-render.
+    // misses and tries to POST-create mid-render. For Admin, the receipt
+    // card's constructor-time lookup (loadExistingReceiptTotal) shares
+    // those same two caches, then queries Invoices once they resolve.
     httpMock.expectOne(`${environment.apiUrl}/Utilities`).flush(MOCK_UTILITIES);
     httpMock.expectOne(`${environment.apiUrl}/Dates`).flush(MOCK_DATES);
+    if (!isApartmentOwner) {
+      httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush(invoices);
+    }
     httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush([]);
     fixture.detectChanges();
   }
@@ -155,6 +160,33 @@ describe('CounterUtilitiesComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Valor a pagar');
   });
 
+  it('pre-fills Total del recibo from an already-saved Invoice for the default Servicio/Mes/Año', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [{ id: 5, totalCounter: '', total: '437590', dateId, utilityId: 1 }]);
+
+    expect(component.receiptTotal).toBe('437590');
+  });
+
+  it('has no pre-filled Total when no Invoice exists yet for the default period', () => {
+    expect(component.receiptTotal).toBeNull();
+  });
+
+  it('onReceiptPeriodChanged re-filters the already-cached Invoices for the newly selected period', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [
+      { id: 5, totalCounter: '', total: '437590', dateId, utilityId: 1 }, // Agua
+      { id: 8, totalCounter: '', total: '95000', dateId, utilityId: 2 }, // Luz
+    ]);
+    expect(component.receiptTotal).toBe('437590');
+
+    component.selectedReceiptService = 'Luz';
+    component.onReceiptPeriodChanged();
+
+    expect(component.receiptTotal).toBe('95000');
+  });
+
   it('onReceiptFileSelected requests an OCR preview and pre-fills the receipt total', () => {
     const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
 
@@ -166,16 +198,22 @@ describe('CounterUtilitiesComponent', () => {
     expect(component.receiptTotal).toBe('95000');
   });
 
-  it('saveReceiptTotal sets the Invoice total then uploads the receipt when a file was chosen', () => {
+  it('saveReceiptTotal sets the Invoice total then uploads the receipt when a file was chosen', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [{ id: 5, totalCounter: '', total: '', dateId, utilityId: 1 }]);
+
     const file = new File(['x'], 'recibo.pdf', { type: 'application/pdf' });
     component.onReceiptFileSelected({ target: { files: [file] } } as unknown as Event);
     httpMock.expectOne(`${environment.apiUrl}/Invoices/OcrPreview`).flush({ suggestedTotal: '95000' });
 
     component.saveReceiptTotal();
 
-    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: component.selectedReceiptMonth, utilityId: 1 }]);
+    // The Invoice for this period is already known (cached from the
+    // constructor's pre-fill lookup, seeded via setup's `invoices` param),
+    // so getOrCreateInvoice finds it without another GET /Invoices.
     const putReq = httpMock.expectOne(`${environment.apiUrl}/Invoice/5`);
-    expect(putReq.request.body).toEqual({ Total_counter: '', Total: '95000', Date_id: component.selectedReceiptMonth, Utility_id: 1 });
+    expect(putReq.request.body).toEqual({ Total_counter: '', Total: '95000', Date_id: dateId, Utility_id: 1 });
     putReq.flush({});
 
     const receiptReq = httpMock.expectOne(`${environment.apiUrl}/Invoice/5/Receipt`);
@@ -189,12 +227,14 @@ describe('CounterUtilitiesComponent', () => {
     expect(component.receiptFile).toBeNull();
   });
 
-  it('saveReceiptTotal sets the Invoice total without uploading anything when no file was chosen', () => {
+  it('saveReceiptTotal sets the Invoice total without uploading anything when no file was chosen', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [{ id: 5, totalCounter: '', total: '', dateId, utilityId: 1 }]);
     component.receiptTotal = '95000';
 
     component.saveReceiptTotal();
 
-    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: component.selectedReceiptMonth, utilityId: 1 }]);
     httpMock.expectOne(`${environment.apiUrl}/Invoice/5`).flush({});
 
     httpMock.expectNone(`${environment.apiUrl}/Invoice/5/Receipt`);

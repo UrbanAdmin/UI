@@ -89,6 +89,9 @@ export class CounterUtilitiesComponent {
     private readingsService: ReadingsService,
   ) {
     this.years = Array.from({ length: 7 }, (_, i) => this.selectedReceiptYear - 1 + i);
+    if (!this.isReadOnly) {
+      this.loadExistingReceiptTotal();
+    }
   }
 
   getRows$(apartment: Apartment, service: ServiceName): Observable<ReadingRow[]> {
@@ -129,6 +132,30 @@ export class CounterUtilitiesComponent {
           this.invalidateRows(apartment, service);
         }
       });
+  }
+
+  onReceiptPeriodChanged(): void {
+    this.loadExistingReceiptTotal();
+  }
+
+  /** Pre-fills "Total del recibo" with whatever is already saved for the
+   *  selected Servicio/Mes/Año, so switching back to (or reopening) a period
+   *  that was already billed doesn't show a misleading blank field. */
+  private loadExistingReceiptTotal(): void {
+    forkJoin([this.utilitiesService.getUtilities(), this.datesService.getDates()]).subscribe(([utilities, dates]) => {
+      const utility = utilities.find((u) => u.name === this.selectedReceiptService);
+      const date = dates.find(
+        (d) => d.month === this.monthNames[this.selectedReceiptMonth - 1] && d.year === String(this.selectedReceiptYear),
+      );
+      if (!utility || !date) {
+        this.receiptTotal = null;
+        return;
+      }
+
+      this.invoicesService.findInvoice(utility.id, date.id).subscribe((invoice) => {
+        this.receiptTotal = invoice?.total || null;
+      });
+    });
   }
 
   onReceiptFileSelected(event: Event): void {

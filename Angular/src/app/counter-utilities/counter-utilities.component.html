@@ -5,7 +5,7 @@
       <div class="receipt-filters">
         <mat-form-field appearance="outline">
           <mat-label>Servicio</mat-label>
-          <mat-select [(ngModel)]="selectedReceiptService">
+          <mat-select [(ngModel)]="selectedReceiptService" (ngModelChange)="onReceiptPeriodChanged()">
             @for (service of services; track service) {
               <mat-option [value]="service">{{ service }}</mat-option>
             }
@@ -14,7 +14,7 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Mes</mat-label>
-          <mat-select [(ngModel)]="selectedReceiptMonth">
+          <mat-select [(ngModel)]="selectedReceiptMonth" (ngModelChange)="onReceiptPeriodChanged()">
             @for (name of monthNames; track name; let i = $index) {
               <mat-option [value]="i + 1">{{ name }}</mat-option>
             }
@@ -23,7 +23,7 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Año</mat-label>
-          <mat-select [(ngModel)]="selectedReceiptYear">
+          <mat-select [(ngModel)]="selectedReceiptYear" (ngModelChange)="onReceiptPeriodChanged()">
             @for (year of years; track year) {
               <mat-option [value]="year">{{ year }}</mat-option>
             }
