@@ -1,10 +1,10 @@
-<h2 mat-dialog-title>Lectura {{ data.service }} &middot; Apto {{ data.apartment }}</h2>
+<h2 mat-dialog-title>{{ isEditing ? 'Editar lectura' : 'Lectura' }} {{ data.service }} &middot; Apto {{ data.apartment }}</h2>
 <mat-dialog-content>
   <p class="owner-subtitle">{{ data.owner }}</p>
   <form>
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Mes</mat-label>
-      <mat-select [(ngModel)]="month" name="month">
+      <mat-select [(ngModel)]="month" name="month" [disabled]="isEditing">
         @for (name of monthNames; track name; let i = $index) {
           <mat-option [value]="i + 1">{{ name }}</mat-option>
         }

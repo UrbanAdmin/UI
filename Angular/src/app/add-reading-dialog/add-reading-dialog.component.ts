@@ -16,6 +16,10 @@ export interface AddReadingDialogData {
   apartment: string;
   owner: string;
   service: ServiceName;
+  /** When set, the dialog opens pre-filled for that existing reading instead
+   *  of a new one - month is locked so an edit can't drift to another period. */
+  month?: number;
+  counter?: string | null;
 }
 
 @Component({
@@ -36,9 +40,10 @@ export interface AddReadingDialogData {
 })
 export class AddReadingDialogComponent {
   readonly monthNames = MONTH_NAMES;
+  readonly isEditing: boolean;
 
-  month: number = new Date().getMonth() + 1;
-  counter: string | null = null;
+  month: number;
+  counter: string | null;
   selectedFile: File | null = null;
   ocrLoading = false;
 
@@ -46,7 +51,11 @@ export class AddReadingDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: AddReadingDialogData,
     private dialogRef: MatDialogRef<AddReadingDialogComponent>,
     private readingsService: ReadingsService,
-  ) {}
+  ) {
+    this.isEditing = data.month != null;
+    this.month = data.month ?? new Date().getMonth() + 1;
+    this.counter = data.counter ?? null;
+  }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

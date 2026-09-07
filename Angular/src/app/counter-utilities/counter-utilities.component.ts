@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -39,6 +40,7 @@ type ReadingRow = MeterReading & { monthLabel: string };
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -61,7 +63,7 @@ export class CounterUtilitiesComponent {
   // already sees the bill split elsewhere, so it stays off their view.
   readonly displayedColumns: string[] = this.isReadOnly
     ? ['mes', 'lectura', 'evidencia', 'valorAPagar']
-    : ['mes', 'lectura', 'evidencia'];
+    : ['mes', 'lectura', 'evidencia', 'acciones'];
 
   // Not per-apartment: Invoice.Total is one shared bill per (Servicio, Mes,
   // Año), split across every apartment's consumption server-side - shown
@@ -107,12 +109,19 @@ export class CounterUtilitiesComponent {
     this.rowsCache.delete(`${apartment.id}|${service}`);
   }
 
-  openAddReadingDialog(apartment: Apartment, service: ServiceName) {
+  openAddReadingDialog(apartment: Apartment, service: ServiceName, existing?: ReadingRow) {
     this.dialog
       .open(AddReadingDialogComponent, {
         width: '420px',
         maxHeight: '90vh',
-        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service },
+        data: {
+          apartmentId: apartment.id,
+          apartment: apartment.number,
+          owner: apartment.owner,
+          service,
+          month: existing?.month,
+          counter: existing?.counter,
+        },
       })
       .afterClosed()
       .subscribe((saved) => {

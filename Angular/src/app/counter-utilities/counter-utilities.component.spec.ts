@@ -106,6 +106,20 @@ describe('CounterUtilitiesComponent', () => {
     );
   });
 
+  it('openAddReadingDialog passes the existing month/counter through when editing a row', () => {
+    const apartment = { id: 3, number: '202', owner: 'Yesenia', ...CONTRACT_FIELDS };
+    const existing = { month: 5, year: 2026, counter: '1520', evidenceFileName: null, fee: '12500', monthLabel: 'Mayo' };
+
+    component.openAddReadingDialog(apartment, 'Gas', existing);
+
+    expect(dialogOpen).toHaveBeenCalledWith(
+      AddReadingDialogComponent,
+      expect.objectContaining({
+        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas', month: 5, counter: '1520' },
+      }),
+    );
+  });
+
   it('shows the add-reading buttons for an Admin', () => {
     expect(component.isReadOnly).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('Agregar Lectura');
