@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { of, map } from 'rxjs';
 
 import { ManageApartmentsComponent } from './manage-apartments.component';
 import { ApartmentsService } from '../shared/apartments.service';
@@ -92,6 +92,36 @@ describe('ManageApartmentsComponent', () => {
     component.openCreateDialog();
 
     expect(getApartmentsSpy).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the table with the newly created apartment, following the real dialog save sequencing', () => {
+    // Mirrors what ApartmentDialogComponent.save() does: call the real
+    // ApartmentsService.createApartment() (which nulls the cache in its own
+    // tap) and only close(true) once that completes. MatDialog's real
+    // afterClosed() fires from outside NgZone (its close animation runs via
+    // runOutsideAngular) - this catches a regression of that zone bug,
+    // which the other tests here (stubbing afterClosed with a bare of(true))
+    // can't, since they never leave the zone in the first place.
+    const apartmentsService = TestBed.inject(ApartmentsService);
+    dialogOpen.mockReturnValue({
+      afterClosed: () => apartmentsService.createApartment('303', 'Nueva', null).pipe(map(() => true)),
+    });
+
+    component.openCreateDialog();
+
+    const postReq = httpMock.expectOne(APARTMENTS_URL);
+    expect(postReq.request.method).toBe('POST');
+    postReq.flush({ success: true });
+    fixture.detectChanges();
+
+    const updatedApartments = [...MOCK_APARTMENTS, { id: 3, name: '303', owner: 'Nueva', ...CONTRACT_FIELDS }];
+    const getReq = httpMock.expectOne(APARTMENTS_URL);
+    expect(getReq.request.method).toBe('GET');
+    getReq.flush(updatedApartments);
+
+    let rows: unknown[] | undefined;
+    component.apartments$.subscribe((apartments) => (rows = apartments));
+    expect(rows).toEqual(updatedApartments.map((a) => ({ id: a.id, number: a.name, owner: a.owner, ...CONTRACT_FIELDS })));
   });
 
   it('deleteApartment asks for confirmation, then DELETEs and refreshes', () => {

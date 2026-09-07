@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { of, map } from 'rxjs';
 
 import { ManageUsersComponent } from './manage-users.component';
 import { UsersService } from '../shared/users.service';
@@ -95,6 +95,33 @@ describe('ManageUsersComponent', () => {
     const dialogArgs = dialogOpen.mock.calls[0][1];
     expect(dialogArgs.data).toEqual({ user });
     expect(getUsersSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the table with the newly created user, following the real dialog save sequencing', () => {
+    // Mirrors exactly what UserDialogComponent.save() does: call the real
+    // UsersService.createUser() (which nulls the cache in its own tap) and
+    // only close(true) once that completes - unlike the other tests here,
+    // this doesn't shortcut past that sequencing with `of(true)`.
+    const usersService = TestBed.inject(UsersService);
+    dialogOpen.mockReturnValue({
+      afterClosed: () => usersService.createUser('newuser', 'Password1!', 'ApartmentOwner', 1).pipe(map(() => true)),
+    });
+
+    component.openCreateDialog();
+
+    const postReq = httpMock.expectOne(USERS_URL);
+    expect(postReq.request.method).toBe('POST');
+    postReq.flush({ success: true, userId: 3, error: null });
+    fixture.detectChanges();
+
+    const updatedUsers = [...MOCK_USERS, { id: 3, username: 'newuser', role: 'ApartmentOwner', apartmentId: 1 }];
+    const getReq = httpMock.expectOne(USERS_URL);
+    expect(getReq.request.method).toBe('GET');
+    getReq.flush(updatedUsers);
+
+    let rows: unknown[] | undefined;
+    component.users$.subscribe((users) => (rows = users));
+    expect(rows).toEqual(updatedUsers);
   });
 
   it('deleteUser asks for confirmation, then DELETEs and refreshes', () => {

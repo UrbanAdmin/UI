@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 
@@ -58,6 +58,7 @@ export class CounterUtilitiesComponent {
   private readonly utilitiesService = inject(UtilitiesService);
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
+  private readonly ngZone = inject(NgZone);
 
   readonly apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
@@ -131,8 +132,13 @@ export class CounterUtilitiesComponent {
       })
       .afterClosed()
       .subscribe((saved) => {
+        // MatDialog emits afterClosed() from outside NgZone (its close
+        // animation runs via runOutsideAngular), so invalidating the rows
+        // cache here needs to explicitly re-enter the zone - otherwise no
+        // change detection runs and the table's async pipe never
+        // re-subscribes to pick up the fresh getRows$ call.
         if (saved) {
-          this.invalidateRows(apartment, service);
+          this.ngZone.run(() => this.invalidateRows(apartment, service));
         }
       });
   }

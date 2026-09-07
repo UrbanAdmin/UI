@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,6 +27,7 @@ export class ManageUsersComponent {
   private readonly usersService = inject(UsersService);
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly dialog = inject(MatDialog);
+  private readonly ngZone = inject(NgZone);
 
   readonly displayedColumns: string[] = ['username', 'role', 'apartment', 'actions'];
   users$: Observable<User[]> = this.usersService.getUsers();
@@ -49,8 +50,13 @@ export class ManageUsersComponent {
       .open(UserDialogComponent, { width: '420px', data: { user: null } })
       .afterClosed()
       .subscribe((saved) => {
+        // MatDialog emits afterClosed() from outside NgZone (its close
+        // animation runs via runOutsideAngular), so reassigning users$
+        // here needs to explicitly re-enter the zone - otherwise no change
+        // detection ever runs and the async pipe never re-subscribes,
+        // silently skipping the refetch.
         if (saved) {
-          this.refresh();
+          this.ngZone.run(() => this.refresh());
         }
       });
   }
@@ -60,8 +66,13 @@ export class ManageUsersComponent {
       .open(UserDialogComponent, { width: '420px', data: { user } })
       .afterClosed()
       .subscribe((saved) => {
+        // MatDialog emits afterClosed() from outside NgZone (its close
+        // animation runs via runOutsideAngular), so reassigning users$
+        // here needs to explicitly re-enter the zone - otherwise no change
+        // detection ever runs and the async pipe never re-subscribes,
+        // silently skipping the refetch.
         if (saved) {
-          this.refresh();
+          this.ngZone.run(() => this.refresh());
         }
       });
   }

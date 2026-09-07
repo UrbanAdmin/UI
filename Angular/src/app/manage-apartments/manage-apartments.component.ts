@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -22,6 +22,7 @@ import { ApartmentDialogComponent } from '../apartment-dialog/apartment-dialog.c
 export class ManageApartmentsComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly dialog = inject(MatDialog);
+  private readonly ngZone = inject(NgZone);
 
   readonly displayedColumns: string[] = ['number', 'owner', 'contractStartDate', 'contract', 'actions'];
   apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
@@ -38,8 +39,13 @@ export class ManageApartmentsComponent {
       .open(ApartmentDialogComponent, { width: '420px', data: { apartment: null } })
       .afterClosed()
       .subscribe((saved) => {
+        // MatDialog emits afterClosed() from outside NgZone (its close
+        // animation runs via runOutsideAngular), so reassigning apartments$
+        // here needs to explicitly re-enter the zone - otherwise no change
+        // detection ever runs and the async pipe never re-subscribes,
+        // silently skipping the refetch.
         if (saved) {
-          this.refresh();
+          this.ngZone.run(() => this.refresh());
         }
       });
   }
@@ -49,8 +55,13 @@ export class ManageApartmentsComponent {
       .open(ApartmentDialogComponent, { width: '420px', data: { apartment } })
       .afterClosed()
       .subscribe((saved) => {
+        // MatDialog emits afterClosed() from outside NgZone (its close
+        // animation runs via runOutsideAngular), so reassigning apartments$
+        // here needs to explicitly re-enter the zone - otherwise no change
+        // detection ever runs and the async pipe never re-subscribes,
+        // silently skipping the refetch.
         if (saved) {
-          this.refresh();
+          this.ngZone.run(() => this.refresh());
         }
       });
   }
