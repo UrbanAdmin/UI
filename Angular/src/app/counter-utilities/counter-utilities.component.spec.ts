@@ -29,7 +29,13 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 const CURRENT_YEAR = String(new Date().getFullYear());
-const MOCK_DATES = MONTH_NAMES.map((month, i) => ({ id: i + 1, month, year: CURRENT_YEAR }));
+// Includes December of the previous year too (id 0, distinct from the 1-12
+// used below) so getRows$'s previous-month lookup still resolves without an
+// unexpected create whenever a test happens to run in January.
+const MOCK_DATES = [
+  { id: 0, month: 'Diciembre', year: String(Number(CURRENT_YEAR) - 1) },
+  ...MONTH_NAMES.map((month, i) => ({ id: i + 1, month, year: CURRENT_YEAR })),
+];
 
 describe('CounterUtilitiesComponent', () => {
   let component: CounterUtilitiesComponent;
@@ -90,13 +96,15 @@ describe('CounterUtilitiesComponent', () => {
     expect(component.services).toEqual(['Agua', 'Luz', 'Gas']);
   });
 
-  it('getRows$ should return 12 months for a given apartment/service, cached across repeated calls', () => {
-    let rows: unknown[] | undefined;
+  it('getRows$ returns only the previous and current month, cached across repeated calls', () => {
+    let rows: { month: number }[] | undefined;
     component.getRows$({ id: 1, number: '101', owner: 'TBD', ...CONTRACT_FIELDS }, 'Agua').subscribe((r) => (rows = r));
 
     // Already resolved during beforeEach's render pass - shareReplay(1)
     // replays it synchronously, no further HTTP calls expected here.
-    expect(rows?.length).toBe(12);
+    const currentMonth = new Date().getMonth() + 1;
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    expect(rows?.map((r) => r.month)).toEqual([previousMonth, currentMonth]);
   });
 
   it('openAddReadingDialog should open the dialog with the apartment/service context', () => {
@@ -121,7 +129,7 @@ describe('CounterUtilitiesComponent', () => {
     expect(dialogOpen).toHaveBeenCalledWith(
       AddReadingDialogComponent,
       expect.objectContaining({
-        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas', month: 5, counter: '1520' },
+        data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas', month: 5, year: 2026, counter: '1520' },
       }),
     );
   });
@@ -168,14 +176,22 @@ describe('CounterUtilitiesComponent', () => {
   });
 
   it('shows the receipt card for an Admin', () => {
-    expect(fixture.nativeElement.textContent).toContain('Recibo del servicio');
+    expect(fixture.nativeElement.textContent).toContain('Recibo de Agua');
   });
 
   it('hides the receipt card for an ApartmentOwner', async () => {
     TestBed.resetTestingModule();
     await setup(true);
 
-    expect(fixture.nativeElement.textContent).not.toContain('Recibo del servicio');
+    expect(fixture.nativeElement.textContent).not.toContain('Recibo de Agua');
+  });
+
+  it('still shows the shared Servicio selector for an ApartmentOwner, who has no receipt card of their own', async () => {
+    TestBed.resetTestingModule();
+    await setup(true);
+
+    expect(fixture.nativeElement.querySelector('.service-selector')).toBeTruthy();
+    expect(() => component.onServiceChanged()).not.toThrow();
   });
 
   it('shows a Cantidad a pagar column for both Admin and ApartmentOwner (inquilino)', async () => {
@@ -210,8 +226,23 @@ describe('CounterUtilitiesComponent', () => {
     ]);
     expect(component.receiptTotal).toBe('437590');
 
-    component.selectedReceiptService = 'Luz';
+    component.selectedService = 'Luz';
     component.onReceiptPeriodChanged();
+
+    expect(component.receiptTotal).toBe('95000');
+  });
+
+  it('onServiceChanged recomputes Total del recibo for the newly selected Servicio - the single Servicio selector drives both the receipt card and the reading tables, so there is no separate per-tab selection to keep in sync', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [
+      { id: 5, totalCounter: '', total: '437590', dateId, utilityId: 1 }, // Agua
+      { id: 8, totalCounter: '', total: '95000', dateId, utilityId: 2 }, // Luz
+    ]);
+    expect(component.receiptTotal).toBe('437590');
+
+    component.selectedService = 'Luz';
+    component.onServiceChanged();
 
     expect(component.receiptTotal).toBe('95000');
   });
@@ -241,7 +272,7 @@ describe('CounterUtilitiesComponent', () => {
     ]);
     expect(component.consumoTotal).toBe(11829);
 
-    component.selectedReceiptService = 'Luz';
+    component.selectedService = 'Luz';
     component.onReceiptPeriodChanged();
 
     expect(component.consumoTotal).toBe(20);

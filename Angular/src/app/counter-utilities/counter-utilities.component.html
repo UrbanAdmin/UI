@@ -1,17 +1,18 @@
+
+<mat-form-field appearance="outline" class="service-selector">
+  <mat-label>Servicio</mat-label>
+  <mat-select [(ngModel)]="selectedService" (ngModelChange)="onServiceChanged()">
+    @for (service of services; track service) {
+      <mat-option [value]="service">{{ service }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
 @if (!isReadOnly) {
   <mat-card class="receipt-card">
-    <mat-card-title>Recibo del servicio</mat-card-title>
+    <mat-card-title>Recibo de {{ selectedService }}</mat-card-title>
     <mat-card-content>
       <div class="receipt-filters">
-        <mat-form-field appearance="outline">
-          <mat-label>Servicio</mat-label>
-          <mat-select [(ngModel)]="selectedReceiptService" (ngModelChange)="onReceiptPeriodChanged()">
-            @for (service of services; track service) {
-              <mat-option [value]="service">{{ service }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
         <mat-form-field appearance="outline">
           <mat-label>Mes</mat-label>
           <mat-select [(ngModel)]="selectedReceiptMonth" (ngModelChange)="onReceiptPeriodChanged()">
@@ -66,54 +67,48 @@
   @for (apartment of apartments; track apartment.number) {
     <mat-tab [label]="'Apto ' + apartment.number">
       <div class="tab-content">
-        <mat-tab-group>
-          @for (service of services; track service) {
-            <mat-tab [label]="service">
-              <div class="table-container">
-                <table mat-table [dataSource]="(getRows$(apartment, service) | async) ?? []" class="mat-elevation-z1">
-                  <ng-container matColumnDef="mes">
-                    <th mat-header-cell *matHeaderCellDef>Mes</th>
-                    <td mat-cell *matCellDef="let row">{{ row.monthLabel }}</td>
-                  </ng-container>
+        <div class="table-container">
+          <table mat-table [dataSource]="(getRows$(apartment, selectedService) | async) ?? []" class="mat-elevation-z1">
+            <ng-container matColumnDef="mes">
+              <th mat-header-cell *matHeaderCellDef>Mes</th>
+              <td mat-cell *matCellDef="let row">{{ row.monthLabel }}</td>
+            </ng-container>
 
-                  <ng-container matColumnDef="lectura">
-                    <th mat-header-cell *matHeaderCellDef>Lectura</th>
-                    <td mat-cell *matCellDef="let row">{{ row.counter ?? '—' }}</td>
-                  </ng-container>
+            <ng-container matColumnDef="lectura">
+              <th mat-header-cell *matHeaderCellDef>Lectura</th>
+              <td mat-cell *matCellDef="let row">{{ row.counter ?? '—' }}</td>
+            </ng-container>
 
-                  <ng-container matColumnDef="evidencia">
-                    <th mat-header-cell *matHeaderCellDef>Evidencia</th>
-                    <td mat-cell *matCellDef="let row">{{ row.evidenceFileName ?? '—' }}</td>
-                  </ng-container>
+            <ng-container matColumnDef="evidencia">
+              <th mat-header-cell *matHeaderCellDef>Evidencia</th>
+              <td mat-cell *matCellDef="let row">{{ row.evidenceFileName ?? '—' }}</td>
+            </ng-container>
 
-                  <ng-container matColumnDef="cantidadAPagar">
-                    <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
-                    <td mat-cell *matCellDef="let row">{{ row.fee ? (row.fee | copCurrency) : '—' }}</td>
-                  </ng-container>
+            <ng-container matColumnDef="cantidadAPagar">
+              <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
+              <td mat-cell *matCellDef="let row">{{ row.fee ? (row.fee | copCurrency) : '—' }}</td>
+            </ng-container>
 
-                  <ng-container matColumnDef="acciones">
-                    <th mat-header-cell *matHeaderCellDef>Acciones</th>
-                    <td mat-cell *matCellDef="let row">
-                      @if (row.counter) {
-                        <button mat-icon-button (click)="openAddReadingDialog(apartment, service, row)" aria-label="Editar lectura">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                      }
-                    </td>
-                  </ng-container>
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let row">
+                @if (row.counter) {
+                  <button mat-icon-button (click)="openAddReadingDialog(apartment, selectedService, row)" aria-label="Editar lectura">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
 
-                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-                </table>
-              </div>
-              @if (!isReadOnly) {
-                <div class="button-container-inline">
-                  <button mat-raised-button color="primary" (click)="openAddReadingDialog(apartment, service)">Agregar Lectura</button>
-                </div>
-              }
-            </mat-tab>
-          }
-        </mat-tab-group>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+        @if (!isReadOnly) {
+          <div class="button-container-inline">
+            <button mat-raised-button color="primary" (click)="openAddReadingDialog(apartment, selectedService)">Agregar Lectura</button>
+          </div>
+        }
       </div>
     </mat-tab>
   }

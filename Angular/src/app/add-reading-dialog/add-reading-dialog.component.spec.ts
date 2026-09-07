@@ -192,3 +192,59 @@ describe('AddReadingDialogComponent (editing an existing reading)', () => {
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
 });
+
+describe('AddReadingDialogComponent (editing a reading from a previous year, e.g. December after the new year starts)', () => {
+  let component: AddReadingDialogComponent;
+  let dialogRef: { close: ReturnType<typeof vi.fn> };
+  let httpMock: HttpTestingController;
+
+  const previousYear = new Date().getFullYear() - 1;
+  const editData = { apartmentId: 2, apartment: '201', owner: 'Bryan', service: 'Agua' as const, month: 12, year: previousYear, counter: '1520' };
+
+  beforeEach(async () => {
+    dialogRef = { close: vi.fn() };
+
+    await TestBed.configureTestingModule({
+      imports: [AddReadingDialogComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: MAT_DIALOG_DATA, useValue: editData },
+        { provide: MatDialogRef, useValue: dialogRef },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(AddReadingDialogComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('pre-fills the year from the existing reading instead of defaulting to the current year', () => {
+    expect(component.year).toBe(previousYear);
+  });
+
+  it('save resolves the Date using the reading\'s own year, not the current one', () => {
+    component.counter = '1600';
+
+    component.save();
+
+    httpMock.expectOne(`${environment.apiUrl}/Utilities`).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne(`${environment.apiUrl}/Dates`).flush([{ id: 9, month: 'Diciembre', year: String(previousYear) }]);
+    httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush([{ id: 5, totalCounter: '', total: '', dateId: 9, utilityId: 1 }]);
+    const existing = [{ id: 42, apartmentId: 2, utilityId: 1, dateId: 9, invoiceId: 5, counter: '1520', difference: '15', fee: '12500' }];
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush(existing);
+
+    const putReq = httpMock.expectOne(`${environment.apiUrl}/CounterUtility/42`);
+    expect(putReq.request.body).toEqual(
+      expect.objectContaining({ Date_Id: 9, Counter: '1600' }),
+    );
+    putReq.flush({});
+
+    expect(dialogRef.close).toHaveBeenCalledWith(true);
+  });
+});

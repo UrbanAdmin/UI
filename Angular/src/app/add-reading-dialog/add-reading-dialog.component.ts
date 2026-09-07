@@ -19,6 +19,10 @@ export interface AddReadingDialogData {
   /** When set, the dialog opens pre-filled for that existing reading instead
    *  of a new one - month is locked so an edit can't drift to another period. */
   month?: number;
+  /** The existing reading's actual year - required alongside month when
+   *  editing, since "previous month" can fall in an earlier year (January's
+   *  previous month is December of the prior year). */
+  year?: number;
   counter?: string | null;
 }
 
@@ -43,6 +47,7 @@ export class AddReadingDialogComponent {
   readonly isEditing: boolean;
 
   month: number;
+  year: number;
   counter: string | null;
   selectedFile: File | null = null;
   ocrLoading = false;
@@ -54,6 +59,7 @@ export class AddReadingDialogComponent {
   ) {
     this.isEditing = data.month != null;
     this.month = data.month ?? new Date().getMonth() + 1;
+    this.year = data.year ?? new Date().getFullYear();
     this.counter = data.counter ?? null;
   }
 
@@ -85,7 +91,7 @@ export class AddReadingDialogComponent {
     }
 
     this.readingsService
-      .recordReading(this.data.apartmentId, this.data.service, this.month, new Date().getFullYear(), this.counter)
+      .recordReading(this.data.apartmentId, this.data.service, this.month, this.year, this.counter)
       .subscribe((counterUtilityId) => {
         if (this.selectedFile) {
           this.readingsService

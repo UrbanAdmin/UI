@@ -74,7 +74,7 @@ export class CounterUtilitiesComponent {
   // once here rather than repeated identically inside every apartment tab.
   readonly monthNames = MONTH_NAMES;
   readonly years: number[];
-  selectedReceiptService: ServiceName = 'Agua';
+  selectedService: ServiceName = 'Agua';
   selectedReceiptMonth: number = new Date().getMonth() + 1;
   selectedReceiptYear: number = new Date().getFullYear();
   receiptTotal: string | null = null;
@@ -103,18 +103,42 @@ export class CounterUtilitiesComponent {
     }
   }
 
+  // Only the previous and current calendar month are shown - a full year of
+  // mostly-empty rows was more noise than signal for a bill that's read and
+  // paid month to month. In January, "previous" falls in the prior year, so
+  // that month has to be fetched separately from a different getReadings() call.
   getRows$(apartment: Apartment, service: ServiceName): Observable<ReadingRow[]> {
     const key = `${apartment.id}|${service}`;
     let rows$ = this.rowsCache.get(key);
     if (!rows$) {
-      const year = new Date().getFullYear();
-      rows$ = this.readingsService.getReadings(apartment.id, service, year).pipe(
-        map((readings) => readings.map((reading) => ({ ...reading, monthLabel: monthName(reading.month) }))),
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
+      const current$ = this.readingsService.getReadings(apartment.id, service, currentYear);
+      const previous$ =
+        previousYear === currentYear ? current$ : this.readingsService.getReadings(apartment.id, service, previousYear);
+
+      rows$ = forkJoin([previous$, current$]).pipe(
+        map(([previousYearRows, currentYearRows]) =>
+          [previousYearRows[previousMonth - 1], currentYearRows[currentMonth - 1]].map((reading) => ({
+            ...reading,
+            monthLabel: `${monthName(reading.month)} ${reading.year}`,
+          })),
+        ),
         shareReplay(1),
       );
       this.rowsCache.set(key, rows$);
     }
     return rows$;
+  }
+
+  onServiceChanged(): void {
+    if (!this.isReadOnly) {
+      this.loadExistingReceiptTotal();
+    }
   }
 
   private invalidateRows(apartment: Apartment, service: ServiceName): void {
@@ -132,6 +156,7 @@ export class CounterUtilitiesComponent {
           owner: apartment.owner,
           service,
           month: existing?.month,
+          year: existing?.year,
           counter: existing?.counter,
         },
       })
@@ -165,7 +190,7 @@ export class CounterUtilitiesComponent {
    *  that was already billed doesn't show a misleading blank field. */
   private loadExistingReceiptTotal(): void {
     forkJoin([this.utilitiesService.getUtilities(), this.datesService.getDates()]).subscribe(([utilities, dates]) => {
-      const utility = utilities.find((u) => u.name === this.selectedReceiptService);
+      const utility = utilities.find((u) => u.name === this.selectedService);
       const date = dates.find(
         (d) => d.month === this.monthNames[this.selectedReceiptMonth - 1] && d.year === String(this.selectedReceiptYear),
       );
@@ -211,7 +236,7 @@ export class CounterUtilitiesComponent {
     }
 
     forkJoin([
-      this.utilitiesService.getOrCreateUtility(this.selectedReceiptService),
+      this.utilitiesService.getOrCreateUtility(this.selectedService),
       this.datesService.getOrCreateDate(this.selectedReceiptMonth, this.selectedReceiptYear),
     ]).subscribe(([utility, date]) => {
       this.invoicesService.setTotal(utility.id, date.id, total).subscribe((invoiceId) => {
