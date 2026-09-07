@@ -50,6 +50,12 @@
         <input matInput type="text" inputmode="numeric" [copCurrencyInput]="receiptTotal" (copCurrencyInputChange)="receiptTotal = $event" />
       </mat-form-field>
 
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Consumo total (100%)</mat-label>
+        <input matInput type="text" [value]="consumoTotal ?? 'Sin lecturas registradas'" disabled />
+        <mat-hint>Suma de la lectura de cada apartamento para este período - base del porcentaje que define la Cantidad a pagar de cada uno</mat-hint>
+      </mat-form-field>
+
       <button mat-raised-button color="primary" (click)="saveReceiptTotal()" [disabled]="!receiptTotal">Guardar Total</button>
     </mat-card-content>
   </mat-card>

@@ -8,6 +8,7 @@ import { CounterUtilitiesComponent } from './counter-utilities.component';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 import { ApartmentDto } from '../shared/apartment.model';
 import { AuthService } from '../auth.service';
+import { ReadingsService } from '../readings/readings.service';
 import { environment } from '../../environments/environment';
 
 const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
@@ -36,7 +37,7 @@ describe('CounterUtilitiesComponent', () => {
   let dialogOpen: ReturnType<typeof vi.fn>;
   let httpMock: HttpTestingController;
 
-  async function setup(isApartmentOwner = false, invoices: unknown[] = []) {
+  async function setup(isApartmentOwner = false, invoices: unknown[] = [], counterUtilities: unknown[] = []) {
     dialogOpen = vi.fn().mockReturnValue({ afterClosed: () => of(null) });
 
     await TestBed.configureTestingModule({
@@ -67,7 +68,7 @@ describe('CounterUtilitiesComponent', () => {
     if (!isApartmentOwner) {
       httpMock.expectOne(`${environment.apiUrl}/Invoices`).flush(invoices);
     }
-    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities`).flush(counterUtilities);
     fixture.detectChanges();
   }
 
@@ -123,6 +124,34 @@ describe('CounterUtilitiesComponent', () => {
         data: { apartmentId: apartment.id, apartment: apartment.number, owner: apartment.owner, service: 'Gas', month: 5, counter: '1520' },
       }),
     );
+  });
+
+  it('openAddReadingDialog refreshes Total del recibo and Consumo total when a reading is saved', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [{ id: 5, totalCounter: '', total: '437590', dateId, utilityId: 1 }], [
+      { id: 1, apartmentId: 1, utilityId: 1, dateId, invoiceId: 5, counter: '1520', difference: '11829', fee: '437590' },
+    ]);
+    expect(component.consumoTotal).toBe(11829);
+
+    // Simulates a new apartment's reading landing (its Difference now
+    // shares the same period's consumption total): recordReading() would
+    // have invalidated ReadingsService's CounterUtilities cache for real -
+    // clearCache() reproduces that without needing the full dialog+save flow.
+    TestBed.inject(ReadingsService).clearCache();
+    dialogOpen.mockReturnValue({ afterClosed: () => of(true) });
+    const apartment = { id: 2, number: '201', owner: 'Bryan', ...CONTRACT_FIELDS };
+
+    component.openAddReadingDialog(apartment, 'Agua');
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/CounterUtilities`)
+      .flush([
+        { id: 1, apartmentId: 1, utilityId: 1, dateId, invoiceId: 5, counter: '1520', difference: '11829', fee: '218795' },
+        { id: 2, apartmentId: 2, utilityId: 1, dateId, invoiceId: 5, counter: '500', difference: '11829', fee: '218795' },
+      ]);
+
+    expect(component.consumoTotal).toBe(23658);
   });
 
   it('shows the add-reading buttons for an Admin', () => {
@@ -185,6 +214,37 @@ describe('CounterUtilitiesComponent', () => {
     component.onReceiptPeriodChanged();
 
     expect(component.receiptTotal).toBe('95000');
+  });
+
+  it('has no Consumo total when no readings exist yet for the default period', () => {
+    expect(component.consumoTotal).toBeNull();
+  });
+
+  it('computes Consumo total as the sum of every apartment\'s Difference for the default Servicio/Mes/Año', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [], [
+      { id: 1, apartmentId: 1, utilityId: 1, dateId, invoiceId: 5, counter: '1520', difference: '11829', fee: '437590' },
+      { id: 2, apartmentId: 2, utilityId: 1, dateId, invoiceId: 5, counter: '900', difference: '500', fee: '0' },
+      { id: 3, apartmentId: 1, utilityId: 2, dateId, invoiceId: 6, counter: '200', difference: '20', fee: '0' }, // different Servicio
+    ]);
+
+    expect(component.consumoTotal).toBe(12329);
+  });
+
+  it('onReceiptPeriodChanged recomputes Consumo total for the newly selected Servicio', async () => {
+    TestBed.resetTestingModule();
+    const dateId = new Date().getMonth() + 1;
+    await setup(false, [], [
+      { id: 1, apartmentId: 1, utilityId: 1, dateId, invoiceId: 5, counter: '1520', difference: '11829', fee: '437590' }, // Agua
+      { id: 2, apartmentId: 1, utilityId: 2, dateId, invoiceId: 6, counter: '200', difference: '20', fee: '0' }, // Luz
+    ]);
+    expect(component.consumoTotal).toBe(11829);
+
+    component.selectedReceiptService = 'Luz';
+    component.onReceiptPeriodChanged();
+
+    expect(component.consumoTotal).toBe(20);
   });
 
   it('onReceiptFileSelected requests an OCR preview and pre-fills the receipt total', () => {

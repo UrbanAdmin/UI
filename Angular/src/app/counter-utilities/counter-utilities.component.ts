@@ -80,6 +80,11 @@ export class CounterUtilitiesComponent {
   receiptTotal: string | null = null;
   receiptFile: File | null = null;
   receiptOcrLoading = false;
+  // 100% denominator behind each row's proportionally-split Fee (see
+  // Backend's RecalculateFeesForPeriodHandler) - shown so the admin can see
+  // why a single apartment's Cantidad a pagar equals the full Total del
+  // recibo whenever it's currently the only one with a recorded reading.
+  consumoTotal: number | null = null;
 
   // getRows$ is called directly from the template on every apartment x
   // service tab, which re-evaluates on every change-detection cycle -
@@ -138,7 +143,15 @@ export class CounterUtilitiesComponent {
         // change detection runs and the table's async pipe never
         // re-subscribes to pick up the fresh getRows$ call.
         if (saved) {
-          this.ngZone.run(() => this.invalidateRows(apartment, service));
+          this.ngZone.run(() => {
+            this.invalidateRows(apartment, service);
+            // A new/edited reading shifts every apartment's consumption
+            // share for this period - refresh Consumo total (and Total del
+            // recibo, in case it's the currently-selected Servicio/Mes/Año).
+            if (!this.isReadOnly) {
+              this.loadExistingReceiptTotal();
+            }
+          });
         }
       });
   }
@@ -158,11 +171,15 @@ export class CounterUtilitiesComponent {
       );
       if (!utility || !date) {
         this.receiptTotal = null;
+        this.consumoTotal = null;
         return;
       }
 
       this.invoicesService.findInvoice(utility.id, date.id).subscribe((invoice) => {
         this.receiptTotal = invoice?.total || null;
+      });
+      this.readingsService.getTotalDifference(utility.id, date.id).subscribe((total) => {
+        this.consumoTotal = total > 0 ? total : null;
       });
     });
   }

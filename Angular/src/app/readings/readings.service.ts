@@ -117,6 +117,20 @@ export class ReadingsService {
     );
   }
 
+  /** Sum of every apartment's consumption Difference for a Utility+Date -
+   *  the 100% denominator behind each row's proportionally-split Fee
+   *  (see Backend's RecalculateFeesForPeriodHandler). Shares the same
+   *  cached list getReadings() already fetches. */
+  getTotalDifference(utilityId: number, dateId: number): Observable<number> {
+    return this.fetchCounterUtilities().pipe(
+      map((all) =>
+        all
+          .filter((cu) => cu.utilityId === utilityId && cu.dateId === dateId)
+          .reduce((sum, cu) => sum + (Number(cu.difference) || 0), 0),
+      ),
+    );
+  }
+
   /** Sends a meter photo to Backend's Tesseract OCR - a suggestion only, never trusted blind. */
   ocrPreviewCounter(file: File): Observable<{ suggestedCounter: string | null }> {
     const formData = new FormData();

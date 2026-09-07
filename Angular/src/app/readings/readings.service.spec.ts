@@ -146,6 +146,34 @@ describe('ReadingsService', () => {
     expect(done).toBe(true);
   });
 
+  it('getTotalDifference sums every apartment\'s Difference for a given Utility+Date, ignoring other periods', () => {
+    let result: number | undefined;
+    service.getTotalDifference(1, 3).subscribe((total) => (result = total));
+
+    const counterUtilities: CounterUtilityDto[] = [
+      { id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 5, counter: '1520', difference: '11829', fee: '437590' },
+      { id: 2, apartmentId: 2, utilityId: 1, dateId: 3, invoiceId: 5, counter: '900', difference: '500', fee: '0' },
+      { id: 3, apartmentId: 1, utilityId: 1, dateId: 4, invoiceId: 6, counter: '1600', difference: '80', fee: '0' }, // different Date_Id
+      { id: 4, apartmentId: 1, utilityId: 2, dateId: 3, invoiceId: 7, counter: '200', difference: '20', fee: '0' }, // different Utility_Id
+    ];
+    httpMock.expectOne(COUNTER_UTILITIES_URL).flush(counterUtilities);
+
+    expect(result).toBe(12329);
+  });
+
+  it('getTotalDifference treats a non-numeric or missing Difference as 0', () => {
+    let result: number | undefined;
+    service.getTotalDifference(1, 3).subscribe((total) => (result = total));
+
+    const counterUtilities: CounterUtilityDto[] = [
+      { id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 5, counter: '1520', difference: '', fee: '0' },
+      { id: 2, apartmentId: 2, utilityId: 1, dateId: 3, invoiceId: 5, counter: '900', difference: '250', fee: '0' },
+    ];
+    httpMock.expectOne(COUNTER_UTILITIES_URL).flush(counterUtilities);
+
+    expect(result).toBe(250);
+  });
+
   it('clearCache forces the next getReadings call to refetch CounterUtilities instead of replaying stale data', () => {
     service.getReadings(1, 'Agua', 2026).subscribe();
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
