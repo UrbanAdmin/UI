@@ -163,16 +163,9 @@ export class CounterUtilitiesComponent {
     ]).subscribe(([utility, date]) => {
       this.invoicesService.setTotal(utility.id, date.id, total).subscribe((invoiceId) => {
         if (this.receiptFile) {
-          this.invoicesService.uploadReceipt(invoiceId, this.receiptFile).subscribe(() => this.resetReceiptForm());
-        } else {
-          this.resetReceiptForm();
+          this.invoicesService.uploadReceipt(invoiceId, this.receiptFile).subscribe(() => (this.receiptFile = null));
         }
       });
     });
-  }
-
-  private resetReceiptForm(): void {
-    this.receiptTotal = null;
-    this.receiptFile = null;
   }
 }

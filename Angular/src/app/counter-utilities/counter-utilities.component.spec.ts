@@ -182,7 +182,10 @@ describe('CounterUtilitiesComponent', () => {
     expect(receiptReq.request.body instanceof FormData).toBe(true);
     receiptReq.flush(null);
 
-    expect(component.receiptTotal).toBeNull();
+    // The saved value stays visible - it was persisted correctly (verified
+    // against the live Invoice/CounterUtility/PaymentStatus rows), so
+    // clearing the field here only made it look like the save had failed.
+    expect(component.receiptTotal).toBe('95000');
     expect(component.receiptFile).toBeNull();
   });
 
@@ -195,6 +198,6 @@ describe('CounterUtilitiesComponent', () => {
     httpMock.expectOne(`${environment.apiUrl}/Invoice/5`).flush({});
 
     httpMock.expectNone(`${environment.apiUrl}/Invoice/5/Receipt`);
-    expect(component.receiptTotal).toBeNull();
+    expect(component.receiptTotal).toBe('95000');
   });
 });

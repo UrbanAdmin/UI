@@ -22,6 +22,14 @@ export class InvoicesService {
     return this.cache$;
   }
 
+  /** Read-only lookup - unlike getOrCreateInvoice, never creates a placeholder,
+   *  so it's safe to call just from browsing the Servicio/Mes/Año filters. */
+  findInvoice(utilityId: number, dateId: number): Observable<InvoiceDto | undefined> {
+    return this.fetchAll().pipe(
+      map((invoices) => invoices.find((i) => i.utilityId === utilityId && i.dateId === dateId)),
+    );
+  }
+
   getOrCreateInvoice(utilityId: number, dateId: number): Observable<InvoiceDto> {
     return this.fetchAll().pipe(
       switchMap((invoices) => {

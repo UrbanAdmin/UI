@@ -66,6 +66,26 @@ describe('InvoicesService', () => {
     expect(result).toEqual({ id: 2, totalCounter: '', total: '', dateId: 1, utilityId: 1 });
   });
 
+  it('findInvoice returns the matching invoice without creating one', () => {
+    let result: InvoiceDto | undefined;
+
+    service.findInvoice(3, 5).subscribe((i) => (result = i));
+
+    httpMock.expectOne(invoicesUrl).flush([{ id: 9, totalCounter: '', total: '95000', dateId: 5, utilityId: 3 }]);
+
+    expect(result).toEqual({ id: 9, totalCounter: '', total: '95000', dateId: 5, utilityId: 3 });
+  });
+
+  it('findInvoice returns undefined (no POST) when no invoice exists for that period yet', () => {
+    let result: InvoiceDto | undefined | null = null;
+
+    service.findInvoice(3, 5).subscribe((i) => (result = i));
+
+    httpMock.expectOne(invoicesUrl).flush([]);
+
+    expect(result).toBeUndefined();
+  });
+
   it('setTotal gets-or-creates the invoice then PUTs the confirmed Total', () => {
     let result: number | undefined;
 
