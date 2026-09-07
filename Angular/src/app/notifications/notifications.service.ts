@@ -201,7 +201,7 @@ export class NotificationsService {
 
   /** Admin-only "cantidad a pagar", stored on the same per-apartment/period
    *  PaymentStatus row as Paid. For Agua/Luz/Gas, the backend mirrors this
-   *  into the matching CounterUtility.Fee so Lecturas' "Valor a pagar" shows
+   *  into the matching CounterUtility.Fee so Lecturas' "Cantidad a pagar" shows
    *  the same number (see PaymentStatusCounterUtilityFeeSync). */
   setAmount(apartmentId: number, service: ServiceName, month: number, year: number, amount: string): Observable<void> {
     return this.resolveIds(service, month, year).pipe(

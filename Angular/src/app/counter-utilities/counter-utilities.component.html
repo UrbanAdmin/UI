@@ -80,8 +80,8 @@
                     <td mat-cell *matCellDef="let row">{{ row.evidenceFileName ?? '—' }}</td>
                   </ng-container>
 
-                  <ng-container matColumnDef="valorAPagar">
-                    <th mat-header-cell *matHeaderCellDef>Valor a pagar</th>
+                  <ng-container matColumnDef="cantidadAPagar">
+                    <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
                     <td mat-cell *matCellDef="let row">{{ row.fee ? (row.fee | copCurrency) : '—' }}</td>
                   </ng-container>
 

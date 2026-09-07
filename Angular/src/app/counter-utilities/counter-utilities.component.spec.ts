@@ -149,15 +149,15 @@ describe('CounterUtilitiesComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Recibo del servicio');
   });
 
-  it('shows a Valor a pagar column for an ApartmentOwner (inquilino) but not for an Admin', async () => {
-    expect(component.displayedColumns).not.toContain('valorAPagar');
-    expect(fixture.nativeElement.textContent).not.toContain('Valor a pagar');
+  it('shows a Cantidad a pagar column for both Admin and ApartmentOwner (inquilino)', async () => {
+    expect(component.displayedColumns).toContain('cantidadAPagar');
+    expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
 
     TestBed.resetTestingModule();
     await setup(true);
 
-    expect(component.displayedColumns).toContain('valorAPagar');
-    expect(fixture.nativeElement.textContent).toContain('Valor a pagar');
+    expect(component.displayedColumns).toContain('cantidadAPagar');
+    expect(fixture.nativeElement.textContent).toContain('Cantidad a pagar');
   });
 
   it('pre-fills Total del recibo from an already-saved Invoice for the default Servicio/Mes/Año', async () => {
