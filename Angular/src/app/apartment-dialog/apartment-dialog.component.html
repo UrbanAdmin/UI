@@ -28,6 +28,13 @@
           <input type="file" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx,image/*" />
         </label>
       </div>
+
+      @if (saveError(); as error) {
+        <div class="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+      }
     </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

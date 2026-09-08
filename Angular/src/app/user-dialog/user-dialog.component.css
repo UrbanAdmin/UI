@@ -10,6 +10,13 @@ mat-dialog-actions {
 }
 
 .error {
-  color: var(--mat-sys-error);
-  margin: -8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+  font-size: 0.875rem;
 }

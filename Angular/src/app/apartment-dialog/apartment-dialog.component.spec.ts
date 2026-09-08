@@ -136,6 +136,19 @@ describe('ApartmentDialogComponent', () => {
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
 
+  it('save surfaces the backend error instead of failing silently', () => {
+    setup({ apartment: { id: 3, number: '301', owner: 'Oscar', ...CONTRACT_FIELDS } });
+
+    component.save();
+
+    httpMock
+      .expectOne(`${environment.apiUrl}/Apartment/3`)
+      .flush('El número de apartamento ya existe', { status: 400, statusText: 'Bad Request' });
+
+    expect(component.saveError()).toBe('El número de apartamento ya existe');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
   it('viewContract downloads the contract and opens it in a new tab', () => {
     setup({ apartment: { id: 3, number: '301', owner: 'Oscar', contractStartDate: null, hasContract: true, contractFileName: 'contrato.pdf' } });
     const objectUrl = 'blob:fake-url';

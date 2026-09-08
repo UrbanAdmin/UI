@@ -1,12 +1,14 @@
-import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, switchMap } from 'rxjs';
 
 import { Apartment } from '../shared/apartment.model';
@@ -26,6 +28,7 @@ export interface ApartmentDialogData {
   imports: [
     FormsModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -37,6 +40,7 @@ export class ApartmentDialogComponent {
   owner: string;
   contractStartDate: Date | null;
   selectedFile: File | null = null;
+  readonly saveError = signal<string | null>(null);
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: ApartmentDialogData,
@@ -76,13 +80,19 @@ export class ApartmentDialogComponent {
   }
 
   save(): void {
+    this.saveError.set(null);
     const existing = this.data.apartment;
     const contractStartDateIso = this.contractStartDate ? this.contractStartDate.toISOString() : null;
     const request$ = existing
       ? this.apartmentsService.updateApartment(existing.id, this.number, this.owner, contractStartDateIso)
       : this.apartmentsService.createApartment(this.number, this.owner, contractStartDateIso);
 
-    request$.pipe(switchMap(() => this.uploadFileIfSelected(existing))).subscribe(() => this.dialogRef.close(true));
+    request$.pipe(switchMap(() => this.uploadFileIfSelected(existing))).subscribe({
+      next: () => this.dialogRef.close(true),
+      error: (err: HttpErrorResponse) => {
+        this.saveError.set(typeof err.error === 'string' ? err.error : 'No se pudo guardar el apartamento');
+      },
+    });
   }
 
   private uploadFileIfSelected(existing: Apartment | null): Observable<void> {

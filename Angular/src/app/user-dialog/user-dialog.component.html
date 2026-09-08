@@ -34,7 +34,10 @@
     }
 
     @if (errorMessage) {
-      <p class="error">{{ errorMessage }}</p>
+      <div class="error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
     }
   </form>
 </mat-dialog-content>
