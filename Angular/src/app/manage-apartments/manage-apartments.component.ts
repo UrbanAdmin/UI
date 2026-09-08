@@ -10,6 +10,9 @@ import { Observable } from 'rxjs';
 import { Apartment } from '../shared/apartment.model';
 import { ApartmentsService } from '../shared/apartments.service';
 import { ApartmentDialogComponent } from '../apartment-dialog/apartment-dialog.component';
+import { LoadingService } from '../loading.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 
 @Component({
   selector: 'app-manage-apartments',
@@ -17,12 +20,21 @@ import { ApartmentDialogComponent } from '../apartment-dialog/apartment-dialog.c
   templateUrl: './manage-apartments.component.html',
   styleUrl: './manage-apartments.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatTableModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatTableModule,
+    EmptyStateComponent,
+    LoadingIndicatorComponent,
+  ],
 })
 export class ManageApartmentsComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly dialog = inject(MatDialog);
   private readonly ngZone = inject(NgZone);
+  protected readonly loadingService = inject(LoadingService);
 
   readonly displayedColumns: string[] = ['number', 'owner', 'contractStartDate', 'contract', 'actions'];
   apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();

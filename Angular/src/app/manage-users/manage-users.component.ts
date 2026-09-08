@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,9 @@ import { ApartmentsService } from '../shared/apartments.service';
 import { User } from '../shared/user.model';
 import { UsersService } from '../shared/users.service';
 import { UserDialogComponent } from '../user-dialog/user-dialog.component';
+import { LoadingService } from '../loading.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 
 @Component({
   selector: 'app-manage-users',
@@ -21,16 +24,26 @@ import { UserDialogComponent } from '../user-dialog/user-dialog.component';
   templateUrl: './manage-users.component.html',
   styleUrl: './manage-users.component.css',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatTableModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatTableModule,
+    EmptyStateComponent,
+    LoadingIndicatorComponent,
+  ],
 })
 export class ManageUsersComponent {
   private readonly usersService = inject(UsersService);
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly dialog = inject(MatDialog);
   private readonly ngZone = inject(NgZone);
+  protected readonly loadingService = inject(LoadingService);
 
   readonly displayedColumns: string[] = ['username', 'role', 'apartment', 'actions'];
   users$: Observable<User[]> = this.usersService.getUsers();
+  readonly deleteError = signal<string | null>(null);
 
   private readonly apartments = toSignal(this.apartmentsService.getApartments(), { initialValue: [] as Apartment[] });
 
@@ -81,9 +94,11 @@ export class ManageUsersComponent {
     if (!window.confirm(`¿Eliminar el usuario ${user.username}?`)) {
       return;
     }
+    this.deleteError.set(null);
     this.usersService.deleteUser(user.id).subscribe({
       next: () => this.refresh(),
-      error: (err: HttpErrorResponse) => window.alert(typeof err.error === 'string' ? err.error : 'No se pudo eliminar el usuario'),
+      error: (err: HttpErrorResponse) =>
+        this.deleteError.set(typeof err.error === 'string' ? err.error : 'No se pudo eliminar el usuario'),
     });
   }
 

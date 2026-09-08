@@ -148,12 +148,11 @@ describe('ManageUsersComponent', () => {
 
   it('deleteUser surfaces the backend error (e.g. deleting your own account) instead of failing silently', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     component.deleteUser(MOCK_USERS[0]);
 
     httpMock.expectOne(`${environment.apiUrl}/User/1`).flush('You cannot delete your own account', { status: 400, statusText: 'Bad Request' });
 
-    expect(alertSpy).toHaveBeenCalledWith('You cannot delete your own account');
+    expect(component.deleteError()).toBe('You cannot delete your own account');
   });
 });
