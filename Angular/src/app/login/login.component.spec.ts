@@ -54,7 +54,7 @@ describe('LoginComponent', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
     req.flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-    expect(component.errorMessage).toBe('Invalid username or password');
+    expect(component.errorMessage).toBe('Usuario o contraseña incorrectos');
   });
 
   it('is loading while the request is pending and stops once it succeeds', () => {

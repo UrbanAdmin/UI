@@ -40,7 +40,7 @@ export class LoginComponent {
         this.errorMessage = '';
         this.router.navigate(['/']);
       } else {
-        this.errorMessage = 'Invalid username or password';
+        this.errorMessage = 'Usuario o contraseña incorrectos';
       }
     });
   }
