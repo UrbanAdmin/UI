@@ -86,4 +86,12 @@ mat-tab-group {
   .button-container-inline button {
     width: 100%;
   }
+
+  /* Evidence file name is the least-essential column here - dropping it
+     leaves Mes/Lectura/Cantidad a pagar, the "primary values" spec
+     Acceptance Scenario 3.2 calls out, fitting without horizontal
+     scroll (FR-005/SC-003). */
+  .mat-column-evidencia {
+    display: none;
+  }
 }

@@ -32,3 +32,23 @@ table {
 
 /* Status chip colors now live in app-status-chip's own stylesheet - see
    shared/status-chip/status-chip.component.css. */
+
+/* Mobile-first table: on narrow viewports, drop the least-essential columns
+   and let the table shrink to fit instead of forcing horizontal scroll
+   (FR-005/SC-003). Due date is redundant with the status chip's meaning;
+   for the owner's read-only table, Pagado is redundant too (it's already
+   encoded in status), leaving Servicio/Estado/Cantidad a pagar - exactly
+   the "primary values" spec Acceptance Scenario 3.2 calls out. */
+@media (max-width: 600px) {
+  table {
+    min-width: 0;
+  }
+
+  .mat-column-dueDate {
+    display: none;
+  }
+
+  .owner-table .mat-column-paid {
+    display: none;
+  }
+}

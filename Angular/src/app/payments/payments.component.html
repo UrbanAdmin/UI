@@ -108,7 +108,7 @@
         @if (ownerRows.length === 0) {
           <app-empty-state icon="payments" message="No hay pagos registrados para este período." />
         } @else {
-      <div class="table-scroll">
+      <div class="table-scroll owner-table">
       <table mat-table [dataSource]="ownerRows" class="mat-elevation-z1">
         <ng-container matColumnDef="service">
           <th mat-header-cell *matHeaderCellDef>Servicio</th>
