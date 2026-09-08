@@ -1,9 +1,13 @@
 @use '@angular/material' as mat;
 
+// Material 3's tonal palettes are generated to guarantee WCAG AA contrast between paired
+// roles (e.g. primary/on-primary, surface/on-surface) - swapping the palette here is the
+// mechanism for FR-009, not a per-component contrast fix. Blue reads as more professional/
+// trustworthy than the prior default violet for a payments/admin app (FR-001).
 html {
   @include mat.theme((
     color: (
-      primary: mat.$violet-palette,
+      primary: mat.$blue-palette,
       tertiary: mat.$orange-palette,
       theme-type: light,
     ),
