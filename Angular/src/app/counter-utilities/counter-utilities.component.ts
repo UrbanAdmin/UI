@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { AddReadingDialogComponent } from '../add-reading-dialog/add-reading-dialog.component';
 
@@ -9,7 +9,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTableModule } from '@angular/material/table';
@@ -27,6 +26,9 @@ import { MeterReading } from '../readings/reading.model';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
+import { LoadingService } from '../loading.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -44,12 +46,13 @@ type ReadingRow = MeterReading & { monthLabel: string };
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatProgressSpinnerModule,
     MatSelectModule,
     MatTabsModule,
     MatTableModule,
     CopCurrencyPipe,
     CopCurrencyInputDirective,
+    EmptyStateComponent,
+    LoadingIndicatorComponent,
   ],
 })
 export class CounterUtilitiesComponent {
@@ -59,6 +62,7 @@ export class CounterUtilitiesComponent {
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly ngZone = inject(NgZone);
+  protected readonly loadingService = inject(LoadingService);
 
   readonly apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas'];
@@ -80,6 +84,7 @@ export class CounterUtilitiesComponent {
   receiptTotal: string | null = null;
   receiptFile: File | null = null;
   receiptOcrLoading = false;
+  readonly receiptOcrError = signal<string | null>(null);
   // 100% denominator behind each row's proportionally-split Fee (see
   // Backend's RecalculateFeesForPeriodHandler) - shown so the admin can see
   // why a single apartment's Cantidad a pagar equals the full Total del
@@ -218,6 +223,7 @@ export class CounterUtilitiesComponent {
     }
 
     this.receiptOcrLoading = true;
+    this.receiptOcrError.set(null);
     this.invoicesService.ocrPreviewTotal(file).subscribe({
       next: (result) => {
         this.receiptOcrLoading = false;
@@ -225,7 +231,10 @@ export class CounterUtilitiesComponent {
           this.receiptTotal = result.suggestedTotal;
         }
       },
-      error: () => (this.receiptOcrLoading = false),
+      error: () => {
+        this.receiptOcrLoading = false;
+        this.receiptOcrError.set('No se pudo leer el recibo automáticamente. Ingresa el total manualmente.');
+      },
     });
   }
 

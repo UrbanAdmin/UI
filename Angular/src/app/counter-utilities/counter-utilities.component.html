@@ -38,11 +38,12 @@
         @if (receiptFile) {
           <span class="file-name">{{ receiptFile.name }}</span>
         }
-        @if (receiptOcrLoading) {
-          <span class="ocr-loading">
-            <mat-spinner diameter="16"></mat-spinner>
-            Leyendo el recibo&hellip;
-          </span>
+        <app-loading-indicator [loading]="receiptOcrLoading" label="Leyendo el recibo…" />
+        @if (receiptOcrError(); as ocrError) {
+          <div class="error">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ ocrError }}</span>
+          </div>
         }
       </div>
 
@@ -62,7 +63,12 @@
   </mat-card>
 }
 
-@if (apartments$ | async; as apartments) {
+@if (loadingService.isLoading()) {
+  <app-loading-indicator [loading]="true" />
+} @else if (apartments$ | async; as apartments) {
+  @if (apartments.length === 0) {
+    <app-empty-state icon="home_work" message="Todavía no hay apartamentos registrados." />
+  } @else {
 <mat-tab-group>
   @for (apartment of apartments; track apartment.number) {
     <mat-tab [label]="'Apto ' + apartment.number">
@@ -113,4 +119,5 @@
     </mat-tab>
   }
 </mat-tab-group>
+  }
 }
