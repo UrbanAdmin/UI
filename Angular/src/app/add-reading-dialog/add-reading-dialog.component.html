@@ -17,11 +17,12 @@
       @if (selectedFile) {
         <span class="file-name">{{ selectedFile.name }}</span>
       }
-      @if (ocrLoading) {
-        <span class="ocr-loading">
-          <mat-spinner diameter="16"></mat-spinner>
-          Leyendo el medidor&hellip;
-        </span>
+      <app-loading-indicator [loading]="ocrLoading" label="Leyendo el medidor…" />
+      @if (ocrError(); as error) {
+        <div class="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
       }
     </div>
 

@@ -25,10 +25,14 @@
   opacity: 0.85;
 }
 
-.ocr-loading {
+.error {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  opacity: 0.85;
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+  font-size: 0.875rem;
 }

@@ -1,15 +1,16 @@
-import { Component, ChangeDetectionStrategy, Inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ReadingsService } from '../readings/readings.service';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { ServiceName } from '../notifications/notification.model';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 
 export interface AddReadingDialogData {
   apartmentId: number;
@@ -37,9 +38,10 @@ export interface AddReadingDialogData {
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
-    MatProgressSpinnerModule,
     MatSelectModule,
+    LoadingIndicatorComponent,
   ],
 })
 export class AddReadingDialogComponent {
@@ -51,6 +53,7 @@ export class AddReadingDialogComponent {
   counter: string | null;
   selectedFile: File | null = null;
   ocrLoading = false;
+  readonly ocrError = signal<string | null>(null);
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: AddReadingDialogData,
@@ -72,6 +75,7 @@ export class AddReadingDialogComponent {
     }
 
     this.ocrLoading = true;
+    this.ocrError.set(null);
     this.readingsService.ocrPreviewCounter(file).subscribe({
       next: (result) => {
         this.ocrLoading = false;
@@ -81,7 +85,10 @@ export class AddReadingDialogComponent {
           this.counter = result.suggestedCounter;
         }
       },
-      error: () => (this.ocrLoading = false),
+      error: () => {
+        this.ocrLoading = false;
+        this.ocrError.set('No se pudo leer el medidor automáticamente. Ingresa la lectura manualmente.');
+      },
     });
   }
 

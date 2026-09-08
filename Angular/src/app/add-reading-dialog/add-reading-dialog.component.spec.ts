@@ -68,6 +68,29 @@ describe('AddReadingDialogComponent', () => {
     expect(component.ocrLoading).toBe(false);
   });
 
+  it('onFileSelected shows a calm error message when the OCR read fails, instead of failing silently', () => {
+    const file = new File(['content'], 'medidor.png', { type: 'image/png' });
+
+    component.onFileSelected({ target: { files: [file] } } as unknown as Event);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities/OcrPreview`).error(new ProgressEvent('error'));
+
+    expect(component.ocrLoading).toBe(false);
+    expect(component.ocrError()).toBeTruthy();
+  });
+
+  it('onFileSelected clears a previous OCR error when a new file is selected', () => {
+    const badFile = new File(['content'], 'bad.png', { type: 'image/png' });
+    component.onFileSelected({ target: { files: [badFile] } } as unknown as Event);
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities/OcrPreview`).error(new ProgressEvent('error'));
+    expect(component.ocrError()).toBeTruthy();
+
+    const goodFile = new File(['content'], 'good.png', { type: 'image/png' });
+    component.onFileSelected({ target: { files: [goodFile] } } as unknown as Event);
+
+    expect(component.ocrError()).toBeNull();
+    httpMock.expectOne(`${environment.apiUrl}/CounterUtilities/OcrPreview`).flush({ suggestedCounter: '1523' });
+  });
+
   it('onFileSelected does not overwrite the counter when OCR finds no digits', () => {
     const file = new File(['content'], 'medidor.png', { type: 'image/png' });
     component.counter = '999';
