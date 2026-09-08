@@ -1,0 +1,8 @@
+@if (loading()) {
+  <div class="loading-indicator">
+    <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+    @if (label(); as text) {
+      <span class="loading-label">{{ text }}</span>
+    }
+  </div>
+}
