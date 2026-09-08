@@ -1,9 +1,8 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +18,10 @@ import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
+import { LoadingService } from '../loading.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 type OwnerServiceRow = OwnerRow & { service: ServiceName };
@@ -42,7 +45,6 @@ interface MonthYear {
     FormsModule,
     MatButtonModule,
     MatCardModule,
-    MatChipsModule,
     MatDatepickerModule,
     MatFormFieldModule,
     MatIconModule,
@@ -52,6 +54,9 @@ interface MonthYear {
     MatTableModule,
     CopCurrencyPipe,
     CopCurrencyInputDirective,
+    EmptyStateComponent,
+    LoadingIndicatorComponent,
+    StatusChipComponent,
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './payments.component.html',
@@ -59,6 +64,7 @@ interface MonthYear {
   styleUrl: './payments.component.css',
 })
 export class PaymentsComponent {
+  protected readonly loadingService = inject(LoadingService);
   readonly services: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
   readonly monthNames: string[] = MONTH_NAMES;
   readonly years: number[];
@@ -150,20 +156,5 @@ export class PaymentsComponent {
     this.notificationsService
       .setAmount(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, amount)
       .subscribe(() => this.onPeriodChange());
-  }
-
-  statusLabel(status: NotificationStatus): string {
-    switch (status) {
-      case 'paid':
-        return 'Pagado';
-      case 'due-soon':
-        return 'Vence en 2 días';
-      case 'due-today':
-        return 'Vence hoy';
-      case 'overdue':
-        return 'Vencido';
-      default:
-        return 'No vence aún';
-    }
   }
 }
