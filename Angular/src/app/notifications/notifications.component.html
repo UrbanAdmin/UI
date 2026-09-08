@@ -1,8 +1,10 @@
-@if (groups$ | async; as groups) {
+@if (loadingService.isLoading()) {
+  <app-loading-indicator [loading]="true" />
+} @else if (groups$ | async; as groups) {
 @if (groups.length === 0) {
   <mat-card>
     <mat-card-content>
-      <p>No hay notificaciones pendientes.</p>
+      <app-empty-state icon="notifications_none" message="No hay notificaciones pendientes." />
     </mat-card-content>
   </mat-card>
 } @else {
@@ -28,9 +30,7 @@
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Estado</th>
                 <td mat-cell *matCellDef="let n">
-                  <mat-chip-set>
-                    <mat-chip [class]="'status-' + n.status">{{ statusLabel(n.status) }}</mat-chip>
-                  </mat-chip-set>
+                  <app-status-chip [status]="n.status" />
                 </td>
               </ng-container>
 

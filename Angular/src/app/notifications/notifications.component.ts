@@ -1,12 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
 import { Observable, map } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { NotificationStatus, ServicePayment } from './notification.model';
 import { monthName } from './month-names';
+import { LoadingService } from '../loading.service';
+import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
+import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
 
 type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
 
@@ -26,11 +29,20 @@ interface ApartmentGroup {
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, DatePipe, MatCardModule, MatChipsModule, MatTableModule],
+  imports: [
+    CommonModule,
+    DatePipe,
+    MatCardModule,
+    MatTableModule,
+    EmptyStateComponent,
+    LoadingIndicatorComponent,
+    StatusChipComponent,
+  ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css',
 })
 export class NotificationsComponent {
+  protected readonly loadingService = inject(LoadingService);
   displayedColumns: string[] = ['service', 'dueDate', 'status'];
   readonly groups$: Observable<ApartmentGroup[]>;
 
@@ -38,19 +50,6 @@ export class NotificationsComponent {
     this.groups$ = this.notificationsService
       .getActiveNotifications()
       .pipe(map((notifications) => this.groupByApartmentAndPeriod(notifications)));
-  }
-
-  statusLabel(status: NotificationStatus): string {
-    switch (status) {
-      case 'due-soon':
-        return 'Vence en 2 días';
-      case 'due-today':
-        return 'Vence hoy';
-      case 'overdue':
-        return 'Vencido';
-      default:
-        return status;
-    }
   }
 
   private groupByApartmentAndPeriod(notifications: ActiveNotification[]): ApartmentGroup[] {

@@ -25,23 +25,5 @@ table {
   min-width: 420px;
 }
 
-/* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain
-   background-color override - Material's own .mat-mdc-standard-chip rule has higher
-   specificity than a single class and would win otherwise). */
-.status-due-soon {
-  --mat-chip-elevated-container-color: #f9a825;
-  --mat-chip-label-text-color: #212121;
-  font-weight: 500;
-}
-
-.status-due-today {
-  --mat-chip-elevated-container-color: #ef6c00;
-  --mat-chip-label-text-color: #ffffff;
-  font-weight: 500;
-}
-
-.status-overdue {
-  --mat-chip-elevated-container-color: #c62828;
-  --mat-chip-label-text-color: #ffffff;
-  font-weight: 500;
-}
+/* Status chip colors now live in app-status-chip's own stylesheet - see
+   shared/status-chip/status-chip.component.css. */
