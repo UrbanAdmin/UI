@@ -12,7 +12,7 @@ describe('ApartmentDialogComponent', () => {
   let dialogRef: { close: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
 
-  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
+  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' as const };
 
   function setup(data: ApartmentDialogData) {
     dialogRef = { close: vi.fn() };
@@ -37,7 +37,7 @@ describe('ApartmentDialogComponent', () => {
     httpMock.verify();
   });
 
-  it('starts blank in create mode', () => {
+  it('starts blank in create mode, defaulting Estado to Arrendado', () => {
     setup({ apartment: null });
 
     expect(component.number).toBe('');
@@ -45,11 +45,21 @@ describe('ApartmentDialogComponent', () => {
     expect(component.contractStartDate).toBeNull();
     expect(component.isEdit).toBe(false);
     expect(component.hasContract).toBe(false);
+    expect(component.status).toBe('Arrendado');
+    expect(component.ownerRequired).toBe(true);
   });
 
-  it('pre-fills the form (incl. contract start date) in edit mode', () => {
+  it('pre-fills the form (incl. contract start date and status) in edit mode', () => {
     setup({
-      apartment: { id: 3, number: '301', owner: 'Oscar', contractStartDate: '2026-03-10T00:00:00', hasContract: true, contractFileName: 'contrato.pdf' },
+      apartment: {
+        id: 3,
+        number: '301',
+        owner: 'Oscar',
+        contractStartDate: '2026-03-10T00:00:00',
+        hasContract: true,
+        contractFileName: 'contrato.pdf',
+        status: 'En arriendo',
+      },
     });
 
     expect(component.number).toBe('301');
@@ -58,6 +68,27 @@ describe('ApartmentDialogComponent', () => {
     expect(component.isEdit).toBe(true);
     expect(component.hasContract).toBe(true);
     expect(component.contractFileName).toBe('contrato.pdf');
+    expect(component.status).toBe('En arriendo');
+    expect(component.ownerRequired).toBe(false);
+  });
+
+  it('save button is disabled for a blank Owner while Estado is Arrendado', () => {
+    setup({ apartment: null });
+    component.number = '501';
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[mat-raised-button]');
+    expect(button.disabled).toBe(true);
+  });
+
+  it('save button is enabled with a blank Owner once Estado is En arriendo', () => {
+    setup({ apartment: null });
+    component.number = '501';
+    component.status = 'En arriendo';
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[mat-raised-button]');
+    expect(button.disabled).toBe(false);
   });
 
   it('save POSTs a new apartment (incl. ContractStartDate) and closes the dialog', () => {
@@ -71,7 +102,12 @@ describe('ApartmentDialogComponent', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/Apartments`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ Name: '501', Owner: 'Nueva', ContractStartDate: contractStartDate.toISOString() });
+    expect(req.request.body).toEqual({
+      Name: '501',
+      Owner: 'Nueva',
+      ContractStartDate: contractStartDate.toISOString(),
+      Status: 'Arrendado',
+    });
     req.flush({ id: 0 });
 
     expect(dialogRef.close).toHaveBeenCalledWith(true);
@@ -85,7 +121,7 @@ describe('ApartmentDialogComponent', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/Apartment/3`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ Name: '301', Owner: 'Nuevo Dueño', ContractStartDate: null });
+    expect(req.request.body).toEqual({ Name: '301', Owner: 'Nuevo Dueño', ContractStartDate: null, Status: 'Arrendado' });
     req.flush({ id: 3, name: '301', owner: 'Nuevo Dueño', ...CONTRACT_FIELDS });
 
     expect(dialogRef.close).toHaveBeenCalledWith(true);
@@ -150,7 +186,17 @@ describe('ApartmentDialogComponent', () => {
   });
 
   it('viewContract downloads the contract and opens it in a new tab', () => {
-    setup({ apartment: { id: 3, number: '301', owner: 'Oscar', contractStartDate: null, hasContract: true, contractFileName: 'contrato.pdf' } });
+    setup({
+      apartment: {
+        id: 3,
+        number: '301',
+        owner: 'Oscar',
+        contractStartDate: null,
+        hasContract: true,
+        contractFileName: 'contrato.pdf',
+        status: 'Arrendado',
+      },
+    });
     const objectUrl = 'blob:fake-url';
     vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl);
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);

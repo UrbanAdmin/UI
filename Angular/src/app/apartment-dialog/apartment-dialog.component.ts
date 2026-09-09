@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -11,7 +12,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, switchMap } from 'rxjs';
 
-import { Apartment } from '../shared/apartment.model';
+import { Apartment, ApartmentStatus } from '../shared/apartment.model';
 import { ApartmentsService } from '../shared/apartments.service';
 
 export interface ApartmentDialogData {
@@ -30,6 +31,7 @@ export interface ApartmentDialogData {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
     MatDialogModule,
@@ -38,6 +40,7 @@ export interface ApartmentDialogData {
 export class ApartmentDialogComponent {
   number: string;
   owner: string;
+  status: ApartmentStatus;
   contractStartDate: Date | null;
   selectedFile: File | null = null;
   readonly saveError = signal<string | null>(null);
@@ -49,11 +52,16 @@ export class ApartmentDialogComponent {
   ) {
     this.number = data.apartment?.number ?? '';
     this.owner = data.apartment?.owner ?? '';
+    this.status = data.apartment?.status ?? 'Arrendado';
     this.contractStartDate = data.apartment?.contractStartDate ? new Date(data.apartment.contractStartDate) : null;
   }
 
   get isEdit(): boolean {
     return this.data.apartment !== null;
+  }
+
+  get ownerRequired(): boolean {
+    return this.status === 'Arrendado';
   }
 
   get hasContract(): boolean {
@@ -84,8 +92,8 @@ export class ApartmentDialogComponent {
     const existing = this.data.apartment;
     const contractStartDateIso = this.contractStartDate ? this.contractStartDate.toISOString() : null;
     const request$ = existing
-      ? this.apartmentsService.updateApartment(existing.id, this.number, this.owner, contractStartDateIso)
-      : this.apartmentsService.createApartment(this.number, this.owner, contractStartDateIso);
+      ? this.apartmentsService.updateApartment(existing.id, this.number, this.owner, contractStartDateIso, this.status)
+      : this.apartmentsService.createApartment(this.number, this.owner, contractStartDateIso, this.status);
 
     request$.pipe(switchMap(() => this.uploadFileIfSelected(existing))).subscribe({
       next: () => this.dialogRef.close(true),

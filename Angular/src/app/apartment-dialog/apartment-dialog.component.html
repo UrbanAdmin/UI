@@ -7,7 +7,15 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Arrendatario</mat-label>
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="status" name="status">
+          <mat-option value="Arrendado">Arrendado</mat-option>
+          <mat-option value="En arriendo">En arriendo</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Arrendatario{{ ownerRequired ? '' : ' (opcional)' }}</mat-label>
         <input matInput type="text" [(ngModel)]="owner" name="owner" />
       </mat-form-field>
 
@@ -38,5 +46,5 @@
     </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-raised-button color="primary" (click)="save()" [disabled]="!number || !owner">Guardar</button>
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="!number || (ownerRequired && !owner)">Guardar</button>
 </mat-dialog-actions>
