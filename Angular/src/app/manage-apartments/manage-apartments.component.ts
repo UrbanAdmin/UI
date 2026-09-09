@@ -36,7 +36,7 @@ export class ManageApartmentsComponent {
   private readonly ngZone = inject(NgZone);
   protected readonly loadingService = inject(LoadingService);
 
-  readonly displayedColumns: string[] = ['number', 'owner', 'contractStartDate', 'contract', 'actions'];
+  readonly displayedColumns: string[] = ['number', 'owner', 'status', 'contractStartDate', 'contract', 'actions'];
   apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
 
   viewContract(apartment: Apartment): void {

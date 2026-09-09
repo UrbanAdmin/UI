@@ -15,7 +15,7 @@ describe('ManageApartmentsComponent', () => {
   let dialogOpen: ReturnType<typeof vi.fn>;
 
   const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
-  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
+  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' as const };
   const MOCK_APARTMENTS = [
     { id: 1, name: '101', owner: 'Eduardo', ...CONTRACT_FIELDS },
     { id: 2, name: '201', owner: 'Hilda', ...CONTRACT_FIELDS },
@@ -104,7 +104,7 @@ describe('ManageApartmentsComponent', () => {
     // can't, since they never leave the zone in the first place.
     const apartmentsService = TestBed.inject(ApartmentsService);
     dialogOpen.mockReturnValue({
-      afterClosed: () => apartmentsService.createApartment('303', 'Nueva', null).pipe(map(() => true)),
+      afterClosed: () => apartmentsService.createApartment('303', 'Nueva', null, 'Arrendado').pipe(map(() => true)),
     });
 
     component.openCreateDialog();
@@ -145,6 +145,26 @@ describe('ManageApartmentsComponent', () => {
     component.deleteApartment({ id: 2, number: '201', owner: 'Hilda', ...CONTRACT_FIELDS });
 
     httpMock.expectNone(`${environment.apiUrl}/Apartment/2`);
+  });
+
+  it('renders an Estado column with each apartment\'s status', () => {
+    fixture.detectChanges();
+
+    const cells: string[] = Array.from(fixture.nativeElement.querySelectorAll('td.mat-column-status')).map(
+      (el) => (el as HTMLElement).textContent?.trim() ?? '',
+    );
+
+    expect(cells).toEqual(['Arrendado', 'Arrendado']);
+  });
+
+  it('shows "Sin arrendatario" instead of a blank Owner cell for a vacant apartment with no owner', () => {
+    component.apartments$ = of([
+      { id: 4, number: '401', owner: '', contractStartDate: null, hasContract: false, contractFileName: null, status: 'En arriendo' },
+    ]);
+    fixture.detectChanges();
+
+    const ownerCell = fixture.nativeElement.querySelector('td.mat-column-owner') as HTMLElement;
+    expect(ownerCell.textContent?.trim()).toBe('Sin arrendatario');
   });
 
   it('viewContract downloads the contract and opens it in a new tab', () => {
