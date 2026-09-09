@@ -1,3 +1,5 @@
+export type ApartmentStatus = 'Arrendado' | 'En arriendo';
+
 export interface ApartmentDto {
   id: number;
   name: string;
@@ -5,6 +7,7 @@ export interface ApartmentDto {
   contractStartDate: string | null;
   hasContract: boolean;
   contractFileName: string | null;
+  status: ApartmentStatus;
 }
 
 export interface Apartment {
@@ -14,4 +17,5 @@ export interface Apartment {
   contractStartDate: string | null;
   hasContract: boolean;
   contractFileName: string | null;
+  status: ApartmentStatus;
 }

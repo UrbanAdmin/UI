@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Apartment, ApartmentDto } from './apartment.model';
+import { Apartment, ApartmentDto, ApartmentStatus } from './apartment.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApartmentsService {
@@ -22,6 +22,7 @@ export class ApartmentsService {
               contractStartDate: dto.contractStartDate,
               hasContract: dto.hasContract,
               contractFileName: dto.contractFileName,
+              status: dto.status,
             })),
           ),
           shareReplay(1),
@@ -30,18 +31,39 @@ export class ApartmentsService {
     return this.cache$;
   }
 
-  createApartment(number: string, owner: string, contractStartDate: string | null): Observable<void> {
+  createApartment(
+    number: string,
+    owner: string,
+    contractStartDate: string | null,
+    status: ApartmentStatus,
+  ): Observable<void> {
     return this.http
-      .post(`${environment.apiUrl}/Apartments`, { Name: number, Owner: owner, ContractStartDate: contractStartDate })
+      .post(`${environment.apiUrl}/Apartments`, {
+        Name: number,
+        Owner: owner,
+        ContractStartDate: contractStartDate,
+        Status: status,
+      })
       .pipe(
         tap(() => (this.cache$ = null)),
         map(() => undefined),
       );
   }
 
-  updateApartment(id: number, number: string, owner: string, contractStartDate: string | null): Observable<void> {
+  updateApartment(
+    id: number,
+    number: string,
+    owner: string,
+    contractStartDate: string | null,
+    status: ApartmentStatus,
+  ): Observable<void> {
     return this.http
-      .put(`${environment.apiUrl}/Apartment/${id}`, { Name: number, Owner: owner, ContractStartDate: contractStartDate })
+      .put(`${environment.apiUrl}/Apartment/${id}`, {
+        Name: number,
+        Owner: owner,
+        ContractStartDate: contractStartDate,
+        Status: status,
+      })
       .pipe(
         tap(() => (this.cache$ = null)),
         map(() => undefined),

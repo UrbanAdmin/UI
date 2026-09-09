@@ -11,7 +11,7 @@ import { AuthService } from '../auth.service';
 import { ReadingsService } from '../readings/readings.service';
 import { environment } from '../../environments/environment';
 
-const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
+const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' as const };
 
 const MOCK_APARTMENTS: ApartmentDto[] = [
   { id: 1, name: '101', owner: 'TBD', ...CONTRACT_FIELDS },

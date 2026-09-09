@@ -16,7 +16,7 @@ describe('ManageUsersComponent', () => {
 
   const USERS_URL = `${environment.apiUrl}/Users`;
   const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
-  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null };
+  const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' as const };
   const MOCK_APARTMENTS = [
     { id: 1, name: '101', owner: 'Eduardo', ...CONTRACT_FIELDS },
     { id: 2, name: '201', owner: 'Hilda', ...CONTRACT_FIELDS },

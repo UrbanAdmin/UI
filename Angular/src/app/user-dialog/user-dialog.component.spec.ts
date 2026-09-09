@@ -14,7 +14,7 @@ describe('UserDialogComponent', () => {
 
   const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
   const MOCK_APARTMENTS = [
-    { id: 1, name: '101', owner: 'Eduardo', contractStartDate: null, hasContract: false, contractFileName: null },
+    { id: 1, name: '101', owner: 'Eduardo', contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' },
   ];
 
   function setup(data: UserDialogData) {

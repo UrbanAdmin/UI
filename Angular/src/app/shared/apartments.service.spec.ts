@@ -31,6 +31,7 @@ describe('ApartmentsService', () => {
         contractStartDate: '2026-03-10T00:00:00',
         hasContract: true,
         contractFileName: 'contrato.pdf',
+        status: 'Arrendado',
       },
     ];
     let result: unknown[] | undefined;
@@ -46,13 +47,22 @@ describe('ApartmentsService', () => {
         contractStartDate: '2026-03-10T00:00:00',
         hasContract: true,
         contractFileName: 'contrato.pdf',
+        status: 'Arrendado',
       },
     ]);
   });
 
   it('caches the result so a second subscriber does not trigger another HTTP call', () => {
     const dtos: ApartmentDto[] = [
-      { id: 1, name: '101', owner: 'Daniel', contractStartDate: null, hasContract: false, contractFileName: null },
+      {
+        id: 1,
+        name: '101',
+        owner: 'Daniel',
+        contractStartDate: null,
+        hasContract: false,
+        contractFileName: null,
+        status: 'Arrendado',
+      },
     ];
     let second: unknown[] | undefined;
 
@@ -68,20 +78,43 @@ describe('ApartmentsService', () => {
     service.getApartments().subscribe();
     httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([]);
 
-    service.createApartment('501', 'Nueva', '2026-03-10T00:00:00').subscribe();
+    service.createApartment('501', 'Nueva', '2026-03-10T00:00:00', 'Arrendado').subscribe();
     const postReq = httpMock.expectOne(`${environment.apiUrl}/Apartments`);
     expect(postReq.request.method).toBe('POST');
-    expect(postReq.request.body).toEqual({ Name: '501', Owner: 'Nueva', ContractStartDate: '2026-03-10T00:00:00' });
+    expect(postReq.request.body).toEqual({
+      Name: '501',
+      Owner: 'Nueva',
+      ContractStartDate: '2026-03-10T00:00:00',
+      Status: 'Arrendado',
+    });
     postReq.flush({ id: 0 });
 
     let result: unknown[] | undefined;
     service.getApartments().subscribe((apartments) => (result = apartments));
     httpMock
       .expectOne(`${environment.apiUrl}/Apartments`)
-      .flush([{ id: 7, name: '501', owner: 'Nueva', contractStartDate: null, hasContract: false, contractFileName: null }]);
+      .flush([
+        {
+          id: 7,
+          name: '501',
+          owner: 'Nueva',
+          contractStartDate: null,
+          hasContract: false,
+          contractFileName: null,
+          status: 'Arrendado',
+        },
+      ]);
 
     expect(result).toEqual([
-      { id: 7, number: '501', owner: 'Nueva', contractStartDate: null, hasContract: false, contractFileName: null },
+      {
+        id: 7,
+        number: '501',
+        owner: 'Nueva',
+        contractStartDate: null,
+        hasContract: false,
+        contractFileName: null,
+        status: 'Arrendado',
+      },
     ]);
   });
 
@@ -89,10 +122,10 @@ describe('ApartmentsService', () => {
     service.getApartments().subscribe();
     httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([]);
 
-    service.updateApartment(3, '301', 'Oscar', null).subscribe();
+    service.updateApartment(3, '301', 'Oscar', null, 'Arrendado').subscribe();
     const putReq = httpMock.expectOne(`${environment.apiUrl}/Apartment/3`);
     expect(putReq.request.method).toBe('PUT');
-    expect(putReq.request.body).toEqual({ Name: '301', Owner: 'Oscar', ContractStartDate: null });
+    expect(putReq.request.body).toEqual({ Name: '301', Owner: 'Oscar', ContractStartDate: null, Status: 'Arrendado' });
     putReq.flush({ id: 3, name: '301', owner: 'Oscar', contractStartDate: null, hasContract: false, contractFileName: null });
 
     service.getApartments().subscribe();
@@ -130,7 +163,14 @@ describe('ApartmentsService', () => {
 
   it('clearCache forces the next getApartments call to refetch instead of replaying stale data', () => {
     service.getApartments().subscribe();
-    httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([{ id: 1, name: '101', owner: 'Daniel', ...({ contractStartDate: null, hasContract: false, contractFileName: null }) }]);
+    httpMock.expectOne(`${environment.apiUrl}/Apartments`).flush([
+      {
+        id: 1,
+        name: '101',
+        owner: 'Daniel',
+        ...({ contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' }),
+      },
+    ]);
 
     service.clearCache();
 
