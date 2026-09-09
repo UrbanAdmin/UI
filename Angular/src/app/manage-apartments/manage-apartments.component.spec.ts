@@ -159,7 +159,7 @@ describe('ManageApartmentsComponent', () => {
 
   it('shows "Sin arrendatario" instead of a blank Owner cell for a vacant apartment with no owner', () => {
     component.apartments$ = of([
-      { id: 4, number: '401', owner: '', contractStartDate: null, hasContract: false, contractFileName: null, status: 'En arriendo' },
+      { id: 4, number: '401', owner: '', contractStartDate: null, hasContract: false, contractFileName: null, status: 'No arrendado' },
     ]);
     fixture.detectChanges();
 

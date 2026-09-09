@@ -1,4 +1,4 @@
-export type ApartmentStatus = 'Arrendado' | 'En arriendo';
+export type ApartmentStatus = 'Arrendado' | 'No arrendado';
 
 export interface ApartmentDto {
   id: number;

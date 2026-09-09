@@ -58,7 +58,7 @@ describe('ApartmentDialogComponent', () => {
         contractStartDate: '2026-03-10T00:00:00',
         hasContract: true,
         contractFileName: 'contrato.pdf',
-        status: 'En arriendo',
+        status: 'No arrendado',
       },
     });
 
@@ -68,7 +68,7 @@ describe('ApartmentDialogComponent', () => {
     expect(component.isEdit).toBe(true);
     expect(component.hasContract).toBe(true);
     expect(component.contractFileName).toBe('contrato.pdf');
-    expect(component.status).toBe('En arriendo');
+    expect(component.status).toBe('No arrendado');
     expect(component.ownerRequired).toBe(false);
   });
 
@@ -81,10 +81,10 @@ describe('ApartmentDialogComponent', () => {
     expect(button.disabled).toBe(true);
   });
 
-  it('save button is enabled with a blank Owner once Estado is En arriendo', () => {
+  it('save button is enabled with a blank Owner once Estado is No arrendado', () => {
     setup({ apartment: null });
     component.number = '501';
-    component.status = 'En arriendo';
+    component.status = 'No arrendado';
     fixture.detectChanges();
 
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button[mat-raised-button]');
@@ -93,7 +93,7 @@ describe('ApartmentDialogComponent', () => {
 
   it('shows a "Sin arrendatario" placeholder on the Owner field while it is optional and blank', () => {
     setup({ apartment: null });
-    component.status = 'En arriendo';
+    component.status = 'No arrendado';
     fixture.detectChanges();
 
     const ownerInput: HTMLInputElement = fixture.nativeElement.querySelector('input[name="owner"]');
