@@ -91,6 +91,23 @@ describe('ApartmentDialogComponent', () => {
     expect(button.disabled).toBe(false);
   });
 
+  it('shows a "Sin arrendatario" placeholder on the Owner field while it is optional and blank', () => {
+    setup({ apartment: null });
+    component.status = 'En arriendo';
+    fixture.detectChanges();
+
+    const ownerInput: HTMLInputElement = fixture.nativeElement.querySelector('input[name="owner"]');
+    expect(ownerInput.placeholder).toBe('Sin arrendatario');
+  });
+
+  it('shows no Owner placeholder while Estado is Arrendado (Owner is required)', () => {
+    setup({ apartment: null });
+    fixture.detectChanges();
+
+    const ownerInput: HTMLInputElement = fixture.nativeElement.querySelector('input[name="owner"]');
+    expect(ownerInput.placeholder).toBe('');
+  });
+
   it('save POSTs a new apartment (incl. ContractStartDate) and closes the dialog', () => {
     setup({ apartment: null });
     component.number = '501';

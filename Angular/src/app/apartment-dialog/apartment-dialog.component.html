@@ -16,7 +16,13 @@
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Arrendatario{{ ownerRequired ? '' : ' (opcional)' }}</mat-label>
-        <input matInput type="text" [(ngModel)]="owner" name="owner" />
+        <input
+          matInput
+          type="text"
+          [(ngModel)]="owner"
+          name="owner"
+          [placeholder]="ownerRequired ? '' : 'Sin arrendatario'"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
