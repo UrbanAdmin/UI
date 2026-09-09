@@ -225,6 +225,68 @@ describe('PaymentsComponent', () => {
     httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
   });
 
+  it('typing several keystrokes then blurring saves exactly once, with the final value', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+
+    let rows: { apartmentId: number }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    flushArriendoUtilityCreation();
+    const row = rows!.find((r) => r.apartmentId === 1)!;
+
+    component.onAmountFocus(row as never);
+    component.onAmountInput(row as never, '7');
+    component.onAmountInput(row as never, '75');
+    component.onAmountInput(row as never, '750000');
+    httpMock.expectNone(PAYMENT_STATUSES_URL);
+
+    component.onAmountBlur(row as never);
+
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 1, Utility_Id: 4, Date_Id: currentDateId, Paid: false, Amount: '750000' });
+    postReq.flush({ id: 0 });
+
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+  });
+
+  it('leaving the amount blank on blur does not save and reverts to the original amount', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+
+    let rows: { apartmentId: number; amount: string | null }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    flushArriendoUtilityCreation();
+    const row = rows!.find((r) => r.apartmentId === 1)!;
+    const originalAmount = row.amount;
+
+    component.onAmountFocus(row as never);
+    component.onAmountInput(row as never, '750000');
+    component.onAmountInput(row as never, '');
+    component.onAmountBlur(row as never);
+
+    httpMock.expectNone(PAYMENT_STATUSES_URL);
+    expect(row.amount).toBe(originalAmount);
+  });
+
+  it('blurring without having typed anything does not re-save the unchanged amount', () => {
+    component.selectedService = 'Arriendo';
+    component.onPeriodChange();
+    flushArriendoUtilityCreation();
+
+    let rows: { apartmentId: number }[] | undefined;
+    component.rows$.subscribe((r) => (rows = r as typeof rows));
+    flushArriendoUtilityCreation();
+    const row = rows!.find((r) => r.apartmentId === 1)!;
+
+    component.onAmountFocus(row as never);
+    component.onAmountBlur(row as never);
+
+    httpMock.expectNone(PAYMENT_STATUSES_URL);
+  });
+
   it('shows the Pagado toggle for an Admin', () => {
     expect(component.isReadOnly).toBe(false);
     expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeTruthy();

@@ -157,4 +157,35 @@ export class PaymentsComponent {
       .setAmount(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, amount)
       .subscribe(() => this.onPeriodChange());
   }
+
+  /** Snapshot of each row's amount as it was when editing began, keyed by
+   *  apartmentId, so onAmountBlur can tell "nothing typed" from "cleared"
+   *  and revert to it - row.amount itself gets overwritten live by
+   *  onAmountInput while the admin types. Always read-then-deleted in
+   *  onAmountBlur, so a stale entry can never linger across edits. */
+  private readonly amountBeforeEdit = new Map<number, string | null>();
+
+  onAmountFocus(row: OwnerRow): void {
+    this.amountBeforeEdit.set(row.apartmentId, row.amount);
+  }
+
+  /** Keystroke-level update only - deliberately does NOT call onAmountChange
+   *  (no save, no reload) so the admin isn't fighting a rebuilt table row on
+   *  every character. The actual save is committed on blur, in onAmountBlur. */
+  onAmountInput(row: OwnerRow, amount: string): void {
+    row.amount = amount;
+  }
+
+  onAmountBlur(row: OwnerRow): void {
+    const before = this.amountBeforeEdit.get(row.apartmentId) ?? null;
+    this.amountBeforeEdit.delete(row.apartmentId);
+
+    if (!row.amount) {
+      row.amount = before;
+      return;
+    }
+    if (row.amount !== before) {
+      this.onAmountChange(row, row.amount);
+    }
+  }
 }
