@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="UrbanAdmin.Tenant.Mobile.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:auth="clr-namespace:UrbanAdmin.Tenant.Mobile.Auth"
+    xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
+    xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
+    FlyoutBehavior="Disabled"
+    Title="UrbanAdmin">
+
+    <ShellContent
+        Title="Ingresar"
+        Route="Login"
+        ContentTemplate="{DataTemplate auth:LoginPage}" />
+
+    <TabBar>
+        <ShellContent
+            Title="Notificaciones"
+            Route="Notificaciones"
+            ContentTemplate="{DataTemplate notificaciones:NotificacionesPage}" />
+        <ShellContent
+            Title="Pagos"
+            Route="Pagos"
+            ContentTemplate="{DataTemplate pagos:PagosPage}" />
+    </TabBar>
+
+</Shell>

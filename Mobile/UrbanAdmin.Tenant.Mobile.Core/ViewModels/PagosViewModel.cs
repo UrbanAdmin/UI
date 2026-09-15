@@ -1,0 +1,42 @@
+using UrbanAdmin.Tenant.Mobile.Core.Models;
+using UrbanAdmin.Tenant.Mobile.Core.Services;
+
+namespace UrbanAdmin.Tenant.Mobile.Core.ViewModels;
+
+// Read-only by design (FR-008): this view model exposes no Save/Submit
+// method and never calls a write endpoint - Pagos only ever loads data.
+public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore)
+{
+    public List<PagoModel> Items { get; private set; } = [];
+    public bool IsBusy { get; private set; }
+    public bool HasError { get; private set; }
+
+    // US3 Acceptance Scenario 3: nothing pending shows a clear "nothing due"
+    // state rather than an empty-looking error.
+    public bool IsEmpty => !IsBusy && !HasError && Items.Count == 0;
+
+    public async Task LoadAsync()
+    {
+        IsBusy = true;
+        HasError = false;
+        try
+        {
+            var token = await tokenStore.GetTokenAsync();
+            if (token is null)
+            {
+                HasError = true;
+                return;
+            }
+
+            Items = await apiClient.GetPagosAsync(token);
+        }
+        catch
+        {
+            HasError = true;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+}

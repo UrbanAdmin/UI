@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Auth.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Ingresar">
+
+    <VerticalStackLayout Padding="24" Spacing="16" VerticalOptions="Center">
+        <Label Text="UrbanAdmin" FontSize="28" HorizontalOptions="Center" />
+
+        <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
+        <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+
+        <Label
+            x:Name="ErrorLabel"
+            TextColor="Red"
+            IsVisible="False" />
+
+        <Button x:Name="LoginButton" Text="Ingresar" Clicked="OnLoginClicked" />
+
+        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+    </VerticalStackLayout>
+
+</ContentPage>

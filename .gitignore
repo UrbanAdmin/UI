@@ -1,2 +1,13 @@
 .vs/
 .angular/
+
+# .NET / MAUI (Mobile/)
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+*.mfractor/
+.mfractor/

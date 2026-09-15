@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  FR-008: read-only for the tenant. This page deliberately contains no
+  Entry/Button/Save control of any kind for the amount, due date, or paid
+  status - only Labels. The Backend also enforces this at the routing level
+  (TenantEndpointsTests.MapTenantEndpoints_RegistersOnlyGetFor_TenantPagos).
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Pagos.PagosPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    Title="Pagos">
+
+    <Grid RowDefinitions="*" Padding="16">
+        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+
+        <Label
+            x:Name="EmptyLabel"
+            Text="No tienes nada pendiente por pagar."
+            IsVisible="False"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+
+        <Label
+            x:Name="ErrorLabel"
+            Text="No se pudo cargar tu información de pagos."
+            TextColor="Red"
+            IsVisible="False"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+
+        <CollectionView x:Name="ItemsList" IsVisible="False">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:PagoModel">
+                    <VerticalStackLayout Padding="0,8" Spacing="2">
+                        <Label Text="{Binding Utility}" FontAttributes="Bold" />
+                        <Label Text="{Binding Amount, StringFormat='Monto: {0}'}" />
+                        <Label Text="{Binding DueDate, StringFormat='Vence: {0:dd/MM/yyyy}'}" />
+                        <Label Text="{Binding Paid, StringFormat='Pagado: {0}'}" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>
