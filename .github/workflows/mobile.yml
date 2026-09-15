@@ -1,0 +1,72 @@
+# CI for the native tenant mobile app (Mobile/). Kept as its own workflow,
+# path-scoped to Mobile/**, so Angular-only changes never pay for MAUI
+# workload installs and vice versa (see ci.yml's Angular/** scoping).
+#
+# Windows (net10.0-windows10.0.19041.0) is deliberately not built here: it's
+# a conditional TargetFramework only added on Windows hosts, would need a
+# windows-latest runner, and is already verified locally on every change.
+# Android and iOS are the two platforms that actually ship to tenants, so
+# CI focuses its minutes there - and macos-latest can build iOS even though
+# local Windows development cannot (Windows MAX_PATH blocks one of the
+# Firebase plugin's nested framework bundles; macOS has no such limit).
+name: Mobile
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "Mobile/**" ]
+  pull_request:
+    branches: [ "main" ]
+    paths: [ "Mobile/**" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Mobile
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore
+        run: dotnet restore UrbanAdmin.Tenant.Mobile.Tests/UrbanAdmin.Tenant.Mobile.Tests.csproj
+      - name: Build
+        run: dotnet build UrbanAdmin.Tenant.Mobile.Tests/UrbanAdmin.Tenant.Mobile.Tests.csproj --no-restore
+      - name: Test
+        run: dotnet test UrbanAdmin.Tenant.Mobile.Tests/UrbanAdmin.Tenant.Mobile.Tests.csproj --no-build --verbosity normal
+
+  build-android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Mobile
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+      - name: Build (net10.0-android)
+        run: dotnet build UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-android
+
+  build-ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: Mobile
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
+      - name: Build (net10.0-ios)
+        run: dotnet build UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-ios
