@@ -16,8 +16,24 @@ public class FirebasePushTokenProvider : IPushTokenProvider
 {
     public string Platform => DeviceInfo.Platform == DevicePlatform.iOS ? "iOS" : "Android";
 
+    public event Action<string>? TokenRefreshed;
+
+    public FirebasePushTokenProvider()
+    {
+        CrossFirebaseCloudMessaging.Current.TokenChanged += (_, args) => TokenRefreshed?.Invoke(args.Token);
+    }
+
     public async Task<string?> GetTokenAsync()
     {
+        // Android 13+ (API 33) will not display any notification unless the app has
+        // been granted POST_NOTIFICATIONS at runtime - declaring it in the manifest
+        // (which a transitive Firebase library already does) is necessary but not
+        // sufficient. Permissions.PostNotifications is MAUI's built-in cross-platform
+        // wrapper for it: Android-specific, a safe no-op everywhere else (iOS's
+        // notification permission is requested internally by CheckIfValidAsync below
+        // instead, per research.md §10). Converge finding F2.
+        await Permissions.RequestAsync<Permissions.PostNotifications>();
+
         await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
         return await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
     }

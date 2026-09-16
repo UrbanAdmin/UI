@@ -11,4 +11,10 @@ public interface IPushTokenProvider
     Task<string?> GetTokenAsync();
 
     string Platform { get; }
+
+    // Fires whenever the OS/Firebase rotates this device's token after
+    // GetTokenAsync was first called - a normal, periodic occurrence per
+    // Firebase's own token-lifecycle docs, not an error. DeviceRegistrationService
+    // subscribes to this to re-register without requiring a fresh login.
+    event Action<string> TokenRefreshed;
 }
