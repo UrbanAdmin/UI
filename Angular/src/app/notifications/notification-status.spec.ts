@@ -54,12 +54,12 @@ describe('getNotificationStatus', () => {
     expect(result).toBe('not-due');
   });
 
-  it('does not treat 1 day before the due date as due-soon', () => {
+  it('returns due-soon 1 day before the due date when unpaid', () => {
     const result = getNotificationStatus(
       payment({ dueDate: new Date('2026-09-10T00:00:00') }),
       new Date('2026-09-09T00:00:00'),
     );
-    expect(result).toBe('not-due');
+    expect(result).toBe('due-soon');
   });
 
   it('does not treat 3 days before the due date as due-soon', () => {

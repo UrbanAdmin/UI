@@ -20,7 +20,7 @@ export function getNotificationStatus(payment: ServicePayment, today: Date): Not
   if (daysUntilDue === 0) {
     return 'due-today';
   }
-  if (daysUntilDue === 2) {
+  if (daysUntilDue === 1 || daysUntilDue === 2) {
     return 'due-soon';
   }
   return 'not-due';
