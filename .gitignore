@@ -11,3 +11,4 @@ obj/
 [Rr]elease/
 *.mfractor/
 .mfractor/
+*.SdkResolver.*.proj.Backup.tmp

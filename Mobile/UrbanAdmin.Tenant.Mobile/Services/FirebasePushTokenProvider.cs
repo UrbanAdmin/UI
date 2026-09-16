@@ -7,12 +7,11 @@ namespace UrbanAdmin.Tenant.Mobile.Services;
 // Platforms/Android or Platforms/iOS class needed for token acquisition
 // itself - only Firebase's own project config differs per platform).
 //
-// Requires a real Firebase project's google-services.json (Android, under
-// Platforms/Android/) and GoogleService-Info.plist (iOS, under
-// Platforms/iOS/) plus a CrossFirebase.Initialize(...) call in
-// MainApplication.cs / AppDelegate.cs before this can issue a real token -
-// none of that exists yet (T028 - needs the user's own Firebase project) and
-// is deliberately left as a deployment-time step, per research.md.
+// Backed by the real urbanadmin-tenant Firebase project's google-services.json
+// (Android) / GoogleService-Info.plist (iOS), both at the project root and
+// wired into the build via the csproj's GoogleServicesJson/BundleResource
+// items, plus CrossFirebase.Initialize(...) in MainActivity.OnCreate
+// (Android) / AppDelegate.FinishedLaunching (iOS) - see research.md §10.
 public class FirebasePushTokenProvider : IPushTokenProvider
 {
     public string Platform => DeviceInfo.Platform == DevicePlatform.iOS ? "iOS" : "Android";
