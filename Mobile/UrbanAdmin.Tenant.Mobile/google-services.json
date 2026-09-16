@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "792464271951",
+    "project_id": "urbanadmin-tenant",
+    "storage_bucket": "urbanadmin-tenant.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792464271951:android:c6c43a43d7d2994904583a",
+        "android_client_info": {
+          "package_name": "com.companyname.urbanadmin.tenant.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8XjU_SbnpRgrMYbsOKaLB_BZdMhAntK4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -62,6 +62,17 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
+	<!-- From the real urbanadmin-tenant Firebase project (T028/research.md §10) - these are
+	client-side config, not secrets (Google's own guidance is that they're safe to commit; the
+	actual private credential is the Backend's Firebase:CredentialsJson user-secret, never this). -->
+	<ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+		<GoogleServicesJson Include="google-services.json" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework.Contains('-ios')) OR $(TargetFramework.Contains('-maccatalyst'))">
+		<BundleResource Include="GoogleService-Info.plist" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
