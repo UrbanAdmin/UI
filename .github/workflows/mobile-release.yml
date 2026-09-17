@@ -61,7 +61,11 @@ jobs:
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             DISPLAY_VERSION="${GITHUB_REF_NAME#mobile-v}"
           else
-            DISPLAY_VERSION="0.0.$EPOCH"
+            # .NET's AssemblyVersion format caps each part at 65534, so the
+            # epoch (used below for versionCode, which allows up to 2^31-1)
+            # can't be reused here - the small run number is fine for a
+            # human-readable fallback version on a manual, non-tag run.
+            DISPLAY_VERSION="0.0.${{ github.run_number }}"
           fi
           echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$EPOCH" >> "$GITHUB_OUTPUT"
