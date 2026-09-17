@@ -6,9 +6,12 @@
 #
 # Trigger: push a tag matching mobile-v*.*.* (e.g. mobile-v1.0.0) from
 # inside this repo (submodules/UI). versionCode (AndroidVersionCode) is
-# derived from the GitHub Actions run number, which is monotonically
-# increasing for this repo, so Play's "versionCode must always increase"
-# rule is satisfied without hand-editing the .csproj before every release.
+# derived from the current Unix timestamp rather than the Actions run
+# number - run_number is scoped per-workflow and starts at 1, which
+# collided with versionCode 1 already used by the first manual Play
+# Console upload. A timestamp is always far larger and strictly
+# increasing, so it can never collide with a prior manual or automated
+# upload, satisfying Play's "versionCode must always increase" rule.
 #
 # NOTE: Google Play does not allow the Developer API to create the very
 # FIRST release of a brand-new app listing - upload the first .aab manually
@@ -54,14 +57,14 @@ jobs:
         id: version
         shell: bash
         run: |
-          RUN_NUMBER="${{ github.run_number }}"
+          EPOCH="$(date -u +%s)"
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
             DISPLAY_VERSION="${GITHUB_REF_NAME#mobile-v}"
           else
-            DISPLAY_VERSION="0.0.$RUN_NUMBER"
+            DISPLAY_VERSION="0.0.$EPOCH"
           fi
           echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
-          echo "version_code=$RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "version_code=$EPOCH" >> "$GITHUB_OUTPUT"
 
       - name: Decode signing keystore
         shell: bash
@@ -98,5 +101,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.urbanadmin.tenant
           releaseFiles: Mobile/UrbanAdmin.Tenant.Mobile/bin/Release/net10.0-android/publish/*-Signed.aab
-          track: ${{ inputs.track || 'production' }}
+          tracks: ${{ inputs.track || 'production' }}
           status: draft
