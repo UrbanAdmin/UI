@@ -12,3 +12,8 @@ obj/
 *.mfractor/
 .mfractor/
 *.SdkResolver.*.proj.Backup.tmp
+
+# Android release signing - never commit (Constitution Principle I)
+*.keystore
+*.jks
+keystore.properties

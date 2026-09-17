@@ -1,0 +1,102 @@
+# Builds a signed release .aab for the tenant mobile app and uploads it to
+# Google Play. Kept separate from mobile.yml (which is path-scoped to
+# Mobile/** and runs on every push/PR) because a tag push carries no file
+# diff of its own - combining `paths:` with `tags:` on the same push trigger
+# would silently skip this job on an ordinary tag push.
+#
+# Trigger: push a tag matching mobile-v*.*.* (e.g. mobile-v1.0.0) from
+# inside this repo (submodules/UI). versionCode (AndroidVersionCode) is
+# derived from the GitHub Actions run number, which is monotonically
+# increasing for this repo, so Play's "versionCode must always increase"
+# rule is satisfied without hand-editing the .csproj before every release.
+#
+# NOTE: Google Play does not allow the Developer API to create the very
+# FIRST release of a brand-new app listing - upload the first .aab manually
+# through the Play Console UI once, then this workflow can take over for
+# every release after that.
+name: Mobile Release (Android)
+
+on:
+  push:
+    tags:
+      - "mobile-v*.*.*"
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Play Console track to release to"
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - beta
+          - alpha
+          - internal
+
+jobs:
+  release-android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Derive version info
+        id: version
+        shell: bash
+        run: |
+          RUN_NUMBER="${{ github.run_number }}"
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            DISPLAY_VERSION="${GITHUB_REF_NAME#mobile-v}"
+          else
+            DISPLAY_VERSION="0.0.$RUN_NUMBER"
+          fi
+          echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Decode signing keystore
+        shell: bash
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > urbanadmin-tenant-upload.keystore
+        working-directory: Mobile/UrbanAdmin.Tenant.Mobile
+
+      - name: Build signed release .aab
+        run: |
+          dotnet publish UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-android -c Release \
+            -p:ApplicationDisplayVersion=${{ steps.version.outputs.display_version }} \
+            -p:ApplicationVersion=${{ steps.version.outputs.version_code }} \
+            -p:AndroidPackageFormat=aab \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore=urbanadmin-tenant-upload.keystore \
+            -p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS }} \
+            -p:AndroidSigningStorePass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Remove decoded keystore
+        if: always()
+        shell: bash
+        run: rm -f UrbanAdmin.Tenant.Mobile/urbanadmin-tenant-upload.keystore
+
+      - name: Upload .aab as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: urbanadmin-tenant-${{ steps.version.outputs.display_version }}
+          path: Mobile/UrbanAdmin.Tenant.Mobile/bin/Release/net10.0-android/publish/*-Signed.aab
+          retention-days: 90
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.urbanadmin.tenant
+          releaseFiles: Mobile/UrbanAdmin.Tenant.Mobile/bin/Release/net10.0-android/publish/*-Signed.aab
+          track: ${{ inputs.track || 'production' }}
+          status: draft
