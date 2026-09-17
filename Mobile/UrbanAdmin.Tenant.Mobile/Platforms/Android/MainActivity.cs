@@ -12,6 +12,11 @@ public class MainActivity : MauiAppCompatActivity
     // activityLocator lets the plugin re-resolve the current activity later (e.g. for any
     // Firebase feature that needs to present UI), which this single-activity MAUI app always
     // satisfies by returning itself.
+    //
+    // This one call also covers Crashlytics (Plugin.Firebase.Crashlytics) - confirmed by IL
+    // inspection (specs/005-mobile-observability/research.md §5) that no separate
+    // Crashlytics-specific initialization call exists; CrossFirebaseCrashlytics.Current
+    // simply becomes available once Firebase Core is initialized here.
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);

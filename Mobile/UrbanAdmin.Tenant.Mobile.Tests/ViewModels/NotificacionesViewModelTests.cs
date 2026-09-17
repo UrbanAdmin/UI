@@ -15,7 +15,7 @@ public class NotificacionesViewModelTests
         };
         var tokenStore = new FakeTokenStore();
         await tokenStore.SaveTokenAsync("fake-jwt");
-        var vm = new NotificacionesViewModel(apiClient, tokenStore);
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
 
         await vm.LoadAsync();
 
@@ -31,7 +31,7 @@ public class NotificacionesViewModelTests
         var apiClient = new FakeTenantApiClient { Notificaciones = [] };
         var tokenStore = new FakeTokenStore();
         await tokenStore.SaveTokenAsync("fake-jwt");
-        var vm = new NotificacionesViewModel(apiClient, tokenStore);
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
 
         await vm.LoadAsync();
 
@@ -45,11 +45,26 @@ public class NotificacionesViewModelTests
         var apiClient = new FakeTenantApiClient { ThrowOnGet = true };
         var tokenStore = new FakeTokenStore();
         await tokenStore.SaveTokenAsync("fake-jwt");
-        var vm = new NotificacionesViewModel(apiClient, tokenStore);
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
 
         await vm.LoadAsync();
 
         Assert.True(vm.HasError);
         Assert.False(vm.IsEmpty);
+    }
+
+    // US2 (FR-005): a non-crashing API failure is still recorded as a diagnostic event.
+    [Fact]
+    public async Task LoadAsync_LogsApiErrorWhenTheApiCallFails()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var diagnostics = new FakeCrashDiagnosticsService();
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, diagnostics);
+
+        await vm.LoadAsync();
+
+        Assert.Equal([("notificaciones", (int?)null)], diagnostics.ApiErrors);
     }
 }

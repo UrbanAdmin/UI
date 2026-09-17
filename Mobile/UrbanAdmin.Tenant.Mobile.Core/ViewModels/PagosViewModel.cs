@@ -5,7 +5,7 @@ namespace UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 // Read-only by design (FR-008): this view model exposes no Save/Submit
 // method and never calls a write endpoint - Pagos only ever loads data.
-public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore)
+public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, ICrashDiagnosticsService diagnostics)
 {
     public List<PagoModel> Items { get; private set; } = [];
     public bool IsBusy { get; private set; }
@@ -32,6 +32,9 @@ public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore)
         }
         catch
         {
+            // US2/FR-005: a non-crashing API failure is still recorded as a
+            // diagnostic event, even though HasError already handles the UI side.
+            diagnostics.LogApiError("pagos", null);
             HasError = true;
         }
         finally

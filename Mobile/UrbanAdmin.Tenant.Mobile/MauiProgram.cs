@@ -30,6 +30,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
 		builder.Services.AddSingleton<IPushTokenProvider, FirebasePushTokenProvider>();
 		builder.Services.AddSingleton<DeviceRegistrationService>();
+		builder.Services.AddSingleton<ICrashDiagnosticsService, FirebaseCrashDiagnosticsService>();
 
 		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<NotificacionesViewModel>();

@@ -9,9 +9,11 @@ public class FakeTenantApiClient : ITenantApiClient
     public List<NotificacionModel> Notificaciones { get; set; } = [];
     public List<PagoModel> Pagos { get; set; } = [];
     public bool ThrowOnGet { get; set; }
+    public bool ThrowOnLogin { get; set; }
     public (string Token, string Platform, string PushToken)? RegisteredDevice { get; private set; }
 
-    public Task<string?> LoginAsync(string username, string password) => Task.FromResult(TokenToReturn);
+    public Task<string?> LoginAsync(string username, string password) =>
+        ThrowOnLogin ? throw new HttpRequestException("boom") : Task.FromResult(TokenToReturn);
 
     public Task RegisterDeviceAsync(string token, string platform, string pushToken)
     {

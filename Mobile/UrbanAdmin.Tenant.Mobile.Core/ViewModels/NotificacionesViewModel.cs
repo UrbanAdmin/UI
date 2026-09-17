@@ -3,7 +3,7 @@ using UrbanAdmin.Tenant.Mobile.Core.Services;
 
 namespace UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
-public class NotificacionesViewModel(ITenantApiClient apiClient, ITokenStore tokenStore)
+public class NotificacionesViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, ICrashDiagnosticsService diagnostics)
 {
     public List<NotificacionModel> Items { get; private set; } = [];
     public bool IsBusy { get; private set; }
@@ -30,6 +30,9 @@ public class NotificacionesViewModel(ITenantApiClient apiClient, ITokenStore tok
         }
         catch
         {
+            // US2/FR-005: a non-crashing API failure is still recorded as a
+            // diagnostic event, even though HasError already handles the UI side.
+            diagnostics.LogApiError("notificaciones", null);
             HasError = true;
         }
         finally

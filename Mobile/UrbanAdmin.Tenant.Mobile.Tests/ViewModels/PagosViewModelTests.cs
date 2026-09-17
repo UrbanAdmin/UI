@@ -15,7 +15,7 @@ public class PagosViewModelTests
         };
         var tokenStore = new FakeTokenStore();
         await tokenStore.SaveTokenAsync("fake-jwt");
-        var vm = new PagosViewModel(apiClient, tokenStore);
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
 
         await vm.LoadAsync();
 
@@ -30,10 +30,25 @@ public class PagosViewModelTests
         var apiClient = new FakeTenantApiClient { Pagos = [] };
         var tokenStore = new FakeTokenStore();
         await tokenStore.SaveTokenAsync("fake-jwt");
-        var vm = new PagosViewModel(apiClient, tokenStore);
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
 
         await vm.LoadAsync();
 
         Assert.True(vm.IsEmpty);
+    }
+
+    // US2 (FR-005): a non-crashing API failure is still recorded as a diagnostic event.
+    [Fact]
+    public async Task LoadAsync_LogsApiErrorWhenTheApiCallFails()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var diagnostics = new FakeCrashDiagnosticsService();
+        var vm = new PagosViewModel(apiClient, tokenStore, diagnostics);
+
+        await vm.LoadAsync();
+
+        Assert.Equal([("pagos", (int?)null)], diagnostics.ApiErrors);
     }
 }
