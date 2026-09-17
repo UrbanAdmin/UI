@@ -26,9 +26,16 @@ on:
   workflow_dispatch:
     inputs:
       track:
+        # Defaults to internal, not production: this Play Console account is
+        # subject to Google's new-personal-developer-account policy, which
+        # blocks any production release (API or manual) until a closed test
+        # (the "alpha" track) has run with 12+ testers opted in continuously
+        # for 14 days and production access has been explicitly granted via
+        # "Apply for production" in the Play Console dashboard. Switch this
+        # default back to production once that access is granted.
         description: "Play Console track to release to"
         required: true
-        default: production
+        default: internal
         type: choice
         options:
           - production
@@ -105,5 +112,9 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.urbanadmin.tenant
           releaseFiles: Mobile/UrbanAdmin.Tenant.Mobile/bin/Release/net10.0-android/publish/*-Signed.aab
-          tracks: ${{ inputs.track || 'production' }}
+          # Falls back to internal (not production) for tag-triggered runs
+          # for the same reason as the workflow_dispatch default above -
+          # switch back to production once Play Console grants production
+          # access for this account.
+          tracks: ${{ inputs.track || 'internal' }}
           status: draft
