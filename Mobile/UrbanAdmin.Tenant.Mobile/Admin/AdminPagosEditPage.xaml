@@ -61,15 +61,16 @@
                         <Border Padding="12,10" Margin="0,4" StrokeShape="RoundRectangle 12">
                             <VerticalStackLayout Spacing="8">
                                 <Label Text="{Binding ApartmentLabel}" FontAttributes="Bold" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                                    <Label Grid.Column="0" Text="$" VerticalOptions="Center" />
                                     <Entry
-                                        Grid.Column="0"
+                                        Grid.Column="1"
                                         Placeholder="Cantidad a pagar"
                                         Keyboard="Numeric"
                                         Text="{Binding Amount}"
                                         Unfocused="OnAmountUnfocused" />
                                     <Switch
-                                        Grid.Column="1"
+                                        Grid.Column="2"
                                         IsToggled="{Binding Paid}"
                                         Toggled="OnPaidToggled" />
                                 </Grid>

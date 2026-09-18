@@ -85,30 +85,6 @@ public class AdminPagosViewModelTests
         Assert.Equal([("admin-pagos", (int?)null)], diagnostics.ApiErrors);
     }
 
-    // Phase 6b (spec.md FR-005c): grand total sums every non-Arriendo row's Amount across all
-    // apartments; Arriendo is excluded, unparseable/placeholder (null) amounts contribute 0.
-    [Fact]
-    public async Task GrandTotal_SumsNonArriendoAmountsAcrossAllApartments()
-    {
-        var apiClient = new FakeAdminApiClient
-        {
-            AdminPagos =
-            [
-                new AdminPagoRowModel { ApartmentId = 1, Utility = "Agua", Amount = "45000" },
-                new AdminPagoRowModel { ApartmentId = 1, Utility = "Arriendo", Amount = "750000" },
-                new AdminPagoRowModel { ApartmentId = 2, Utility = "Luz", Amount = "20000" },
-                new AdminPagoRowModel { ApartmentId = 2, Utility = "Gas", Amount = null },
-            ],
-        };
-        var tokenStore = new FakeTokenStore();
-        await tokenStore.SaveTokenAsync("admin-jwt");
-        var vm = new AdminPagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
-
-        await vm.LoadAsync();
-
-        Assert.Equal(65000m, vm.GrandTotal);
-    }
-
     [Fact]
     public void SumNonArriendoAmounts_ExcludesArriendoAndTreatsUnparseableAmountsAsZero()
     {

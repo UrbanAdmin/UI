@@ -16,9 +16,6 @@ public class AdminPagosViewModel(IAdminApiClient apiClient, ITokenStore tokenSto
 
     public bool IsEmpty => !IsBusy && !HasError && Items.Count == 0;
 
-    // FR-005c: grand total across every apartment, excluding Arriendo.
-    public decimal GrandTotal => SumNonArriendoAmounts(Items);
-
     public async Task LoadAsync()
     {
         IsBusy = true;
@@ -45,9 +42,9 @@ public class AdminPagosViewModel(IAdminApiClient apiClient, ITokenStore tokenSto
         }
     }
 
-    // Shared by GrandTotal and the summary page's per-apartment subtotal (both exclude
-    // Arriendo, per FR-005c). An unparseable or placeholder (null) Amount contributes 0 rather
-    // than throwing - a placeholder row has nothing to add yet.
+    // Shared by the summary page's per-apartment subtotal (FR-005c, excludes Arriendo). An
+    // unparseable or placeholder (null) Amount contributes 0 rather than throwing - a
+    // placeholder row has nothing to add yet.
     public static decimal SumNonArriendoAmounts(IEnumerable<AdminPagoRowModel> rows) =>
         rows.Where(r => r.Utility != "Arriendo")
             .Sum(r => decimal.TryParse(r.Amount, out var amount) ? amount : 0m);

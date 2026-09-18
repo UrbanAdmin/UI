@@ -10,7 +10,7 @@
         <ToolbarItem Text="Editar" Clicked="OnEditClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="16" RowSpacing="8">
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
         <HorizontalStackLayout Grid.Row="0" Spacing="8">
             <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
                 <Picker.ItemsSource>
@@ -54,42 +54,90 @@
             <CollectionView x:Name="ItemsList" IsVisible="False" IsGrouped="True">
                 <CollectionView.GroupHeaderTemplate>
                     <DataTemplate x:DataType="admin:ApartmentPagoGroup">
-                        <Label
-                            Text="{Binding Header}"
-                            FontAttributes="Bold"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
-                            Padding="8,6" />
+                        <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="8"
+                            Padding="12,10"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}">
+                            <Label
+                                Grid.Column="0"
+                                Text="{Binding ApartmentNumber}"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding OwnerDisplay}"
+                                FontSize="12.5"
+                                Opacity="0.85"
+                                HorizontalTextAlignment="End"
+                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+                        </Grid>
                     </DataTemplate>
                 </CollectionView.GroupHeaderTemplate>
                 <CollectionView.GroupFooterTemplate>
                     <DataTemplate x:DataType="admin:ApartmentPagoGroup">
-                        <Label
-                            Text="{Binding SubtotalDisplay}"
-                            FontAttributes="Bold"
-                            Padding="16,4,8,10" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="16,6,12,12">
+                            <Label
+                                Grid.Column="0"
+                                Text="{Binding SubtotalLabel}"
+                                FontAttributes="Bold"
+                                FontSize="12.5"
+                                TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding SubtotalValue}"
+                                FontAttributes="Bold"
+                                FontSize="12.5" />
+                        </Grid>
                     </DataTemplate>
                 </CollectionView.GroupFooterTemplate>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="admin:AdminPagoDisplayRow">
-                        <VerticalStackLayout Padding="16,8,0,8" Spacing="2">
-                            <Label Text="{Binding Utility}" FontAttributes="Bold" />
-                            <Label Text="{Binding AmountDisplay}" />
-                            <Label Text="{Binding StatusDisplay}" />
-                        </VerticalStackLayout>
+                        <Grid Padding="16,8,10,8" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="1">
+                                <Label Text="{Binding Utility}" FontAttributes="Bold" FontSize="13.5" />
+                                <Label
+                                    Text="{Binding AmountDisplay}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </VerticalStackLayout>
+                            <Border
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Padding="9,3"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="paid">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="pending">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="placeholder">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PlaceholderBg}, Dark={StaticResource PlaceholderBgDark}}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding StatusDisplay}" FontSize="11" FontAttributes="Bold">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="paid">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="pending">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="placeholder">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PlaceholderText}, Dark={StaticResource PlaceholderTextDark}}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </Grid>
-
-        <Label
-            x:Name="GrandTotalLabel"
-            Grid.Row="2"
-            FontAttributes="Bold"
-            FontSize="16"
-            Padding="12"
-            TextColor="White"
-            BackgroundColor="{StaticResource Primary}"
-            IsVisible="False" />
     </Grid>
 
 </ContentPage>

@@ -27,6 +27,22 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
+    <!-- Payment status chip colors - mirrors Mockups/admin-payments-summary-and-edit/index.html -->
+    <Color x:Key="Success">#1E8E5A</Color>
+    <Color x:Key="SuccessDark">#4ADE94</Color>
+    <Color x:Key="SuccessBg">#E4F5EC</Color>
+    <Color x:Key="SuccessBgDark">#163325</Color>
+
+    <Color x:Key="Pending">#A9700A</Color>
+    <Color x:Key="PendingDark">#E3B15C</Color>
+    <Color x:Key="PendingBg">#FBF0DD</Color>
+    <Color x:Key="PendingBgDark">#33270F</Color>
+
+    <Color x:Key="PlaceholderText">#6B5B95</Color>
+    <Color x:Key="PlaceholderTextDark">#B7A8E0</Color>
+    <Color x:Key="PlaceholderBg">#F5F1FA</Color>
+    <Color x:Key="PlaceholderBgDark">#241F35</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
