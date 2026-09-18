@@ -31,10 +31,46 @@
         <CollectionView x:Name="ItemsList" IsVisible="False" SelectionMode="Single" SelectionChanged="OnApartmentSelected">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:ApartmentModel">
-                    <VerticalStackLayout Padding="0,8" Spacing="2">
-                        <Label Text="{Binding Name}" FontAttributes="Bold" />
-                        <Label Text="{Binding Owner, StringFormat='Propietario: {0}'}" />
-                        <Label Text="{Binding Status}" />
+                    <VerticalStackLayout>
+                        <Grid Padding="4,10" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="1">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="13.5" />
+                                <Label
+                                    Text="{Binding Owner, StringFormat='Propietario: {0}'}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <Label
+                                    Text="{Binding ContractStartDate, StringFormat='Fecha inicio: {0:dd/MM/yyyy}', TargetNullValue='Fecha inicio: Sin definir'}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </VerticalStackLayout>
+                            <Border
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Padding="9,3"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="Arrendado">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Status}" Value="No arrendado">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Status}" FontSize="11" FontAttributes="Bold">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="Arrendado">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Status}" Value="No arrendado">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

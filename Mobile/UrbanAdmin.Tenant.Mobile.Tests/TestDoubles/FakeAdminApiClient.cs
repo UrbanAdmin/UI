@@ -65,8 +65,20 @@ public class FakeAdminApiClient : IAdminApiClient
         return Task.CompletedTask;
     }
 
-    public Task<(byte[] Content, string ContentType, string FileName)?> DownloadContractAsync(string token, long apartmentId) =>
-        Task.FromResult<(byte[] Content, string ContentType, string FileName)?>(null);
+    public bool ThrowOnDownloadContract { get; set; }
+    public (byte[] Content, string ContentType, string FileName)? DownloadContractResult { get; set; }
+    public long? LastDownloadedContractApartmentId { get; private set; }
+
+    public Task<(byte[] Content, string ContentType, string FileName)?> DownloadContractAsync(string token, long apartmentId)
+    {
+        if (ThrowOnDownloadContract)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastDownloadedContractApartmentId = apartmentId;
+        return Task.FromResult(DownloadContractResult);
+    }
 
     public List<UserModel> Users { get; set; } = [];
     public bool ThrowOnGetUsers { get; set; }

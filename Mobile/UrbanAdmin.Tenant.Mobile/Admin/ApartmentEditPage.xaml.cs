@@ -38,6 +38,7 @@ public partial class ApartmentEditPage : ContentPage
             }
 
             ContractStatusLabel.Text = value.HasContract ? $"Contrato: {value.ContractFileName}" : "Sin contrato";
+            ViewContractButton.IsVisible = value.HasContract;
             DeleteButton.IsVisible = true;
         }
     }
@@ -131,5 +132,31 @@ public partial class ApartmentEditPage : ContentPage
         }
 
         ContractStatusLabel.Text = $"Contrato: {file.FileName}";
+        ViewContractButton.IsVisible = true;
+    }
+
+    private async void OnViewContractClicked(object? sender, EventArgs e)
+    {
+        BusyIndicator.IsVisible = true;
+        BusyIndicator.IsRunning = true;
+        ErrorLabel.IsVisible = false;
+
+        var download = await _viewModel.DownloadContractAsync();
+
+        BusyIndicator.IsVisible = false;
+        BusyIndicator.IsRunning = false;
+
+        if (download is null)
+        {
+            ErrorLabel.Text = _viewModel.ErrorMessage ?? "No se pudo abrir el contrato.";
+            ErrorLabel.IsVisible = true;
+            return;
+        }
+
+        var (content, contentType, fileName) = download.Value;
+        var path = Path.Combine(FileSystem.CacheDirectory, fileName);
+        await File.WriteAllBytesAsync(path, content);
+
+        await Launcher.Default.OpenAsync(new OpenFileRequest(fileName, new ReadOnlyFile(path, contentType)));
     }
 }

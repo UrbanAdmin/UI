@@ -99,6 +99,37 @@ public class ApartmentEditViewModel(IAdminApiClient apiClient, ITokenStore token
         }
     }
 
+    public async Task<(byte[] Content, string ContentType, string FileName)?> DownloadContractAsync()
+    {
+        if (ApartmentId is not long id)
+        {
+            return null;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var token = await tokenStore.GetTokenAsync();
+            if (token is null)
+            {
+                ErrorMessage = "No se pudo abrir el contrato: sesión no válida.";
+                return null;
+            }
+
+            return await apiClient.DownloadContractAsync(token, id);
+        }
+        catch
+        {
+            diagnostics.LogApiError("apartments", null);
+            ErrorMessage = "No se pudo abrir el contrato. Verifica tu conexión e intenta de nuevo.";
+            return null;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     public async Task<bool> DeleteAsync()
     {
         if (ApartmentId is not long id)

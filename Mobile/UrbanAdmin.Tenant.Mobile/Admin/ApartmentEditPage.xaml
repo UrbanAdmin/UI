@@ -23,6 +23,7 @@
 
             <Button x:Name="UploadContractButton" Text="Subir contrato" Clicked="OnUploadContractClicked" />
             <Label x:Name="ContractStatusLabel" />
+            <Button x:Name="ViewContractButton" Text="Ver contrato" Clicked="OnViewContractClicked" IsVisible="False" />
 
             <Label
                 x:Name="ErrorLabel"

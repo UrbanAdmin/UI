@@ -128,4 +128,42 @@ public class ApartmentEditViewModelTests
         Assert.False(success);
         Assert.NotNull(vm.ErrorMessage);
     }
+
+    [Fact]
+    public async Task DownloadContractAsync_ReturnsTheFileFromTheApi()
+    {
+        var (apiClient, vm) = await MakeAsync(apartmentId: 7);
+        apiClient.DownloadContractResult = ([1, 2, 3], "application/pdf", "contrato.pdf");
+
+        var result = await vm.DownloadContractAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal("contrato.pdf", result.Value.FileName);
+        Assert.Equal("application/pdf", result.Value.ContentType);
+        Assert.Equal(new byte[] { 1, 2, 3 }, result.Value.Content);
+        Assert.Equal(7L, apiClient.LastDownloadedContractApartmentId);
+    }
+
+    [Fact]
+    public async Task DownloadContractAsync_ReturnsNullWhenThereIsNoApartmentIdYet()
+    {
+        var (apiClient, vm) = await MakeAsync();
+
+        var result = await vm.DownloadContractAsync();
+
+        Assert.Null(result);
+        Assert.Null(apiClient.LastDownloadedContractApartmentId);
+    }
+
+    [Fact]
+    public async Task DownloadContractAsync_DoesNotThrowAndSetsAnErrorWhenTheApiCallFails()
+    {
+        var (apiClient, vm) = await MakeAsync(apartmentId: 7);
+        apiClient.ThrowOnDownloadContract = true;
+
+        var result = await vm.DownloadContractAsync();
+
+        Assert.Null(result);
+        Assert.NotNull(vm.ErrorMessage);
+    }
 }
