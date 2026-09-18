@@ -10,6 +10,7 @@ public class FakeTenantApiClient : ITenantApiClient
     public List<PagoModel> Pagos { get; set; } = [];
     public bool ThrowOnGet { get; set; }
     public bool ThrowOnLogin { get; set; }
+    public bool ThrowOnRegisterDevice { get; set; }
     public (string Token, string Platform, string PushToken)? RegisteredDevice { get; private set; }
 
     public Task<string?> LoginAsync(string username, string password) =>
@@ -17,6 +18,11 @@ public class FakeTenantApiClient : ITenantApiClient
 
     public Task RegisterDeviceAsync(string token, string platform, string pushToken)
     {
+        if (ThrowOnRegisterDevice)
+        {
+            throw new HttpRequestException("boom");
+        }
+
         RegisteredDevice = (token, platform, pushToken);
         return Task.CompletedTask;
     }

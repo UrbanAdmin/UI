@@ -11,12 +11,14 @@ public class DeviceRegistrationService
     private readonly ITenantApiClient _apiClient;
     private readonly IPushTokenProvider _pushTokenProvider;
     private readonly ITokenStore _tokenStore;
+    private readonly ICrashDiagnosticsService _diagnostics;
 
-    public DeviceRegistrationService(ITenantApiClient apiClient, IPushTokenProvider pushTokenProvider, ITokenStore tokenStore)
+    public DeviceRegistrationService(ITenantApiClient apiClient, IPushTokenProvider pushTokenProvider, ITokenStore tokenStore, ICrashDiagnosticsService diagnostics)
     {
         _apiClient = apiClient;
         _pushTokenProvider = pushTokenProvider;
         _tokenStore = tokenStore;
+        _diagnostics = diagnostics;
         _pushTokenProvider.TokenRefreshed += OnTokenRefreshed;
     }
 
@@ -30,7 +32,19 @@ public class DeviceRegistrationService
             return;
         }
 
-        await _apiClient.RegisterDeviceAsync(authToken, _pushTokenProvider.Platform, pushToken);
+        try
+        {
+            await _apiClient.RegisterDeviceAsync(authToken, _pushTokenProvider.Platform, pushToken);
+        }
+        catch
+        {
+            // 007-fix-device-registration-crash/FR-001: this used to propagate
+            // uncaught through LoginPage's async void OnLoginClicked and crash
+            // the app right after a successful login - now it's best-effort,
+            // same tolerance as OnTokenRefreshed below; the tenant still gets
+            // into the app, just without push notifications registered yet.
+            _diagnostics.LogApiError("device-registration", null);
+        }
     }
 
     private async void OnTokenRefreshed(string newPushToken)
@@ -54,6 +68,7 @@ public class DeviceRegistrationService
             // in this app (e.g. PagosViewModel.LoadAsync) - a failed
             // re-registration isn't user-facing and isn't retried here, but the
             // next login or token rotation will try again.
+            _diagnostics.LogApiError("device-registration", null);
         }
     }
 }
