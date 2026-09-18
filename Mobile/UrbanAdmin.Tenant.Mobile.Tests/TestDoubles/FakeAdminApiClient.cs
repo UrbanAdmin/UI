@@ -114,4 +114,24 @@ public class FakeAdminApiClient : IAdminApiClient
         LastDeletedUserId = userId;
         return Task.CompletedTask;
     }
+
+    public List<AdminPagoRowModel> AdminPagos { get; set; } = [];
+    public bool ThrowOnGetAdminPagos { get; set; }
+    public List<AdminNotificationRowModel> AdminNotificaciones { get; set; } = [];
+    public bool ThrowOnGetAdminNotificaciones { get; set; }
+    public (long? ApartmentId, int? Month, int? Year)? LastGetAdminPagosArgs { get; private set; }
+
+    public Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year)
+    {
+        if (ThrowOnGetAdminPagos)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastGetAdminPagosArgs = (apartmentId, month, year);
+        return Task.FromResult(AdminPagos);
+    }
+
+    public Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token) =>
+        ThrowOnGetAdminNotificaciones ? throw new HttpRequestException("boom") : Task.FromResult(AdminNotificaciones);
 }

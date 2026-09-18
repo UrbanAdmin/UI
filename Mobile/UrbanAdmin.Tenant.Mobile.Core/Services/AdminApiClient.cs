@@ -126,4 +126,41 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         var response = await httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year)
+    {
+        var query = new List<string>();
+        if (apartmentId is not null)
+        {
+            query.Add($"apartmentId={apartmentId}");
+        }
+
+        if (month is not null)
+        {
+            query.Add($"month={month}");
+        }
+
+        if (year is not null)
+        {
+            query.Add($"year={year}");
+        }
+
+        var path = query.Count > 0 ? $"/admin/pagos?{string.Join('&', query)}" : "/admin/pagos";
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<List<AdminPagoRowModel>>(JsonOptions);
+        return result ?? [];
+    }
+
+    public async Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/admin/notificaciones");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<List<AdminNotificationRowModel>>(JsonOptions);
+        return result ?? [];
+    }
 }

@@ -3,14 +3,72 @@
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminPagosPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     Title="Pagos">
 
-    <Grid RowDefinitions="*" Padding="16">
-        <Label
-            x:Name="PlaceholderLabel"
-            Text="Próximamente."
-            HorizontalOptions="Center"
-            VerticalOptions="Center" />
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Enero</x:String>
+                        <x:String>Febrero</x:String>
+                        <x:String>Marzo</x:String>
+                        <x:String>Abril</x:String>
+                        <x:String>Mayo</x:String>
+                        <x:String>Junio</x:String>
+                        <x:String>Julio</x:String>
+                        <x:String>Agosto</x:String>
+                        <x:String>Septiembre</x:String>
+                        <x:String>Octubre</x:String>
+                        <x:String>Noviembre</x:String>
+                        <x:String>Diciembre</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+            <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
+        </HorizontalStackLayout>
+
+        <Grid Grid.Row="1">
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+
+            <Label
+                x:Name="EmptyLabel"
+                Text="No hay pagos registrados para este período."
+                IsVisible="False"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
+
+            <Label
+                x:Name="ErrorLabel"
+                Text="No se pudieron cargar los pagos."
+                TextColor="Red"
+                IsVisible="False"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
+
+            <CollectionView x:Name="ItemsList" IsVisible="False" IsGrouped="True">
+                <CollectionView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="admin:ApartmentPagoGroup">
+                        <Label
+                            Text="{Binding Header}"
+                            FontAttributes="Bold"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
+                            Padding="8,6" />
+                    </DataTemplate>
+                </CollectionView.GroupHeaderTemplate>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:AdminPagoRowModel">
+                        <VerticalStackLayout Padding="16,8,0,8" Spacing="2">
+                            <Label Text="{Binding Utility}" FontAttributes="Bold" />
+                            <Label Text="{Binding Amount, StringFormat='Monto: {0}'}" />
+                            <Label Text="{Binding Paid, StringFormat='Pagado: {0}'}" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
     </Grid>
 
 </ContentPage>

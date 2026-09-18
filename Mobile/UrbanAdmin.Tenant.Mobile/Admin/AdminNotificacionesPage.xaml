@@ -3,14 +3,48 @@
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminNotificacionesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     Title="Notificaciones">
 
     <Grid RowDefinitions="*" Padding="16">
+        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+
         <Label
-            x:Name="PlaceholderLabel"
-            Text="Próximamente."
+            x:Name="EmptyLabel"
+            Text="No hay pendientes por cobrar."
+            IsVisible="False"
             HorizontalOptions="Center"
             VerticalOptions="Center" />
+
+        <Label
+            x:Name="ErrorLabel"
+            Text="No se pudieron cargar las notificaciones."
+            TextColor="Red"
+            IsVisible="False"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+
+        <CollectionView x:Name="ItemsList" IsVisible="False" IsGrouped="True">
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate x:DataType="admin:ApartmentNotificationGroup">
+                    <Label
+                        Text="{Binding Header}"
+                        FontAttributes="Bold"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray900}}"
+                        Padding="8,6" />
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:AdminNotificationRowModel">
+                    <VerticalStackLayout Padding="16,8,0,8" Spacing="2">
+                        <Label Text="{Binding Service}" FontAttributes="Bold" />
+                        <Label Text="{Binding DueDate, StringFormat='Vence: {0:d}'}" />
+                        <Label Text="{Binding Status}" TextColor="Red" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </Grid>
 
 </ContentPage>

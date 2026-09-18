@@ -26,4 +26,8 @@ public interface IAdminApiClient
     Task<AdminWriteResult> UpdateUserAsync(string token, long userId, string role, long? apartmentId, string? newPassword);
 
     Task DeleteUserAsync(string token, long userId);
+
+    Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year);
+
+    Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token);
 }
