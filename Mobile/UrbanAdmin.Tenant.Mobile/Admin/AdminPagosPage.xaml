@@ -3,11 +3,14 @@
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminPagosPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     Title="Pagos">
 
-    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Editar" Clicked="OnEditClicked" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="16" RowSpacing="8">
         <HorizontalStackLayout Grid.Row="0" Spacing="8">
             <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
                 <Picker.ItemsSource>
@@ -58,17 +61,35 @@
                             Padding="8,6" />
                     </DataTemplate>
                 </CollectionView.GroupHeaderTemplate>
+                <CollectionView.GroupFooterTemplate>
+                    <DataTemplate x:DataType="admin:ApartmentPagoGroup">
+                        <Label
+                            Text="{Binding SubtotalDisplay}"
+                            FontAttributes="Bold"
+                            Padding="16,4,8,10" />
+                    </DataTemplate>
+                </CollectionView.GroupFooterTemplate>
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:AdminPagoRowModel">
+                    <DataTemplate x:DataType="admin:AdminPagoDisplayRow">
                         <VerticalStackLayout Padding="16,8,0,8" Spacing="2">
                             <Label Text="{Binding Utility}" FontAttributes="Bold" />
-                            <Label Text="{Binding Amount, StringFormat='Monto: {0}'}" />
-                            <Label Text="{Binding Paid, StringFormat='Pagado: {0}'}" />
+                            <Label Text="{Binding AmountDisplay}" />
+                            <Label Text="{Binding StatusDisplay}" />
                         </VerticalStackLayout>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </Grid>
+
+        <Label
+            x:Name="GrandTotalLabel"
+            Grid.Row="2"
+            FontAttributes="Bold"
+            FontSize="16"
+            Padding="12"
+            TextColor="White"
+            BackgroundColor="{StaticResource Primary}"
+            IsVisible="False" />
     </Grid>
 
 </ContentPage>

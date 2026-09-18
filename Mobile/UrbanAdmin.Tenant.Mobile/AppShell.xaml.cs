@@ -12,6 +12,7 @@ public partial class AppShell : Shell
 		// 008-mobile-admin-views T019.
 		Routing.RegisterRoute("ApartmentEdit", typeof(ApartmentEditPage));
 		Routing.RegisterRoute("UserEdit", typeof(UserEditPage));
+		Routing.RegisterRoute("AdminPagosEdit", typeof(AdminPagosEditPage));
 	}
 
 	// 008-mobile-admin-views T005: called from LoginPage right after a successful login.

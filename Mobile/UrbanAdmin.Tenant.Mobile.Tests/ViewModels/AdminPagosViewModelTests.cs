@@ -35,7 +35,7 @@ public class AdminPagosViewModelTests
         await vm.LoadAsync();
 
         var today = DateTime.Now;
-        Assert.Equal((null, (int?)today.Month, (int?)today.Year), apiClient.LastGetAdminPagosArgs);
+        Assert.Equal((null, (int?)today.Month, (int?)today.Year, (string?)null), apiClient.LastGetAdminPagosArgs);
         Assert.Equal(today.Month, vm.Month);
         Assert.Equal(today.Year, vm.Year);
     }
@@ -54,7 +54,7 @@ public class AdminPagosViewModelTests
 
         await vm.LoadAsync();
 
-        Assert.Equal(((long?)null, (int?)1, (int?)2026), apiClient.LastGetAdminPagosArgs);
+        Assert.Equal(((long?)null, (int?)1, (int?)2026, (string?)null), apiClient.LastGetAdminPagosArgs);
     }
 
     [Fact]
@@ -83,5 +83,45 @@ public class AdminPagosViewModelTests
 
         Assert.True(vm.HasError);
         Assert.Equal([("admin-pagos", (int?)null)], diagnostics.ApiErrors);
+    }
+
+    // Phase 6b (spec.md FR-005c): grand total sums every non-Arriendo row's Amount across all
+    // apartments; Arriendo is excluded, unparseable/placeholder (null) amounts contribute 0.
+    [Fact]
+    public async Task GrandTotal_SumsNonArriendoAmountsAcrossAllApartments()
+    {
+        var apiClient = new FakeAdminApiClient
+        {
+            AdminPagos =
+            [
+                new AdminPagoRowModel { ApartmentId = 1, Utility = "Agua", Amount = "45000" },
+                new AdminPagoRowModel { ApartmentId = 1, Utility = "Arriendo", Amount = "750000" },
+                new AdminPagoRowModel { ApartmentId = 2, Utility = "Luz", Amount = "20000" },
+                new AdminPagoRowModel { ApartmentId = 2, Utility = "Gas", Amount = null },
+            ],
+        };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("admin-jwt");
+        var vm = new AdminPagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        Assert.Equal(65000m, vm.GrandTotal);
+    }
+
+    [Fact]
+    public void SumNonArriendoAmounts_ExcludesArriendoAndTreatsUnparseableAmountsAsZero()
+    {
+        var rows = new List<AdminPagoRowModel>
+        {
+            new() { Utility = "Agua", Amount = "10000" },
+            new() { Utility = "Arriendo", Amount = "999999" },
+            new() { Utility = "Luz", Amount = "not-a-number" },
+            new() { Utility = "Gas", Amount = null },
+        };
+
+        var total = AdminPagosViewModel.SumNonArriendoAmounts(rows);
+
+        Assert.Equal(10000m, total);
     }
 }

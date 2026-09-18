@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminPagosEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
+    Title="Editar pagos">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Picker x:Name="ServicioPicker" Title="Servicio" SelectedIndexChanged="OnServicioChanged" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Picker x:Name="MonthPicker" Grid.Column="0" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Enero</x:String>
+                            <x:String>Febrero</x:String>
+                            <x:String>Marzo</x:String>
+                            <x:String>Abril</x:String>
+                            <x:String>Mayo</x:String>
+                            <x:String>Junio</x:String>
+                            <x:String>Julio</x:String>
+                            <x:String>Agosto</x:String>
+                            <x:String>Septiembre</x:String>
+                            <x:String>Octubre</x:String>
+                            <x:String>Noviembre</x:String>
+                            <x:String>Diciembre</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+                <Picker x:Name="YearPicker" Grid.Column="1" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
+            </Grid>
+
+            <Grid x:Name="DeadlineRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <DatePicker x:Name="DeadlineDatePicker" Grid.Column="0" />
+                <Button x:Name="SaveDeadlineButton" Grid.Column="1" Text="Guardar" Clicked="OnSaveDeadlineClicked" />
+            </Grid>
+            <Label
+                x:Name="ArriendoHintLabel"
+                Text="El vencimiento de Arriendo se calcula por apartamento, desde la fecha de inicio del contrato — no se fija aquí."
+                FontSize="12"
+                IsVisible="False" />
+
+            <Label
+                x:Name="ErrorLabel"
+                TextColor="Red"
+                IsVisible="False" />
+
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+
+            <Label
+                x:Name="EmptyLabel"
+                Text="No hay apartamentos para mostrar."
+                IsVisible="False"
+                HorizontalOptions="Center" />
+
+            <CollectionView x:Name="ItemsList" IsVisible="False">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="admin:AdminPagoEditRow">
+                        <Border Padding="12,10" Margin="0,4" StrokeShape="RoundRectangle 12">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding ApartmentLabel}" FontAttributes="Bold" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <Entry
+                                        Grid.Column="0"
+                                        Placeholder="Cantidad a pagar"
+                                        Keyboard="Numeric"
+                                        Text="{Binding Amount}"
+                                        Unfocused="OnAmountUnfocused" />
+                                    <Switch
+                                        Grid.Column="1"
+                                        IsToggled="{Binding Paid}"
+                                        Toggled="OnPaidToggled" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

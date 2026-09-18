@@ -119,19 +119,53 @@ public class FakeAdminApiClient : IAdminApiClient
     public bool ThrowOnGetAdminPagos { get; set; }
     public List<AdminNotificationRowModel> AdminNotificaciones { get; set; } = [];
     public bool ThrowOnGetAdminNotificaciones { get; set; }
-    public (long? ApartmentId, int? Month, int? Year)? LastGetAdminPagosArgs { get; private set; }
+    public (long? ApartmentId, int? Month, int? Year, string? Service)? LastGetAdminPagosArgs { get; private set; }
 
-    public Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year)
+    public Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null)
     {
         if (ThrowOnGetAdminPagos)
         {
             throw new HttpRequestException("boom");
         }
 
-        LastGetAdminPagosArgs = (apartmentId, month, year);
+        LastGetAdminPagosArgs = (apartmentId, month, year, service);
         return Task.FromResult(AdminPagos);
     }
 
     public Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token) =>
         ThrowOnGetAdminNotificaciones ? throw new HttpRequestException("boom") : Task.FromResult(AdminNotificaciones);
+
+    public List<UtilityModel> Utilities { get; set; } = [];
+    public bool ThrowOnGetUtilities { get; set; }
+    public AdminWriteResult SetAdminPagoPaymentResult { get; set; } = new(true, null);
+    public AdminWriteResult SetAdminPagoDeadlineResult { get; set; } = new(true, null);
+    public bool ThrowOnSetAdminPagoPayment { get; set; }
+    public bool ThrowOnSetAdminPagoDeadline { get; set; }
+    public (long ApartmentId, string Service, int Month, int Year, string? Amount, bool Paid)? LastSetAdminPagoPayment { get; private set; }
+    public (string Service, int Month, int Year, DateTime DueDate)? LastSetAdminPagoDeadline { get; private set; }
+
+    public Task<List<UtilityModel>> GetUtilitiesAsync(string token) =>
+        ThrowOnGetUtilities ? throw new HttpRequestException("boom") : Task.FromResult(Utilities);
+
+    public Task<AdminWriteResult> SetAdminPagoPaymentAsync(string token, long apartmentId, string service, int month, int year, string? amount, bool paid)
+    {
+        if (ThrowOnSetAdminPagoPayment)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastSetAdminPagoPayment = (apartmentId, service, month, year, amount, paid);
+        return Task.FromResult(SetAdminPagoPaymentResult);
+    }
+
+    public Task<AdminWriteResult> SetAdminPagoDeadlineAsync(string token, string service, int month, int year, DateTime dueDate)
+    {
+        if (ThrowOnSetAdminPagoDeadline)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastSetAdminPagoDeadline = (service, month, year, dueDate);
+        return Task.FromResult(SetAdminPagoDeadlineResult);
+    }
 }

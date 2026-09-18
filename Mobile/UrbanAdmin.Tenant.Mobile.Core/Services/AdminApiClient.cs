@@ -127,7 +127,7 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year)
+    public async Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null)
     {
         var query = new List<string>();
         if (apartmentId is not null)
@@ -143,6 +143,11 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         if (year is not null)
         {
             query.Add($"year={year}");
+        }
+
+        if (!string.IsNullOrEmpty(service))
+        {
+            query.Add($"service={Uri.EscapeDataString(service)}");
         }
 
         var path = query.Count > 0 ? $"/admin/pagos?{string.Join('&', query)}" : "/admin/pagos";
@@ -162,5 +167,49 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<List<AdminNotificationRowModel>>(JsonOptions);
         return result ?? [];
+    }
+
+    public async Task<List<UtilityModel>> GetUtilitiesAsync(string token)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/Utilities");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<List<UtilityModel>>(JsonOptions);
+        return result ?? [];
+    }
+
+    public async Task<AdminWriteResult> SetAdminPagoPaymentAsync(string token, long apartmentId, string service, int month, int year, string? amount, bool paid)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, "/admin/pagos/payment")
+        {
+            Content = JsonContent.Create(new { ApartmentId = apartmentId, Service = service, Month = month, Year = year, Amount = amount, Paid = paid }),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            return new AdminWriteResult(true, null);
+        }
+
+        var error = await response.Content.ReadFromJsonAsync<string>(JsonOptions);
+        return new AdminWriteResult(false, error);
+    }
+
+    public async Task<AdminWriteResult> SetAdminPagoDeadlineAsync(string token, string service, int month, int year, DateTime dueDate)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, "/admin/pagos/deadline")
+        {
+            Content = JsonContent.Create(new { Service = service, Month = month, Year = year, DueDate = dueDate }),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            return new AdminWriteResult(true, null);
+        }
+
+        var error = await response.Content.ReadFromJsonAsync<string>(JsonOptions);
+        return new AdminWriteResult(false, error);
     }
 }

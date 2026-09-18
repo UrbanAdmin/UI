@@ -11,4 +11,7 @@ public class AdminPagoRowModel
     public string? Amount { get; set; }
     public DateTime DueDate { get; set; }
     public bool Paid { get; set; }
+
+    // Null means this row is a synthesized placeholder (no PaymentStatus record yet) - Phase 6b.
+    public long? PaymentStatusId { get; set; }
 }
