@@ -52,6 +52,13 @@ jobs:
           dotnet-version: 10.0.x
       - name: Install MAUI Android workload
         run: dotnet workload install maui-android
+      - name: Decode Firebase config (google-services.json)
+        # Gitignored (specs/008-mobile-admin-views: contains the Firebase project's API
+        # keys/app IDs) but the Firebase Basement build task requires the file to exist -
+        # same decode-to-file pattern as mobile-release.yml's signing keystore.
+        shell: bash
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > google-services.json
+        working-directory: Mobile/UrbanAdmin.Tenant.Mobile
       - name: Build (net10.0-android)
         # The project's TargetFrameworks is Linux-conditional (see the .csproj)
         # so on this runner it only ever lists net10.0-android - -f here is
@@ -60,6 +67,10 @@ jobs:
         # global and propagates into the Core ProjectReference (which is
         # single-targeted, not multi-targeted), breaking its restore.
         run: dotnet build UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-android
+      - name: Remove decoded Firebase config
+        if: always()
+        shell: bash
+        run: rm -f UrbanAdmin.Tenant.Mobile/google-services.json
 
   build-ios:
     runs-on: macos-latest
@@ -77,5 +88,16 @@ jobs:
         # maccatalyst - see the .csproj), so evaluation needs every one of
         # their manifests resolvable even though we only build iOS below.
         run: dotnet workload install maui-android maui-ios maui-maccatalyst
+      - name: Decode Firebase config (GoogleService-Info.plist)
+        # Gitignored (specs/008-mobile-admin-views: contains the Firebase project's API
+        # keys/app IDs) but the Firebase build task requires the file to exist - same
+        # decode-to-file pattern as mobile-release.yml's signing keystore.
+        shell: bash
+        run: echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}" | base64 --decode > GoogleService-Info.plist
+        working-directory: Mobile/UrbanAdmin.Tenant.Mobile
       - name: Build (net10.0-ios)
         run: dotnet build UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-ios
+      - name: Remove decoded Firebase config
+        if: always()
+        shell: bash
+        run: rm -f UrbanAdmin.Tenant.Mobile/GoogleService-Info.plist

@@ -82,6 +82,13 @@ jobs:
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > urbanadmin-tenant-upload.keystore
         working-directory: Mobile/UrbanAdmin.Tenant.Mobile
 
+      - name: Decode Firebase config (google-services.json)
+        # Gitignored (specs/008-mobile-admin-views: contains the Firebase project's API
+        # keys/app IDs) but the Firebase Basement build task requires the file to exist.
+        shell: bash
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > google-services.json
+        working-directory: Mobile/UrbanAdmin.Tenant.Mobile
+
       - name: Build signed release .aab
         run: |
           dotnet publish UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-android -c Release \
@@ -98,6 +105,11 @@ jobs:
         if: always()
         shell: bash
         run: rm -f UrbanAdmin.Tenant.Mobile/urbanadmin-tenant-upload.keystore
+
+      - name: Remove decoded Firebase config
+        if: always()
+        shell: bash
+        run: rm -f UrbanAdmin.Tenant.Mobile/google-services.json
 
       - name: Upload .aab as build artifact
         uses: actions/upload-artifact@v5
