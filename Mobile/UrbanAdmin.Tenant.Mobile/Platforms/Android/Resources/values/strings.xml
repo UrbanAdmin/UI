@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- .NET MAUI has no Gradle build, so the step a native Android build uses to auto-generate and
+inject the Crashlytics build-id manifest resource never runs for this project. This resource is
+the documented manual substitute (006-fix-android-crashlytics-crash/research.md §1) - without it,
+FirebaseInitProvider throws "The Crashlytics build ID is missing" on every app launch, before any
+app code runs. "none" is correct here because this app has no ProGuard/R8 mapping file to
+correlate (that's what this value is normally used for on a native build). -->
+<resources>
+    <string name="com.google.firebase.crashlytics.mapping_file_id">none</string>
+</resources>

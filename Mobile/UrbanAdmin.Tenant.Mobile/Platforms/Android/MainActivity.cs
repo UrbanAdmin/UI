@@ -2,6 +2,7 @@
 using Android.Content.PM;
 using Android.OS;
 using Plugin.Firebase.Core.Platforms.Android;
+using Plugin.Firebase.Crashlytics;
 
 namespace UrbanAdmin.Tenant.Mobile;
 
@@ -13,13 +14,16 @@ public class MainActivity : MauiAppCompatActivity
     // Firebase feature that needs to present UI), which this single-activity MAUI app always
     // satisfies by returning itself.
     //
-    // This one call also covers Crashlytics (Plugin.Firebase.Crashlytics) - confirmed by IL
-    // inspection (specs/005-mobile-observability/research.md §5) that no separate
-    // Crashlytics-specific initialization call exists; CrossFirebaseCrashlytics.Current
-    // simply becomes available once Firebase Core is initialized here.
+    // CrossFirebaseCrashlytics.Current becomes available once Firebase Core is initialized here
+    // (confirmed by IL inspection, specs/005-mobile-observability/research.md §5), but the
+    // library's documented setup still requires the explicit SetCrashlyticsCollectionEnabled
+    // call below (specs/006-fix-android-crashlytics-crash/research.md §2) - unrelated to the
+    // startup crash fixed by Resources/values/strings.xml in this same feature, but part of
+    // Crashlytics's own required setup checklist.
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
         CrossFirebase.Initialize(this, () => this);
+        CrossFirebaseCrashlytics.Current.SetCrashlyticsCollectionEnabled(true);
     }
 }
