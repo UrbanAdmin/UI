@@ -40,4 +40,37 @@ public class JwtClaimsReaderTests
 
         Assert.Null(userId);
     }
+
+    // The Backend's JwtTokenGenerator uses JsonWebTokenHandler, which (unlike the older
+    // JwtSecurityTokenHandler) writes claims using their .NET Claim.Type string as-is -
+    // no automatic short-name mapping. ClaimTypes.Role's actual JSON key is therefore the
+    // full long URI, confirmed against Angular's own working client-side decode
+    // (auth.service.ts's ROLE_CLAIM constant), not a short "role" string.
+    [Fact]
+    public void GetRole_ReturnsTheRoleClaim()
+    {
+        var token = MakeToken("""{"sub":"42","http://schemas.microsoft.com/ws/2008/06/identity/claims/role":"Admin"}""");
+
+        var role = JwtClaimsReader.GetRole(token);
+
+        Assert.Equal("Admin", role);
+    }
+
+    [Fact]
+    public void GetRole_ReturnsNullWhenRoleClaimIsMissing()
+    {
+        var token = MakeToken("""{"sub":"42"}""");
+
+        var role = JwtClaimsReader.GetRole(token);
+
+        Assert.Null(role);
+    }
+
+    [Fact]
+    public void GetRole_ReturnsNullForAMalformedToken()
+    {
+        var role = JwtClaimsReader.GetRole("not-a-jwt");
+
+        Assert.Null(role);
+    }
 }

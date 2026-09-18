@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Admin.UserEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Usuario">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
+
+            <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+            <Label
+                x:Name="PasswordHintLabel"
+                Text="Dejar en blanco para no cambiarla"
+                FontSize="12"
+                IsVisible="False" />
+
+            <Picker x:Name="RolePicker" Title="Rol" SelectedIndexChanged="OnRoleChanged">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Administrador</x:String>
+                        <x:String>Arrendatario</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <Picker x:Name="ApartmentPicker" Title="Apartamento" IsVisible="False" />
+
+            <Label
+                x:Name="ErrorLabel"
+                TextColor="Red"
+                IsVisible="False" />
+
+            <Button x:Name="SaveButton" Text="Guardar" Clicked="OnSaveClicked" />
+            <Button x:Name="DeleteButton" Text="Eliminar" TextColor="Red" Clicked="OnDeleteClicked" IsVisible="False" />
+
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

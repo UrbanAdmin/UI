@@ -1,0 +1,29 @@
+using UrbanAdmin.Tenant.Mobile.Core.Models;
+
+namespace UrbanAdmin.Tenant.Mobile.Core.Services;
+
+// Admin-facing API calls (act on any apartment/user, not "mine") - kept separate from
+// ITenantApiClient, which is explicitly scoped to the calling tenant's own identity/apartment
+// (specs/008-mobile-admin-views/research.md §7). Each user story adds its own methods here.
+public interface IAdminApiClient
+{
+    Task<List<ApartmentModel>> GetApartmentsAsync(string token);
+
+    Task<AdminWriteResult> CreateApartmentAsync(string token, string name, string owner, DateTime? contractStartDate, string status);
+
+    Task<AdminWriteResult> UpdateApartmentAsync(string token, long apartmentId, string name, string owner, DateTime? contractStartDate, string status);
+
+    Task DeleteApartmentAsync(string token, long apartmentId);
+
+    Task UploadContractAsync(string token, long apartmentId, string fileName, string contentType, Stream content);
+
+    Task<(byte[] Content, string ContentType, string FileName)?> DownloadContractAsync(string token, long apartmentId);
+
+    Task<List<UserModel>> GetUsersAsync(string token);
+
+    Task<AdminWriteResult> CreateUserAsync(string token, string username, string password, string role, long? apartmentId);
+
+    Task<AdminWriteResult> UpdateUserAsync(string token, long userId, string role, long? apartmentId, string? newPassword);
+
+    Task DeleteUserAsync(string token, long userId);
+}

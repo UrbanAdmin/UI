@@ -3,6 +3,8 @@ using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 namespace UrbanAdmin.Tenant.Mobile.Auth;
 
+using AppShell = UrbanAdmin.Tenant.Mobile.AppShell;
+
 public partial class LoginPage : ContentPage
 {
     private readonly LoginViewModel _viewModel;
@@ -48,6 +50,15 @@ public partial class LoginPage : ContentPage
             await _deviceRegistration.RegisterCurrentDeviceAsync(token);
         }
 
-        await Shell.Current.GoToAsync("//Notificaciones");
+        // 008-mobile-admin-views T006: role-based navigation. "ApartmentOwner" (or an
+        // unreadable/missing role, matching pre-existing behavior) goes to the tenant tabs
+        // exactly as before this feature existed - spec.md FR-002.
+        var role = token is not null ? JwtClaimsReader.GetRole(token) : null;
+        if (Shell.Current is AppShell appShell)
+        {
+            appShell.ApplyRoleVisibility(role);
+        }
+
+        await Shell.Current.GoToAsync(role == "Admin" ? "//Apartments" : "//Notificaciones");
     }
 }

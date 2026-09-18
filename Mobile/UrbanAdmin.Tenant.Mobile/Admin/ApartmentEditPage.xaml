@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Admin.ApartmentEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Apartamento">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Entry x:Name="NameEntry" Placeholder="Número" />
+            <Entry x:Name="OwnerEntry" Placeholder="Propietario" />
+
+            <Picker x:Name="StatusPicker" Title="Estado">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Arrendado</x:String>
+                        <x:String>No arrendado</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+
+            <DatePicker x:Name="ContractStartDatePicker" />
+
+            <Button x:Name="UploadContractButton" Text="Subir contrato" Clicked="OnUploadContractClicked" />
+            <Label x:Name="ContractStatusLabel" />
+
+            <Label
+                x:Name="ErrorLabel"
+                TextColor="Red"
+                IsVisible="False" />
+
+            <Button x:Name="SaveButton" Text="Guardar" Clicked="OnSaveClicked" />
+            <Button x:Name="DeleteButton" Text="Eliminar" TextColor="Red" Clicked="OnDeleteClicked" IsVisible="False" />
+
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

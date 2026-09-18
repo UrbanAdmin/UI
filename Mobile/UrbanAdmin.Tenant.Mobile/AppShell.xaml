@@ -6,6 +6,7 @@
     xmlns:auth="clr-namespace:UrbanAdmin.Tenant.Mobile.Auth"
     xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
     xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
+    xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     FlyoutBehavior="Disabled"
     Title="UrbanAdmin">
 
@@ -14,15 +15,45 @@
         Route="Login"
         ContentTemplate="{DataTemplate auth:LoginPage}" />
 
+    <!-- Tenant (ApartmentOwner) tabs; visibility toggled per-role after login in AppShell.xaml.cs
+         (specs/008-mobile-admin-views/research.md §6 - single TabBar, not a flyout redesign). -->
     <TabBar>
         <ShellContent
+            x:Name="NotificacionesTab"
             Title="Notificaciones"
+            Icon="icon_bell.svg"
             Route="Notificaciones"
             ContentTemplate="{DataTemplate notificaciones:NotificacionesPage}" />
         <ShellContent
+            x:Name="PagosTab"
             Title="Pagos"
+            Icon="icon_card.svg"
             Route="Pagos"
             ContentTemplate="{DataTemplate pagos:PagosPage}" />
+        <ShellContent
+            x:Name="ApartmentsTab"
+            Title="Apartamentos"
+            Icon="icon_building.svg"
+            Route="Apartments"
+            ContentTemplate="{DataTemplate admin:ApartmentsPage}" />
+        <ShellContent
+            x:Name="UsersTab"
+            Title="Usuarios"
+            Icon="icon_people.svg"
+            Route="Users"
+            ContentTemplate="{DataTemplate admin:UsersPage}" />
+        <ShellContent
+            x:Name="AdminPagosTab"
+            Title="Pagos (Admin)"
+            Icon="icon_card.svg"
+            Route="AdminPagos"
+            ContentTemplate="{DataTemplate admin:AdminPagosPage}" />
+        <ShellContent
+            x:Name="AdminNotificacionesTab"
+            Title="Notificaciones (Admin)"
+            Icon="icon_bell.svg"
+            Route="AdminNotificaciones"
+            ContentTemplate="{DataTemplate admin:AdminNotificacionesPage}" />
     </TabBar>
 
 </Shell>

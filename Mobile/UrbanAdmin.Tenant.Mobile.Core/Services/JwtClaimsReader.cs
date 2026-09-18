@@ -9,6 +9,13 @@ namespace UrbanAdmin.Tenant.Mobile.Core.Services;
 // returned by the Backend's own login response), not to authenticate it.
 public static class JwtClaimsReader
 {
+    // JsonWebTokenHandler (used by the Backend's JwtTokenGenerator) writes claims using
+    // their .NET Claim.Type string as-is - no automatic short-name mapping, unlike the
+    // older JwtSecurityTokenHandler. ClaimTypes.Role's actual JSON key in the token is
+    // therefore this full long URI, confirmed against Angular's own working client-side
+    // decode (auth.service.ts's ROLE_CLAIM constant), not a short "role" string.
+    private const string RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
     public static string? GetUserId(string token)
     {
         var parts = token.Split('.');
@@ -22,6 +29,26 @@ public static class JwtClaimsReader
             var payloadJson = Base64UrlDecode(parts[1]);
             using var document = JsonDocument.Parse(payloadJson);
             return document.RootElement.TryGetProperty("sub", out var sub) ? sub.GetString() : null;
+        }
+        catch (Exception ex) when (ex is FormatException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    public static string? GetRole(string token)
+    {
+        var parts = token.Split('.');
+        if (parts.Length < 2)
+        {
+            return null;
+        }
+
+        try
+        {
+            var payloadJson = Base64UrlDecode(parts[1]);
+            using var document = JsonDocument.Parse(payloadJson);
+            return document.RootElement.TryGetProperty(RoleClaimType, out var role) ? role.GetString() : null;
         }
         catch (Exception ex) when (ex is FormatException or JsonException)
         {
