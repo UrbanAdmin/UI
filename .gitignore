@@ -17,3 +17,7 @@ obj/
 *.keystore
 *.jks
 keystore.properties
+
+# Firebase config - contains project API keys/app IDs, never commit (Constitution Principle I)
+google-services.json
+GoogleService-Info.plist
