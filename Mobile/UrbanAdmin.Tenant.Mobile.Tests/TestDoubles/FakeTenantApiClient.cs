@@ -9,6 +9,7 @@ public class FakeTenantApiClient : ITenantApiClient
     public List<NotificacionModel> Notificaciones { get; set; } = [];
     public List<PagoModel> Pagos { get; set; } = [];
     public bool ThrowOnGet { get; set; }
+    public System.Net.HttpStatusCode? ThrowStatusCode { get; set; }
     public bool ThrowOnLogin { get; set; }
     public bool ThrowOnRegisterDevice { get; set; }
     public (string Token, string Platform, string PushToken)? RegisteredDevice { get; private set; }
@@ -29,13 +30,13 @@ public class FakeTenantApiClient : ITenantApiClient
     }
 
     public Task<List<NotificacionModel>> GetNotificacionesAsync(string token) =>
-        ThrowOnGet ? throw new HttpRequestException("boom") : Task.FromResult(Notificaciones);
+        ThrowOnGet ? throw new HttpRequestException("boom", null, ThrowStatusCode) : Task.FromResult(Notificaciones);
 
     public Task<List<PagoModel>> GetPagosAsync(string token, int? month = null, int? year = null)
     {
         if (ThrowOnGet)
         {
-            throw new HttpRequestException("boom");
+            throw new HttpRequestException("boom", null, ThrowStatusCode);
         }
 
         LastGetPagosArgs = (month, year);

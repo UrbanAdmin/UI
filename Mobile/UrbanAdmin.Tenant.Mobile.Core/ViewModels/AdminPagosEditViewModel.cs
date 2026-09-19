@@ -33,9 +33,9 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
 
             Utilities = await apiClient.GetUtilitiesAsync(token);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-pagos-edit", null);
+            diagnostics.LogApiError("admin-pagos-edit", ex.ToApiStatusCode());
         }
     }
 
@@ -56,9 +56,9 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
                 ? []
                 : await apiClient.GetAdminPagosAsync(token, apartmentId: null, month: Month, year: Year, service: Service);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-pagos-edit", null);
+            diagnostics.LogApiError("admin-pagos-edit", ex.ToApiStatusCode());
             HasError = true;
         }
         finally
@@ -88,9 +88,9 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-pagos-edit", null);
+            diagnostics.LogApiError("admin-pagos-edit", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo guardar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }
@@ -126,9 +126,9 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-pagos-edit", null);
+            diagnostics.LogApiError("admin-pagos-edit", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo guardar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }

@@ -55,9 +55,9 @@ public class ApartmentEditViewModel(IAdminApiClient apiClient, ITokenStore token
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo guardar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }
@@ -87,9 +87,9 @@ public class ApartmentEditViewModel(IAdminApiClient apiClient, ITokenStore token
             await apiClient.UploadContractAsync(token, id, fileName, contentType, content);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo subir el contrato. Verifica tu conexión e intenta de nuevo.";
             return false;
         }
@@ -118,9 +118,9 @@ public class ApartmentEditViewModel(IAdminApiClient apiClient, ITokenStore token
 
             return await apiClient.DownloadContractAsync(token, id);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo abrir el contrato. Verifica tu conexión e intenta de nuevo.";
             return null;
         }
@@ -150,9 +150,9 @@ public class ApartmentEditViewModel(IAdminApiClient apiClient, ITokenStore token
             await apiClient.DeleteApartmentAsync(token, id);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo eliminar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }

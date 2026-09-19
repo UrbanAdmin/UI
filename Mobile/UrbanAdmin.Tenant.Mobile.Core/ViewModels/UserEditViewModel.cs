@@ -32,9 +32,9 @@ public class UserEditViewModel(IAdminApiClient apiClient, ITokenStore tokenStore
 
             Apartments = await apiClient.GetApartmentsAsync(token);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
         }
     }
 
@@ -88,9 +88,9 @@ public class UserEditViewModel(IAdminApiClient apiClient, ITokenStore tokenStore
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("users", null);
+            diagnostics.LogApiError("users", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo guardar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }
@@ -120,9 +120,9 @@ public class UserEditViewModel(IAdminApiClient apiClient, ITokenStore tokenStore
             await apiClient.DeleteUserAsync(token, id);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("users", null);
+            diagnostics.LogApiError("users", ex.ToApiStatusCode());
             ErrorMessage = "No se pudo eliminar. Verifica tu conexión e intenta de nuevo.";
             return false;
         }

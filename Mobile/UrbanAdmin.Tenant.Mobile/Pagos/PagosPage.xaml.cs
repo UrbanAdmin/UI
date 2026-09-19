@@ -72,6 +72,7 @@ public partial class PagosPage : ContentPage
 
         if (_viewModel.HasError)
         {
+            ErrorLabel.Text = _viewModel.ErrorMessage;
             ErrorLabel.IsVisible = true;
         }
         else if (_viewModel.IsEmpty)

@@ -26,9 +26,9 @@ public class ApartmentsViewModel(IAdminApiClient apiClient, ITokenStore tokenSto
 
             Items = await apiClient.GetApartmentsAsync(token);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("apartments", null);
+            diagnostics.LogApiError("apartments", ex.ToApiStatusCode());
             HasError = true;
         }
         finally

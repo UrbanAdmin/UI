@@ -36,14 +36,14 @@ public class DeviceRegistrationService
         {
             await _apiClient.RegisterDeviceAsync(authToken, _pushTokenProvider.Platform, pushToken);
         }
-        catch
+        catch (Exception ex)
         {
             // 007-fix-device-registration-crash/FR-001: this used to propagate
             // uncaught through LoginPage's async void OnLoginClicked and crash
             // the app right after a successful login - now it's best-effort,
             // same tolerance as OnTokenRefreshed below; the tenant still gets
             // into the app, just without push notifications registered yet.
-            _diagnostics.LogApiError("device-registration", null);
+            _diagnostics.LogApiError("device-registration", ex.ToApiStatusCode());
         }
     }
 
@@ -62,13 +62,13 @@ public class DeviceRegistrationService
 
             await _apiClient.RegisterDeviceAsync(authToken, _pushTokenProvider.Platform, newPushToken);
         }
-        catch
+        catch (Exception ex)
         {
             // Best-effort, same tolerance as a normal network hiccup elsewhere
             // in this app (e.g. PagosViewModel.LoadAsync) - a failed
             // re-registration isn't user-facing and isn't retried here, but the
             // next login or token rotation will try again.
-            _diagnostics.LogApiError("device-registration", null);
+            _diagnostics.LogApiError("device-registration", ex.ToApiStatusCode());
         }
     }
 }

@@ -31,9 +31,9 @@ public class UsersViewModel(IAdminApiClient apiClient, ITokenStore tokenStore, I
             Items = await apiClient.GetUsersAsync(token);
             Apartments = await apiClient.GetApartmentsAsync(token);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("users", null);
+            diagnostics.LogApiError("users", ex.ToApiStatusCode());
             HasError = true;
         }
         finally

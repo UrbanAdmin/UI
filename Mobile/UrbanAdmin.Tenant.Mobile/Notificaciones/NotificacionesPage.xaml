@@ -18,7 +18,6 @@
 
         <Label
             x:Name="ErrorLabel"
-            Text="No se pudieron cargar las notificaciones."
             TextColor="Red"
             IsVisible="False"
             HorizontalOptions="Center"

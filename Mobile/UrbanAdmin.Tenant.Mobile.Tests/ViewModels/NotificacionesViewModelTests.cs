@@ -67,4 +67,33 @@ public class NotificacionesViewModelTests
 
         Assert.Equal([("notificaciones", (int?)null)], diagnostics.ApiErrors);
     }
+
+    // A 403 means ActiveAccountAuthorizationHandler revoked this ApartmentOwner's access
+    // (their apartment's Status was set to "No arrendado") - mirrors PagosViewModel's identical
+    // fix so the tenant sees the real reason on whichever screen they open first.
+    [Fact]
+    public async Task LoadAsync_SetsADeactivatedAccountMessageOnA403()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true, ThrowStatusCode = System.Net.HttpStatusCode.Forbidden };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        Assert.Equal("Tu cuenta fue desactivada. Contacta a tu administrador.", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SetsAGenericMessageOnAnyOtherFailure()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new NotificacionesViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        Assert.Equal("No se pudieron cargar las notificaciones. Verifica tu conexión e intenta de nuevo.", vm.ErrorMessage);
+    }
 }

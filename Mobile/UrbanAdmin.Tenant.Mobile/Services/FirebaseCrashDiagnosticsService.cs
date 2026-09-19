@@ -1,3 +1,4 @@
+using System.Net;
 using Plugin.Firebase.Crashlytics;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
 
@@ -56,7 +57,10 @@ public class FirebaseCrashDiagnosticsService : ICrashDiagnosticsService
             return;
         }
 
-        var detail = statusCode is int code ? $"{endpoint} ({code})" : endpoint;
+        // Includes the status code's reason phrase (e.g. "403 Forbidden") so a report is
+        // immediately readable in the Firebase console without a device/logcat session to
+        // decode what a bare number meant.
+        var detail = statusCode is int code ? $"{endpoint} ({code} {(HttpStatusCode)code})" : endpoint;
         CrossFirebaseCrashlytics.Current.Log($"api_error: {detail}");
         CrossFirebaseCrashlytics.Current.RecordException(new Exception($"API error: {detail}"));
     }

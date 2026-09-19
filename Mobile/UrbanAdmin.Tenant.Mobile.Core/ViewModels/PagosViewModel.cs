@@ -14,6 +14,7 @@ public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, 
     public List<PagoModel> Items { get; private set; } = [];
     public bool IsBusy { get; private set; }
     public bool HasError { get; private set; }
+    public string? ErrorMessage { get; private set; }
 
     // US3 Acceptance Scenario 3: nothing pending shows a clear "nothing due"
     // state rather than an empty-looking error.
@@ -28,17 +29,25 @@ public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, 
             var token = await tokenStore.GetTokenAsync();
             if (token is null)
             {
+                ErrorMessage = "Sesión no válida. Inicia sesión de nuevo.";
                 HasError = true;
                 return;
             }
 
             Items = await apiClient.GetPagosAsync(token, Month, Year);
         }
-        catch
+        catch (Exception ex)
         {
             // US2/FR-005: a non-crashing API failure is still recorded as a
             // diagnostic event, even though HasError already handles the UI side.
-            diagnostics.LogApiError("pagos", null);
+            var statusCode = ex.ToApiStatusCode();
+            diagnostics.LogApiError("pagos", statusCode);
+            // A 403 means ActiveAccountAuthorizationHandler revoked this account (the
+            // apartment's Status was set to "No arrendado") - tell the tenant that specifically
+            // instead of a generic message indistinguishable from a network failure.
+            ErrorMessage = statusCode == 403
+                ? "Tu cuenta fue desactivada. Contacta a tu administrador."
+                : "No se pudo cargar tu información de pagos. Verifica tu conexión e intenta de nuevo.";
             HasError = true;
         }
         finally

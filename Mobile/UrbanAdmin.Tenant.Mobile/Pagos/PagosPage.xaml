@@ -47,7 +47,6 @@
 
             <Label
                 x:Name="ErrorLabel"
-                Text="No se pudo cargar tu información de pagos."
                 TextColor="Red"
                 IsVisible="False"
                 HorizontalOptions="Center"

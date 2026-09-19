@@ -29,9 +29,9 @@ public class AdminNotificacionesViewModel(IAdminApiClient apiClient, ITokenStore
 
             Items = await apiClient.GetAdminNotificacionesAsync(token);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-notificaciones", null);
+            diagnostics.LogApiError("admin-notificaciones", ex.ToApiStatusCode());
             HasError = true;
         }
         finally

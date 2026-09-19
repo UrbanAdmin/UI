@@ -52,6 +52,53 @@ public class PagosViewModelTests
         Assert.Equal([("pagos", (int?)null)], diagnostics.ApiErrors);
     }
 
+    // Observability fix: a real HTTP status code (e.g. from an authorization rejection) must
+    // reach the diagnostics report instead of always being discarded as null - this was the
+    // exact gap that made a real 403 (an apartment set to "No arrendado" revoking the tenant's
+    // access) indistinguishable from a network failure in Firebase Crashlytics.
+    [Fact]
+    public async Task LoadAsync_ForwardsTheHttpStatusCodeWhenTheApiCallFails()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true, ThrowStatusCode = System.Net.HttpStatusCode.Forbidden };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var diagnostics = new FakeCrashDiagnosticsService();
+        var vm = new PagosViewModel(apiClient, tokenStore, diagnostics);
+
+        await vm.LoadAsync();
+
+        Assert.Equal([("pagos", (int?)403)], diagnostics.ApiErrors);
+    }
+
+    // A 403 means the ActiveAccountAuthorizationHandler revoked this ApartmentOwner's access
+    // (their apartment's Status was set to "No arrendado") - the tenant should see that reason
+    // spelled out, not a generic "couldn't load" message indistinguishable from a network blip.
+    [Fact]
+    public async Task LoadAsync_SetsADeactivatedAccountMessageOnA403()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true, ThrowStatusCode = System.Net.HttpStatusCode.Forbidden };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        Assert.Equal("Tu cuenta fue desactivada. Contacta a tu administrador.", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SetsAGenericMessageOnAnyOtherFailure()
+    {
+        var apiClient = new FakeTenantApiClient { ThrowOnGet = true };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        Assert.Equal("No se pudo cargar tu información de pagos. Verifica tu conexión e intenta de nuevo.", vm.ErrorMessage);
+    }
+
     // 009-tenant-pagos-period-pesos FR-001: defaults to today's month/year when unset.
     [Fact]
     public async Task LoadAsync_DefaultsMonthAndYearToToday()

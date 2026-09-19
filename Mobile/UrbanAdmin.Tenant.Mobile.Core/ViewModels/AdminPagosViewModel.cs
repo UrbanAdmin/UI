@@ -31,9 +31,9 @@ public class AdminPagosViewModel(IAdminApiClient apiClient, ITokenStore tokenSto
 
             Items = await apiClient.GetAdminPagosAsync(token, apartmentId: null, month: Month, year: Year);
         }
-        catch
+        catch (Exception ex)
         {
-            diagnostics.LogApiError("admin-pagos", null);
+            diagnostics.LogApiError("admin-pagos", ex.ToApiStatusCode());
             HasError = true;
         }
         finally
