@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Maui.Biometric;
+using Microsoft.Extensions.Logging;
+using UrbanAdmin.Tenant.Mobile.Account;
 using UrbanAdmin.Tenant.Mobile.Admin;
 using UrbanAdmin.Tenant.Mobile.Auth;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
@@ -16,6 +18,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseBiometricAuthentication()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -37,6 +40,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ITenantApiClient, TenantApiClient>();
 		builder.Services.AddSingleton<IAdminApiClient, AdminApiClient>();
 		builder.Services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
+		builder.Services.AddSingleton<IBiometricCredentialStore, SecureStorageBiometricCredentialStore>();
+		builder.Services.AddSingleton<IBiometricAuthenticator, OscoreBiometricAuthenticator>();
 		builder.Services.AddSingleton<IPushTokenProvider, FirebasePushTokenProvider>();
 		builder.Services.AddSingleton<DeviceRegistrationService>();
 		builder.Services.AddSingleton<ICrashDiagnosticsService, FirebaseCrashDiagnosticsService>();
@@ -51,6 +56,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<AdminPagosViewModel>();
 		builder.Services.AddTransient<AdminPagosEditViewModel>();
 		builder.Services.AddTransient<AdminNotificacionesViewModel>();
+		builder.Services.AddTransient<AccountViewModel>();
 
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<NotificacionesPage>();
@@ -62,6 +68,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<ApartmentEditPage>();
 		builder.Services.AddTransient<UserEditPage>();
 		builder.Services.AddTransient<AdminPagosEditPage>();
+		builder.Services.AddTransient<AccountPage>();
 
 		return builder.Build();
 	}

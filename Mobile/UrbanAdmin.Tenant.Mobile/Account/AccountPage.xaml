@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Account.AccountPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Cuenta">
+
+    <VerticalStackLayout Padding="16" Spacing="16">
+        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+
+        <Border
+            Padding="14"
+            Stroke="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+            StrokeShape="RoundRectangle 14">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Inicio de sesión con huella" FontAttributes="Bold" FontSize="13.5" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Label
+                        Grid.Column="0"
+                        Text="Usa tu huella en vez de escribir tu contraseña cada vez que abres la app."
+                        FontSize="12"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                    <Switch x:Name="FingerprintSwitch" Grid.Column="1" Toggled="OnFingerprintToggled" VerticalOptions="Start" />
+                </Grid>
+
+                <Label
+                    x:Name="UnavailableNoteLabel"
+                    Text="Tu dispositivo no tiene huella configurada — activa una huella en los ajustes del sistema para usar esta opción."
+                    FontSize="12"
+                    IsVisible="False"
+                    TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
+
+                <VerticalStackLayout x:Name="ConfirmPanel" Spacing="8" IsVisible="False">
+                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+                    <Label
+                        Text="Confirma tu contraseña para activar"
+                        FontSize="12"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                    <Entry x:Name="ConfirmPasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelEnableClicked" />
+                        <Button Grid.Column="1" Text="Activar" Clicked="OnConfirmEnableClicked" />
+                    </Grid>
+                    <Label
+                        x:Name="ConfirmErrorLabel"
+                        FontSize="12"
+                        TextColor="Red"
+                        IsVisible="False" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <Border
+            x:Name="LogoutButton"
+            Padding="13"
+            Stroke="Transparent"
+            BackgroundColor="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}"
+            StrokeShape="RoundRectangle 12">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnLogoutTapped" />
+            </Border.GestureRecognizers>
+            <Label
+                Text="Cerrar sesión"
+                FontAttributes="Bold"
+                FontSize="13.5"
+                HorizontalTextAlignment="Center"
+                TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+        </Border>
+    </VerticalStackLayout>
+
+</ContentPage>

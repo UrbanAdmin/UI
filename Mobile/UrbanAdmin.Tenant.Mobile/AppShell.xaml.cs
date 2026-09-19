@@ -29,5 +29,8 @@ public partial class AppShell : Shell
 		UsersTab.IsVisible = isAdmin;
 		AdminPagosTab.IsVisible = isAdmin;
 		AdminNotificacionesTab.IsVisible = isAdmin;
+
+		// 010-logout-biometric-login: the app's first tab visible for both roles - research.md §2.
+		AccountTab.IsVisible = true;
 	}
 }

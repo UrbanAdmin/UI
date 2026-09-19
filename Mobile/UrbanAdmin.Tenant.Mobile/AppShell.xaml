@@ -7,6 +7,7 @@
     xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
     xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
+    xmlns:account="clr-namespace:UrbanAdmin.Tenant.Mobile.Account"
     FlyoutBehavior="Disabled"
     Title="UrbanAdmin">
 
@@ -54,6 +55,14 @@
             Icon="icon_bell.svg"
             Route="AdminNotificaciones"
             ContentTemplate="{DataTemplate admin:AdminNotificacionesPage}" />
+        <!-- 010-logout-biometric-login: the app's first tab shared by both roles - visibility
+             set unconditionally in AppShell.xaml.cs's ApplyRoleVisibility, unlike every tab above. -->
+        <ShellContent
+            x:Name="AccountTab"
+            Title="Cuenta"
+            Icon="icon_account.svg"
+            Route="Account"
+            ContentTemplate="{DataTemplate account:AccountPage}" />
     </TabBar>
 
 </Shell>
