@@ -3,7 +3,7 @@
     x:Class="UrbanAdmin.Tenant.Mobile.Notificaciones.NotificacionesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
     Title="Notificaciones">
 
     <Grid RowDefinitions="*" Padding="16">
@@ -26,12 +26,65 @@
 
         <CollectionView x:Name="ItemsList" IsVisible="False">
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:NotificacionModel">
-                    <VerticalStackLayout Padding="0,8" Spacing="2">
-                        <Label Text="{Binding Utility}" FontAttributes="Bold" />
-                        <Label Text="{Binding Amount, StringFormat='Monto: {0}'}" />
-                        <Label Text="{Binding DueDate, StringFormat='Vence: {0:dd/MM/yyyy}'}" />
-                        <Label Text="{Binding Status}" />
+                <DataTemplate x:DataType="notificaciones:NotificacionDisplayRow">
+                    <VerticalStackLayout>
+                        <Grid Padding="4,10" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Column="0" Spacing="1">
+                                <Label Text="{Binding Utility}" FontAttributes="Bold" FontSize="13.5" />
+                                <Label
+                                    Text="{Binding AmountDisplay}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                <Label
+                                    Text="{Binding DueDateDisplay}"
+                                    FontSize="12"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </VerticalStackLayout>
+                            <Border
+                                Grid.Column="1"
+                                VerticalOptions="Center"
+                                Padding="9,3"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 999">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="paid">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="due-soon">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="due-today">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource UrgentBg}, Dark={StaticResource UrgentBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="overdue">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="not-due">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding StatusLabel}" FontSize="11" FontAttributes="Bold">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="paid">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="due-soon">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="due-today">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Urgent}, Dark={StaticResource UrgentDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="overdue">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="not-due">
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                            </Border>
+                        </Grid>
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

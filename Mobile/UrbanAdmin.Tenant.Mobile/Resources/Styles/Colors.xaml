@@ -43,6 +43,24 @@
     <Color x:Key="PlaceholderBg">#F5F1FA</Color>
     <Color x:Key="PlaceholderBgDark">#241F35</Color>
 
+    <!-- Notification status chip colors (due-today/overdue/not-due) - mirrors
+         status-chip.component.css's canonical status→color mapping, adapted to this app's
+         soft-background chip convention. -->
+    <Color x:Key="Urgent">#C15A00</Color>
+    <Color x:Key="UrgentDark">#F0A857</Color>
+    <Color x:Key="UrgentBg">#FCEADA</Color>
+    <Color x:Key="UrgentBgDark">#3A2711</Color>
+
+    <Color x:Key="Danger">#C62828</Color>
+    <Color x:Key="DangerDark">#F28B8B</Color>
+    <Color x:Key="DangerBg">#FBE6E6</Color>
+    <Color x:Key="DangerBgDark">#3A1616</Color>
+
+    <Color x:Key="Neutral">#5B6B82</Color>
+    <Color x:Key="NeutralDark">#93A2B5</Color>
+    <Color x:Key="NeutralBg">#EEF1F5</Color>
+    <Color x:Key="NeutralBgDark">#22334A</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>

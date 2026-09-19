@@ -1,4 +1,4 @@
-using System.Globalization;
+using UrbanAdmin.Tenant.Mobile.Core.Formatting;
 using UrbanAdmin.Tenant.Mobile.Core.Models;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
@@ -30,7 +30,7 @@ public class ApartmentPagoGroup : List<AdminPagoDisplayRow>
         ApartmentNumber = apartmentNumber;
         OwnerDisplay = owner ?? string.Empty;
         var subtotal = AdminPagosViewModel.SumNonArriendoAmounts(rawItems);
-        SubtotalValue = AdminPagosPage.FormatCurrency(subtotal);
+        SubtotalValue = CopCurrencyFormatter.Format(subtotal);
     }
 
     private static AdminPagoDisplayRow ToDisplayRow(AdminPagoRowModel row)
@@ -40,7 +40,7 @@ public class ApartmentPagoGroup : List<AdminPagoDisplayRow>
             return new AdminPagoDisplayRow(row.Utility, "Sin registrar", "Nada aún", "placeholder");
         }
 
-        var amount = row.Amount is null ? "—" : AdminPagosPage.FormatCurrency(row.Amount);
+        var amount = row.Amount is null ? "—" : CopCurrencyFormatter.Format(row.Amount);
         return row.Paid
             ? new AdminPagoDisplayRow(row.Utility, amount, "Pagado", "paid")
             : new AdminPagoDisplayRow(row.Utility, amount, "Pendiente", "pending");
@@ -52,10 +52,6 @@ public class ApartmentPagoGroup : List<AdminPagoDisplayRow>
 // (FR-005c). Editing lives on the separate AdminPagosEditPage (FR-005a/b).
 public partial class AdminPagosPage : ContentPage
 {
-    // Colombian peso convention: "$" prefix, period as the thousands separator, no decimals
-    // (es-CO's NumberFormatInfo already produces the period separator).
-    private static readonly CultureInfo AmountCulture = new("es-CO");
-
     private readonly AdminPagosViewModel _viewModel;
     private readonly List<int> _years;
     private bool _isInitializing = true;
@@ -74,11 +70,6 @@ public partial class AdminPagosPage : ContentPage
         YearPicker.SelectedIndex = _years.IndexOf(_viewModel.Year);
         _isInitializing = false;
     }
-
-    internal static string FormatCurrency(decimal amount) => $"${amount.ToString("N0", AmountCulture)}";
-
-    internal static string FormatCurrency(string amount) =>
-        decimal.TryParse(amount, out var parsed) ? FormatCurrency(parsed) : amount;
 
     protected override async void OnAppearing()
     {
