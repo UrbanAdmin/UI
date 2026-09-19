@@ -51,4 +51,39 @@ public class PagosViewModelTests
 
         Assert.Equal([("pagos", (int?)null)], diagnostics.ApiErrors);
     }
+
+    // 009-tenant-pagos-period-pesos FR-001: defaults to today's month/year when unset.
+    [Fact]
+    public async Task LoadAsync_DefaultsMonthAndYearToToday()
+    {
+        var apiClient = new FakeTenantApiClient();
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+
+        await vm.LoadAsync();
+
+        var today = DateTime.Now;
+        Assert.Equal(((int?)today.Month, (int?)today.Year), apiClient.LastGetPagosArgs);
+        Assert.Equal(today.Month, vm.Month);
+        Assert.Equal(today.Year, vm.Year);
+    }
+
+    // 009-tenant-pagos-period-pesos FR-002: an explicitly-selected period is used instead of today.
+    [Fact]
+    public async Task LoadAsync_UsesTheSelectedMonthAndYear()
+    {
+        var apiClient = new FakeTenantApiClient();
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("fake-jwt");
+        var vm = new PagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService())
+        {
+            Month = 1,
+            Year = 2026,
+        };
+
+        await vm.LoadAsync();
+
+        Assert.Equal(((int?)1, (int?)2026), apiClient.LastGetPagosArgs);
+    }
 }

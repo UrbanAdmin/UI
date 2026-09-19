@@ -9,39 +9,100 @@
     x:Class="UrbanAdmin.Tenant.Mobile.Pagos.PagosPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:models="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.Models;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
     Title="Pagos">
 
-    <Grid RowDefinitions="*" Padding="16">
-        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Enero</x:String>
+                        <x:String>Febrero</x:String>
+                        <x:String>Marzo</x:String>
+                        <x:String>Abril</x:String>
+                        <x:String>Mayo</x:String>
+                        <x:String>Junio</x:String>
+                        <x:String>Julio</x:String>
+                        <x:String>Agosto</x:String>
+                        <x:String>Septiembre</x:String>
+                        <x:String>Octubre</x:String>
+                        <x:String>Noviembre</x:String>
+                        <x:String>Diciembre</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+            <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
+        </HorizontalStackLayout>
 
-        <Label
-            x:Name="EmptyLabel"
-            Text="No tienes nada pendiente por pagar."
-            IsVisible="False"
-            HorizontalOptions="Center"
-            VerticalOptions="Center" />
+        <Grid Grid.Row="1">
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
 
-        <Label
-            x:Name="ErrorLabel"
-            Text="No se pudo cargar tu información de pagos."
-            TextColor="Red"
-            IsVisible="False"
-            HorizontalOptions="Center"
-            VerticalOptions="Center" />
+            <Label
+                x:Name="EmptyLabel"
+                Text="No tienes nada pendiente por pagar."
+                IsVisible="False"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
 
-        <CollectionView x:Name="ItemsList" IsVisible="False">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:PagoModel">
-                    <VerticalStackLayout Padding="0,8" Spacing="2">
-                        <Label Text="{Binding Utility}" FontAttributes="Bold" />
-                        <Label Text="{Binding Amount, StringFormat='Monto: {0}'}" />
-                        <Label Text="{Binding DueDate, StringFormat='Vence: {0:dd/MM/yyyy}'}" />
-                        <Label Text="{Binding Paid, StringFormat='Pagado: {0}'}" />
-                    </VerticalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            <Label
+                x:Name="ErrorLabel"
+                Text="No se pudo cargar tu información de pagos."
+                TextColor="Red"
+                IsVisible="False"
+                HorizontalOptions="Center"
+                VerticalOptions="Center" />
+
+            <CollectionView x:Name="ItemsList" IsVisible="False">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="pagos:PagoDisplayRow">
+                        <VerticalStackLayout>
+                            <Grid Padding="4,10" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <VerticalStackLayout Grid.Column="0" Spacing="1">
+                                    <Label Text="{Binding Utility}" FontAttributes="Bold" FontSize="13.5" />
+                                    <Label
+                                        Text="{Binding AmountDisplay, StringFormat='Monto: {0}'}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                    <Label
+                                        Text="{Binding DueDateDisplay, StringFormat='Vence: {0}'}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                                </VerticalStackLayout>
+                                <Border
+                                    Grid.Column="1"
+                                    VerticalOptions="Center"
+                                    Padding="9,3"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 999">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Paid}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding Paid}" Value="False">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Label FontSize="11" FontAttributes="Bold">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Paid}" Value="True">
+                                                <Setter Property="Text" Value="Pagado" />
+                                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Paid}" Value="False">
+                                                <Setter Property="Text" Value="Pendiente" />
+                                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </Border>
+                            </Grid>
+                            <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
     </Grid>
 
 </ContentPage>

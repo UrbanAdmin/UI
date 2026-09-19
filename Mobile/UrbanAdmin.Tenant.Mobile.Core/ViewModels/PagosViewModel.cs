@@ -7,6 +7,10 @@ namespace UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 // method and never calls a write endpoint - Pagos only ever loads data.
 public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, ICrashDiagnosticsService diagnostics)
 {
+    // 009-tenant-pagos-period-pesos FR-001/FR-002: defaults to today, overridable by the page's
+    // Mes/Año pickers - mirrors AdminPagosViewModel's existing Month/Year pattern.
+    public int Month { get; set; } = DateTime.Now.Month;
+    public int Year { get; set; } = DateTime.Now.Year;
     public List<PagoModel> Items { get; private set; } = [];
     public bool IsBusy { get; private set; }
     public bool HasError { get; private set; }
@@ -28,7 +32,7 @@ public class PagosViewModel(ITenantApiClient apiClient, ITokenStore tokenStore, 
                 return;
             }
 
-            Items = await apiClient.GetPagosAsync(token);
+            Items = await apiClient.GetPagosAsync(token, Month, Year);
         }
         catch
         {

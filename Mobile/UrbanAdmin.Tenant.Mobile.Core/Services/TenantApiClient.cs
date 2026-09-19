@@ -34,8 +34,22 @@ public class TenantApiClient(HttpClient httpClient) : ITenantApiClient
     public async Task<List<NotificacionModel>> GetNotificacionesAsync(string token) =>
         await GetAsync<NotificacionModel>(token, "/tenant/notificaciones");
 
-    public async Task<List<PagoModel>> GetPagosAsync(string token) =>
-        await GetAsync<PagoModel>(token, "/tenant/pagos");
+    public async Task<List<PagoModel>> GetPagosAsync(string token, int? month = null, int? year = null)
+    {
+        var query = new List<string>();
+        if (month is not null)
+        {
+            query.Add($"month={month}");
+        }
+
+        if (year is not null)
+        {
+            query.Add($"year={year}");
+        }
+
+        var path = query.Count == 0 ? "/tenant/pagos" : $"/tenant/pagos?{string.Join('&', query)}";
+        return await GetAsync<PagoModel>(token, path);
+    }
 
     private async Task<List<T>> GetAsync<T>(string token, string path)
     {

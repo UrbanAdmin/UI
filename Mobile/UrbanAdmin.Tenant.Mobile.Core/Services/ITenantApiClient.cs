@@ -15,6 +15,8 @@ public interface ITenantApiClient
     Task<List<NotificacionModel>> GetNotificacionesAsync(string token);
 
     // Read-only by design - there is deliberately no corresponding
-    // Save/Update method anywhere in this interface (FR-008).
-    Task<List<PagoModel>> GetPagosAsync(string token);
+    // Save/Update method anywhere in this interface (FR-008). month/year are optional
+    // (009-tenant-pagos-period-pesos FR-001) - omitting them preserves the original
+    // "current period" default (contracts/tenant-pagos-api.md).
+    Task<List<PagoModel>> GetPagosAsync(string token, int? month = null, int? year = null);
 }
