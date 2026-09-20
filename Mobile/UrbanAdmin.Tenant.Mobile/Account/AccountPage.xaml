@@ -1,79 +1,85 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+  010-logout-biometric-login: the shared "Cuenta" tab. 013-tenant-pagos-alertas-redesign restyled it to
+  match the redesigned tenant screens (same header pattern, rounded cards and pill buttons); the
+  elements, their order and every interaction are exactly those of the agreed
+  Mockups/cuenta-account-screen layout.
+-->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Account.AccountPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    Shell.NavBarIsVisible="False"
     Title="Cuenta">
 
-    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
-         Caprasimo, since a native platform title can't be styled by a resource
-         dictionary alone. -->
-    <Shell.TitleView>
-        <Label Text="Cuenta" Style="{StaticResource Headline}" VerticalOptions="Center" />
-    </Shell.TitleView>
+    <ScrollView>
+        <VerticalStackLayout Padding="22,0,22,28" Spacing="16">
+            <controls:TenantHeader Kicker="Sesión y seguridad" Title="Cuenta" ShowLogout="False" />
 
-    <VerticalStackLayout Padding="16" Spacing="16">
-        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
 
-        <Border
-            Padding="14"
-            Stroke="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-            StrokeShape="RoundRectangle 14">
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Inicio de sesión con huella" FontAttributes="Bold" FontSize="13.5" />
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <Border Style="{StaticResource CardBorder}" Padding="18,16" StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="10">
                     <Label
-                        Grid.Column="0"
-                        Text="Usa tu huella en vez de escribir tu contraseña cada vez que abres la app."
-                        FontSize="12"
-                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                    <Switch x:Name="FingerprintSwitch" Grid.Column="1" Toggled="OnFingerprintToggled" VerticalOptions="Start" />
-                </Grid>
-
-                <Label
-                    x:Name="UnavailableNoteLabel"
-                    Text="Tu dispositivo no tiene huella configurada — activa una huella en los ajustes del sistema para usar esta opción."
-                    FontSize="12"
-                    IsVisible="False"
-                    TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
-
-                <VerticalStackLayout x:Name="ConfirmPanel" Spacing="8" IsVisible="False">
-                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}" />
-                    <Label
-                        Text="Confirma tu contraseña para activar"
-                        FontSize="12"
-                        FontAttributes="Bold"
-                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                    <Entry x:Name="ConfirmPasswordEntry" Placeholder="Contraseña" IsPassword="True" />
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                        <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelEnableClicked" />
-                        <Button Grid.Column="1" Text="Activar" Clicked="OnConfirmEnableClicked" />
+                        Text="Inicio de sesión con huella"
+                        FontFamily="FigtreeSemibold"
+                        FontSize="17" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Label
+                            Grid.Column="0"
+                            Text="Usa tu huella en vez de escribir tu contraseña cada vez que abres la app."
+                            Style="{StaticResource Muted}"
+                            FontSize="14" />
+                        <Switch x:Name="FingerprintSwitch" Grid.Column="1" Toggled="OnFingerprintToggled" VerticalOptions="Start" />
                     </Grid>
-                    <Label
-                        x:Name="ConfirmErrorLabel"
-                        FontSize="12"
-                        TextColor="Red"
-                        IsVisible="False" />
-                </VerticalStackLayout>
-            </VerticalStackLayout>
-        </Border>
 
-        <Border
-            x:Name="LogoutButton"
-            Padding="13"
-            Stroke="Transparent"
-            BackgroundColor="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}"
-            StrokeShape="RoundRectangle 12">
-            <Border.GestureRecognizers>
-                <TapGestureRecognizer Tapped="OnLogoutTapped" />
-            </Border.GestureRecognizers>
-            <Label
-                Text="Cerrar sesión"
-                FontAttributes="Bold"
-                FontSize="13.5"
-                HorizontalTextAlignment="Center"
-                TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
-        </Border>
-    </VerticalStackLayout>
+                    <Label
+                        x:Name="UnavailableNoteLabel"
+                        Text="Tu dispositivo no tiene huella configurada — activa una huella en los ajustes del sistema para usar esta opción."
+                        Style="{StaticResource Muted}"
+                        FontSize="13"
+                        IsVisible="False" />
+
+                    <VerticalStackLayout x:Name="ConfirmPanel" Spacing="10" IsVisible="False">
+                        <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DividerDark}}" />
+                        <Label Text="Confirma tu contraseña para activar" Style="{StaticResource Kicker}" />
+                        <Entry x:Name="ConfirmPasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <Button Grid.Column="0" Text="Cancelar" Style="{StaticResource ButtonSecondary}" Clicked="OnCancelEnableClicked" />
+                            <Button Grid.Column="1" Text="Activar" Clicked="OnConfirmEnableClicked" />
+                        </Grid>
+                        <Label
+                            x:Name="ConfirmErrorLabel"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            IsVisible="False"
+                            TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Pill button, the same shape as the app's primary buttons, in the danger fill. -->
+            <Border
+                x:Name="LogoutButton"
+                HeightRequest="52"
+                Padding="20,0"
+                Stroke="Transparent"
+                StrokeShape="RoundRectangle 999"
+                BackgroundColor="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}"
+                SemanticProperties.Description="Cerrar sesión">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLogoutTapped" />
+                </Border.GestureRecognizers>
+                <Label
+                    Text="Cerrar sesión"
+                    FontFamily="CaprasimoRegular"
+                    FontSize="15"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
 
 </ContentPage>

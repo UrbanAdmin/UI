@@ -4,21 +4,22 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    Shell.NavBarIsVisible="False"
     Title="Editar pagos">
 
-    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
-         Caprasimo, since a native platform title can't be styled by a resource
-         dictionary alone. -->
-    <Shell.TitleView>
-        <Label Text="Editar pagos" Style="{StaticResource Headline}" VerticalOptions="Center" />
-    </Shell.TitleView>
 
     <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="12">
-            <Picker x:Name="ServicioPicker" Title="Servicio" SelectedIndexChanged="OnServicioChanged" />
+        <VerticalStackLayout Padding="22,0,22,28" Spacing="12">
+            <controls:TenantHeader Kicker="Pagos del mes" Title="Editar pagos" ShowLogout="False" ShowBack="True" />
+
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Picker x:Name="ServicioPicker" Title="Servicio" SelectedIndexChanged="OnServicioChanged" />
+            </Border>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Picker x:Name="MonthPicker" Grid.Column="0" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
+                <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
                     <Picker.ItemsSource>
                         <x:Array Type="{x:Type x:String}">
                             <x:String>Enero</x:String>
@@ -36,22 +37,29 @@
                         </x:Array>
                     </Picker.ItemsSource>
                 </Picker>
-                <Picker x:Name="YearPicker" Grid.Column="1" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                    <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
+                </Border>
             </Grid>
 
             <Grid x:Name="DeadlineRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <DatePicker x:Name="DeadlineDatePicker" Grid.Column="0" />
+                <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                    <DatePicker x:Name="DeadlineDatePicker" />
+                </Border>
                 <Button x:Name="SaveDeadlineButton" Grid.Column="1" Text="Guardar" Clicked="OnSaveDeadlineClicked" />
             </Grid>
             <Label
                 x:Name="ArriendoHintLabel"
                 Text="El vencimiento de Arriendo se calcula por apartamento, desde la fecha de inicio del contrato — no se fija aquí."
-                FontSize="12"
+                Style="{StaticResource Muted}"
+                FontSize="13"
                 IsVisible="False" />
 
             <Label
                 x:Name="ErrorLabel"
-                TextColor="Red"
+                FontAttributes="Bold"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}"
                 IsVisible="False" />
 
             <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
@@ -65,7 +73,7 @@
             <CollectionView x:Name="ItemsList" IsVisible="False">
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="admin:AdminPagoEditRow">
-                        <Border Padding="12,10" Margin="0,4" StrokeShape="RoundRectangle 12">
+                        <Border Style="{StaticResource CardBorder}" Padding="16,12" Margin="0,4" StrokeShape="RoundRectangle 22">
                             <VerticalStackLayout Spacing="8">
                                 <Label Text="{Binding ApartmentLabel}" FontAttributes="Bold" />
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">

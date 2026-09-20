@@ -1,32 +1,94 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign: the sign-in screen restyled to the Organic design reference
+  (Discovery/design_handoff_organic_theme "UrbanAdmin App": logged-out screen) so it matches the
+  redesigned tenant screens - sand ground with two soft circles, a terracotta building mark, the
+  Caprasimo "UrbanAdmin" title, labeled pill fields and a pill button. Behaviour is unchanged: the same
+  fields, the same button, the same error and progress elements (LoginPage.xaml.cs).
+-->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Auth.LoginPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}"
     Title="Ingresar">
 
-    <!-- 011-organic-theme-reskin: native Shell/toolbar titles don't pick up the
-         Caprasimo Headline style from a resource-dictionary swap alone (they're
-         platform toolbar text, not a MAUI Label) - Shell.TitleView replaces the
-         native title with a themed Label instead, cross-platform, no native code. -->
-    <Shell.TitleView>
-        <Label Text="Ingresar" Style="{StaticResource Headline}" VerticalOptions="Center" />
-    </Shell.TitleView>
+    <Grid>
+        <!-- Two soft decorative circles, as in the design (sage top-right, peach top-left). -->
+        <Ellipse
+            WidthRequest="320"
+            HeightRequest="320"
+            HorizontalOptions="End"
+            VerticalOptions="Start"
+            TranslationX="90"
+            TranslationY="-130"
+            Fill="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+        <Ellipse
+            WidthRequest="180"
+            HeightRequest="180"
+            HorizontalOptions="Start"
+            VerticalOptions="Start"
+            TranslationX="-70"
+            TranslationY="70"
+            Fill="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
 
-    <VerticalStackLayout Padding="24" Spacing="16" VerticalOptions="Center">
-        <Label Text="UrbanAdmin" Style="{StaticResource Headline}" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+        <ScrollView>
+            <VerticalStackLayout Padding="30,150,30,46" Spacing="0">
+                <Border
+                    WidthRequest="58"
+                    HeightRequest="58"
+                    Padding="0"
+                    HorizontalOptions="Start"
+                    Margin="0,0,0,22"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 29"
+                    BackgroundColor="{StaticResource Primary}"
+                    SemanticProperties.Description="UrbanAdmin">
+                    <shapes:Path
+                        Data="M5 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16 M16 9h3a2 2 0 0 1 2 2v10 M3 21h18 M9 7h2 M9 11h2 M9 15h2"
+                        Aspect="Uniform"
+                        WidthRequest="28"
+                        HeightRequest="28"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        StrokeThickness="2.4"
+                        StrokeLineCap="Round"
+                        StrokeLineJoin="Round"
+                        Stroke="{StaticResource Bg}" />
+                </Border>
 
-        <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
-        <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+                <Label Text="UrbanAdmin" Style="{StaticResource Headline}" FontSize="38" SemanticProperties.HeadingLevel="Level1" />
+                <Label
+                    Text="Pagos, notificaciones y administración de tu conjunto."
+                    Style="{StaticResource Muted}"
+                    FontSize="15"
+                    Margin="0,8,0,26" />
 
-        <Label
-            x:Name="ErrorLabel"
-            TextColor="Red"
-            IsVisible="False" />
+                <Label Text="Usuario" Style="{StaticResource Kicker}" Margin="4,0,0,6" />
+                <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2" Margin="0,0,0,12">
+                    <Entry x:Name="UsernameEntry" Placeholder="Usuario" SemanticProperties.Description="Usuario" />
+                </Border>
 
-        <Button x:Name="LoginButton" Text="Ingresar" Clicked="OnLoginClicked" />
+                <Label Text="Contraseña" Style="{StaticResource Kicker}" Margin="4,0,0,6" />
+                <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2" Margin="0,0,0,20">
+                    <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" SemanticProperties.Description="Contraseña" />
+                </Border>
 
-        <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
-    </VerticalStackLayout>
+                <Label
+                    x:Name="ErrorLabel"
+                    FontAttributes="Bold"
+                    FontSize="13.5"
+                    Margin="4,0,0,12"
+                    IsVisible="False"
+                    TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+
+                <Button x:Name="LoginButton" Text="Ingresar" MinimumHeightRequest="52" Clicked="OnLoginClicked" />
+
+                <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,16,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

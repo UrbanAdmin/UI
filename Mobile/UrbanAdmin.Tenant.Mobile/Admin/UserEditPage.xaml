@@ -1,46 +1,64 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Restyled to the Organic look shared with the redesigned tenant screens (013-tenant-pagos-alertas-redesign):
+  the shared header (with a back arrow) replaces the native title bar, fields sit in the theme's pill
+  shells and the error text uses the theme color. Same fields, same buttons, same behaviour.
+-->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.UserEditPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    Shell.NavBarIsVisible="False"
     Title="Usuario">
 
-    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
-         Caprasimo, since a native platform title can't be styled by a resource
-         dictionary alone. -->
-    <Shell.TitleView>
-        <Label Text="Usuario" Style="{StaticResource Headline}" VerticalOptions="Center" />
-    </Shell.TitleView>
-
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="16">
-            <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
+        <VerticalStackLayout Padding="22,0,22,28" Spacing="14">
+            <controls:TenantHeader Kicker="Cuentas y roles" Title="Usuario" ShowLogout="False" ShowBack="True" />
 
-            <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
+            </Border>
+
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+            </Border>
             <Label
                 x:Name="PasswordHintLabel"
                 Text="Dejar en blanco para no cambiarla"
-                FontSize="12"
+                Style="{StaticResource Muted}"
+                FontSize="13"
                 IsVisible="False" />
 
-            <Picker x:Name="RolePicker" Title="Rol" SelectedIndexChanged="OnRoleChanged">
-                <Picker.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Administrador</x:String>
-                        <x:String>Arrendatario</x:String>
-                    </x:Array>
-                </Picker.ItemsSource>
-            </Picker>
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Picker x:Name="RolePicker" Title="Rol" SelectedIndexChanged="OnRoleChanged">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Administrador</x:String>
+                            <x:String>Arrendatario</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Border>
 
-            <Picker x:Name="ApartmentPicker" Title="Apartamento" IsVisible="False" />
+            <Border x:Name="ApartmentPickerShell" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2" IsVisible="{Binding Source={x:Reference ApartmentPicker}, Path=IsVisible}">
+                <Picker x:Name="ApartmentPicker" Title="Apartamento" IsVisible="False" />
+            </Border>
 
             <Label
                 x:Name="ErrorLabel"
-                TextColor="Red"
-                IsVisible="False" />
+                FontAttributes="Bold"
+                IsVisible="False"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
 
-            <Button x:Name="SaveButton" Text="Guardar" Clicked="OnSaveClicked" />
-            <Button x:Name="DeleteButton" Text="Eliminar" TextColor="Red" Clicked="OnDeleteClicked" IsVisible="False" />
+            <Button x:Name="SaveButton" Text="Guardar" MinimumHeightRequest="52" Clicked="OnSaveClicked" />
+            <Button
+                x:Name="DeleteButton"
+                Text="Eliminar"
+                Style="{StaticResource ButtonSecondary}"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}"
+                Clicked="OnDeleteClicked"
+                IsVisible="False" />
 
             <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
         </VerticalStackLayout>
