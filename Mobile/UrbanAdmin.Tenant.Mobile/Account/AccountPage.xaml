@@ -5,6 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Cuenta">
 
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
+         Caprasimo, since a native platform title can't be styled by a resource
+         dictionary alone. -->
+    <Shell.TitleView>
+        <Label Text="Cuenta" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <VerticalStackLayout Padding="16" Spacing="16">
         <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
 

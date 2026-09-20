@@ -23,6 +23,9 @@ public static class MauiProgram
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+				fonts.AddFont("Caprasimo-Regular.ttf", "CaprasimoRegular");
+				fonts.AddFont("Figtree-Regular.ttf", "FigtreeRegular");
+				fonts.AddFont("Figtree-SemiBold.ttf", "FigtreeSemibold");
 			});
 
 #if DEBUG

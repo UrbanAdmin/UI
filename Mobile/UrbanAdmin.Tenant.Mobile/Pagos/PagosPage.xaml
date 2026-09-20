@@ -12,6 +12,13 @@
     xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
     Title="Pagos">
 
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
+         Caprasimo, since a native platform title can't be styled by a resource
+         dictionary alone. -->
+    <Shell.TitleView>
+        <Label Text="Pagos" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
         <HorizontalStackLayout Grid.Row="0" Spacing="8">
             <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">

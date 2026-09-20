@@ -5,8 +5,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Ingresar">
 
+    <!-- 011-organic-theme-reskin: native Shell/toolbar titles don't pick up the
+         Caprasimo Headline style from a resource-dictionary swap alone (they're
+         platform toolbar text, not a MAUI Label) - Shell.TitleView replaces the
+         native title with a themed Label instead, cross-platform, no native code. -->
+    <Shell.TitleView>
+        <Label Text="Ingresar" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <VerticalStackLayout Padding="24" Spacing="16" VerticalOptions="Center">
-        <Label Text="UrbanAdmin" FontSize="28" HorizontalOptions="Center" />
+        <Label Text="UrbanAdmin" Style="{StaticResource Headline}" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
 
         <Entry x:Name="UsernameEntry" Placeholder="Usuario" />
         <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />

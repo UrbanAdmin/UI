@@ -6,6 +6,13 @@
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     Title="Usuarios">
 
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
+         Caprasimo, since a native platform title can't be styled by a resource
+         dictionary alone. -->
+    <Shell.TitleView>
+        <Label Text="Usuarios" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Agregar" Clicked="OnAddClicked" />
     </ContentPage.ToolbarItems>

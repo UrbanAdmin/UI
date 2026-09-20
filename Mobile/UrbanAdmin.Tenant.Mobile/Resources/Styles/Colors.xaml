@@ -1,71 +1,102 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ResourceDictionary 
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Colors.xaml — Organic theme.
+    Drop-in replacement for Resources/Styles/Colors.xaml.
+
+    Every key that existed before still exists with the same name, so no page or
+    DataTrigger needs to change; only the values were remapped onto the Organic
+    ramps (cream ground #f5ead8, terracotta accent #c67139, sage second accent
+    #7a8a5e). New keys are grouped at the bottom.
+-->
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
 
-    <Color x:Key="Primary">#1E3A5F</Color>
-    <Color x:Key="PrimaryDark">#7FA6D1</Color>
-    <Color x:Key="PrimaryDarkText">#242424</Color>
-    <Color x:Key="Secondary">#E8EEF5</Color>
-    <Color x:Key="SecondaryDarkText">#7FA6D1</Color>
-    <Color x:Key="Tertiary">#14283F</Color>
+    <!-- Brand: terracotta accent replaces the navy Primary. -->
+    <Color x:Key="Primary">#c67139</Color>          <!-- accent-500 base -->
+    <Color x:Key="PrimaryDark">#f6a06b</Color>      <!-- accent-400, for dark ground -->
+    <Color x:Key="PrimaryDarkText">#201e1d</Color>
+    <Color x:Key="Secondary">#ebddc5</Color>        <!-- sand surface -->
+    <Color x:Key="SecondaryDarkText">#ffc6a5</Color>
+    <Color x:Key="Tertiary">#8c491a</Color>         <!-- accent-700, body text on tint -->
 
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>
-    <Color x:Key="Magenta">#D600AA</Color>
-    <Color x:Key="MidnightBlue">#190649</Color>
-    <Color x:Key="OffBlack">#1f1f1f</Color>
+    <Color x:Key="Magenta">#c67139</Color>          <!-- legacy key, mapped to accent -->
+    <Color x:Key="MidnightBlue">#3d472b</Color>     <!-- accent-2-800, heading ink -->
+    <Color x:Key="OffBlack">#2e2b25</Color>         <!-- neutral-900, dark ground -->
 
-    <Color x:Key="Gray100">#E1E1E1</Color>
-    <Color x:Key="Gray200">#C8C8C8</Color>
-    <Color x:Key="Gray300">#ACACAC</Color>
-    <Color x:Key="Gray400">#919191</Color>
-    <Color x:Key="Gray500">#6E6E6E</Color>
-    <Color x:Key="Gray600">#404040</Color>
-    <Color x:Key="Gray900">#212121</Color>
-    <Color x:Key="Gray950">#141414</Color>
+    <!-- The Gray* ramp is now the warm neutral ramp: same keys, no greys. -->
+    <Color x:Key="Gray100">#f9f4ed</Color>
+    <Color x:Key="Gray200">#dcd3c4</Color>
+    <Color x:Key="Gray300">#c0b6a5</Color>
+    <Color x:Key="Gray400">#a19786</Color>
+    <Color x:Key="Gray500">#82796a</Color>
+    <Color x:Key="Gray600">#645c50</Color>
+    <Color x:Key="Gray900">#2e2b25</Color>
+    <Color x:Key="Gray950">#201e1d</Color>
 
-    <!-- Payment status chip colors - mirrors Mockups/admin-payments-summary-and-edit/index.html -->
-    <Color x:Key="Success">#1E8E5A</Color>
-    <Color x:Key="SuccessDark">#4ADE94</Color>
-    <Color x:Key="SuccessBg">#E4F5EC</Color>
-    <Color x:Key="SuccessBgDark">#163325</Color>
+    <!-- Payment status chips — paid reads sage, pending reads terracotta. -->
+    <Color x:Key="Success">#56633f</Color>          <!-- accent-2-700 -->
+    <Color x:Key="SuccessDark">#aebf92</Color>
+    <Color x:Key="SuccessBg">#e1eecc</Color>        <!-- accent-2-200 -->
+    <Color x:Key="SuccessBgDark">#272e1b</Color>
 
-    <Color x:Key="Pending">#A9700A</Color>
-    <Color x:Key="PendingDark">#E3B15C</Color>
-    <Color x:Key="PendingBg">#FBF0DD</Color>
-    <Color x:Key="PendingBgDark">#33270F</Color>
+    <Color x:Key="Pending">#8c491a</Color>          <!-- accent-700 -->
+    <Color x:Key="PendingDark">#f6a06b</Color>
+    <Color x:Key="PendingBg">#ffe1d0</Color>        <!-- accent-200 -->
+    <Color x:Key="PendingBgDark">#402310</Color>
 
-    <Color x:Key="PlaceholderText">#6B5B95</Color>
-    <Color x:Key="PlaceholderTextDark">#B7A8E0</Color>
-    <Color x:Key="PlaceholderBg">#F5F1FA</Color>
-    <Color x:Key="PlaceholderBgDark">#241F35</Color>
+    <Color x:Key="PlaceholderText">#56633f</Color>
+    <Color x:Key="PlaceholderTextDark">#ccdbb2</Color>
+    <Color x:Key="PlaceholderBg">#f0fae1</Color>
+    <Color x:Key="PlaceholderBgDark">#272e1b</Color>
 
-    <!-- Notification status chip colors (due-today/overdue/not-due) - mirrors
-         status-chip.component.css's canonical status→color mapping, adapted to this app's
-         soft-background chip convention. -->
-    <Color x:Key="Urgent">#C15A00</Color>
-    <Color x:Key="UrgentDark">#F0A857</Color>
-    <Color x:Key="UrgentBg">#FCEADA</Color>
-    <Color x:Key="UrgentBgDark">#3A2711</Color>
+    <!-- Notification status chips (due-today / overdue / not-due).
+         Urgent = due today: a deeper tint of the same accent.
+         Danger = overdue: the only SOLID chip in the system, so it separates
+         from Urgent without introducing a red the palette does not own. -->
+    <Color x:Key="Urgent">#643312</Color>           <!-- accent-800 on accent-300 -->
+    <Color x:Key="UrgentDark">#ffc6a5</Color>
+    <Color x:Key="UrgentBg">#ffc6a5</Color>         <!-- accent-300 -->
+    <Color x:Key="UrgentBgDark">#402310</Color>
 
-    <Color x:Key="Danger">#C62828</Color>
-    <Color x:Key="DangerDark">#F28B8B</Color>
-    <Color x:Key="DangerBg">#FBE6E6</Color>
-    <Color x:Key="DangerBgDark">#3A1616</Color>
+    <Color x:Key="Danger">#fff2eb</Color>           <!-- light ink ON the solid fill -->
+    <Color x:Key="DangerDark">#402310</Color>
+    <Color x:Key="DangerBg">#8c491a</Color>         <!-- accent-700 solid -->
+    <Color x:Key="DangerBgDark">#f6a06b</Color>
 
-    <Color x:Key="Neutral">#5B6B82</Color>
-    <Color x:Key="NeutralDark">#93A2B5</Color>
-    <Color x:Key="NeutralBg">#EEF1F5</Color>
-    <Color x:Key="NeutralBgDark">#22334A</Color>
+    <Color x:Key="Neutral">#645c50</Color>
+    <Color x:Key="NeutralDark">#c0b6a5</Color>
+    <Color x:Key="NeutralBg">#eee7db</Color>
+    <Color x:Key="NeutralBgDark">#474238</Color>
+
+    <!-- New in the Organic theme -->
+    <Color x:Key="Bg">#f5ead8</Color>               <!-- page ground, light -->
+    <Color x:Key="BgDark">#201e1d</Color>
+    <Color x:Key="Surface">#ebddc5</Color>          <!-- sand surface, light -->
+    <Color x:Key="SurfaceDark">#2e2b25</Color>
+    <Color x:Key="Card">#f9f4ed</Color>             <!-- neutral-100, card fill -->
+    <Color x:Key="CardDark">#2e2b25</Color>
+    <Color x:Key="Ink">#201e1d</Color>
+    <Color x:Key="Accent2">#7a8a5e</Color>          <!-- sage, second voice -->
+    <Color x:Key="Accent2Dark">#aebf92</Color>
+    <Color x:Key="Accent2Deep">#3d472b</Color>      <!-- sage panel fill -->
+    <Color x:Key="Divider">#dcd3c4</Color>
+    <Color x:Key="DividerDark">#474238</Color>
 
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
     <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
     <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>
+    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource Bg}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface}"/>
+    <SolidColorBrush x:Key="CardBrush" Color="{StaticResource Card}"/>
+    <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource Divider}"/>
+    <SolidColorBrush x:Key="Accent2Brush" Color="{StaticResource Accent2}"/>
 
     <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}"/>
     <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}"/>

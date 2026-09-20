@@ -1,3 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 456 456">
-  <path fill="#000000" fill-rule="evenodd" d="M100,210 C100,190 120,170 150,150 C185,125 205,108 228,104 C251,108 271,125 306,150 C336,170 356,190 356,210 Z M132,210 L324,210 L324,324 A20,20 0 0 1 304,344 L152,344 A20,20 0 0 1 132,324 Z M196,344 L196,268 A32,32 0 0 1 260,268 L260,344 Z"/>
+<!-- @license lucide-static v1.47.0 - ISC -->
+<svg
+  class="lucide lucide-building"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#82796a"
+  stroke-width="2.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 10h.01" />
+  <path d="M12 14h.01" />
+  <path d="M12 6h.01" />
+  <path d="M16 10h.01" />
+  <path d="M16 14h.01" />
+  <path d="M16 6h.01" />
+  <path d="M8 10h.01" />
+  <path d="M8 14h.01" />
+  <path d="M8 6h.01" />
+  <path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+  <rect x="4" y="2" width="16" height="20" rx="2" />
 </svg>

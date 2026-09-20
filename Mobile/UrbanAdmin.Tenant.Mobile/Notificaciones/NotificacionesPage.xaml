@@ -6,6 +6,13 @@
     xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
     Title="Notificaciones">
 
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
+         Caprasimo, since a native platform title can't be styled by a resource
+         dictionary alone. -->
+    <Shell.TitleView>
+        <Label Text="Notificaciones" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <Grid RowDefinitions="*" Padding="16">
         <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
 

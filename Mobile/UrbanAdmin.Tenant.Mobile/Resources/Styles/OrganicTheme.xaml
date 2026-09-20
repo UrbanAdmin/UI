@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    OrganicTheme.xaml — additive theme layer.
+
+    Merge this AFTER Colors.xaml and Styles.xaml in App.xaml. Later dictionaries
+    win, so this file overrides the template's implicit styles (fonts, radii,
+    grounds) without touching the 24 KB Styles.xaml you already have. Nothing
+    here changes layout or page structure.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ===== Type ===== -->
+    <!-- Caprasimo is display only: page titles, big numbers, primary buttons.
+         Figtree carries everything else. Never set Caprasimo below 17. -->
+
+    <Style TargetType="Label">
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="FontFamily" Value="FigtreeRegular" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="Headline">
+        <Setter Property="FontFamily" Value="CaprasimoRegular" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="FontSize" Value="27" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="HorizontalTextAlignment" Value="Start" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="SubHeadline">
+        <Setter Property="FontFamily" Value="CaprasimoRegular" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="FontSize" Value="19" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="HorizontalTextAlignment" Value="Start" />
+    </Style>
+
+    <!-- Kicker: the uppercase micro-label above every screen title. -->
+    <Style TargetType="Label" x:Key="Kicker">
+        <Setter Property="FontFamily" Value="FigtreeSemibold" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="CharacterSpacing" Value="1.4" />
+        <Setter Property="TextTransform" Value="Uppercase" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="Amount">
+        <Setter Property="FontFamily" Value="CaprasimoRegular" />
+        <Setter Property="FontSize" Value="17" />
+    </Style>
+
+    <Style TargetType="Label" x:Key="Muted">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}" />
+    </Style>
+
+    <!-- ===== Grounds ===== -->
+
+    <Style TargetType="Page" ApplyToDerivedTypes="True">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}" />
+    </Style>
+
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}" />
+        <Setter Property="Shell.ForegroundColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="Shell.TitleColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="Shell.DisabledColor" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" />
+        <Setter Property="Shell.UnselectedColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+        <Setter Property="Shell.NavBarHasShadow" Value="False" />
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}" />
+        <Setter Property="Shell.TabBarForegroundColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="Shell.TabBarTitleColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+    </Style>
+
+    <!-- ===== Shapes ===== -->
+    <!-- Organic over-rounds: 16 for small containers, 28 for cards and sheets,
+         full pill for anything interactive. MAUI has no 999px, so a pill is
+         CornerRadius = height / 2 (22 at the 44 dp minimum target). -->
+
+    <Style TargetType="Button">
+        <Setter Property="FontFamily" Value="CaprasimoRegular" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource Ink}}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="BorderWidth" Value="0" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="Padding" Value="20,12" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource Primary}}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.45" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="PointerOver" />
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Secondary / ghost action: outlined pill on the ground.
+         Not BasedOn the implicit Button style above: MAUI's XAmlC does not support
+         WPF-style "{StaticResource {x:Type Button}}" implicit-style basing (the
+         handoff bundle's own copy of this file uses that syntax and fails to
+         compile - 011-organic-theme-reskin drift note, see plan.md/research.md).
+         Shape/sizing properties are duplicated explicitly instead. -->
+    <Style TargetType="Button" x:Key="ButtonSecondary">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="FontFamily" Value="FigtreeSemibold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="BorderWidth" Value="1" />
+        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DividerDark}}" />
+        <Setter Property="CornerRadius" Value="24" />
+        <Setter Property="Padding" Value="20,12" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <!-- Ink #201e1d at 7% over the ground (README "Interaction states"). -->
+                            <Setter Property="BackgroundColor" Value="#12201e1d" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.45" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="PointerOver" />
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- Card: the repeating row surface across Pagos, Apartamentos, Usuarios. -->
+    <Style TargetType="Border" x:Key="CardBorder">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Card}, Dark={StaticResource CardDark}}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="16,14" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="22" />
+        </Setter>
+    </Style>
+
+    <!-- Hero panel: the sage block behind the month total. -->
+    <Style TargetType="Border" x:Key="HeroBorder">
+        <Setter Property="BackgroundColor" Value="{StaticResource Accent2Deep}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="24,22" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="28" />
+        </Setter>
+    </Style>
+
+    <!-- Status chip: pair with the Success/Pending/Urgent/Danger/Neutral colors
+         via the DataTriggers the pages already declare. -->
+    <Style TargetType="Border" x:Key="ChipBorder">
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="999" />
+        </Setter>
+    </Style>
+
+    <Style TargetType="Label" x:Key="ChipLabel">
+        <Setter Property="FontFamily" Value="FigtreeSemibold" />
+        <Setter Property="FontSize" Value="11.5" />
+    </Style>
+
+    <!-- Default Border: soft, never a sharp corner. -->
+    <Style TargetType="Border">
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DividerDark}}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="16" />
+        </Setter>
+    </Style>
+
+    <!-- ===== Inputs ===== -->
+
+    <Style TargetType="Entry">
+        <Setter Property="FontFamily" Value="FigtreeRegular" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="FontFamily" Value="FigtreeRegular" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="TitleColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="FontFamily" Value="FigtreeRegular" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+    </Style>
+
+    <Style TargetType="Editor">
+        <Setter Property="FontFamily" Value="FigtreeRegular" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        <Setter Property="PlaceholderColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
+    <!-- The input shell: wrap Entry / Picker / DatePicker in this for the
+         pill-shaped field the design uses everywhere. -->
+    <Style TargetType="Border" x:Key="FieldBorder">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceDark}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DividerDark}}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Padding" Value="16,2" />
+        <Setter Property="StrokeShape">
+            <RoundRectangle CornerRadius="24" />
+        </Setter>
+    </Style>
+
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Setter Property="ThumbColor" Value="{StaticResource Bg}" />
+    </Style>
+
+    <Style TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+    </Style>
+
+    <Style TargetType="RefreshView">
+        <Setter Property="RefreshColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+    </Style>
+
+    <Style TargetType="BoxView">
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Divider}, Dark={StaticResource DividerDark}}" />
+    </Style>
+
+    <!-- ===== Elevation ===== -->
+    <!-- Soft, ink-tinted, never grey. Styles.xaml's default Shadow style (white
+         brush, offset 10,10, radius 15) is wrong on this ground; this "sm" step
+         from the design handoff overrides it since this dictionary is merged
+         last (011-organic-theme-reskin research.md §3 — the handoff bundle's
+         own OrganicTheme.xaml omits this override even though its README calls
+         for one). -->
+    <Style TargetType="Shadow">
+        <Setter Property="Brush" Value="{StaticResource Gray900}" />
+        <Setter Property="Offset" Value="0,2" />
+        <Setter Property="Radius" Value="8" />
+        <Setter Property="Opacity" Value="0.14" />
+    </Style>
+
+</ResourceDictionary>

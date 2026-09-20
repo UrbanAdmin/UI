@@ -5,6 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Title="Apartamento">
 
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up
+         Caprasimo, since a native platform title can't be styled by a resource
+         dictionary alone. -->
+    <Shell.TitleView>
+        <Label Text="Apartamento" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
     <ScrollView>
         <VerticalStackLayout Padding="24" Spacing="16">
             <Entry x:Name="NameEntry" Placeholder="Número" />
