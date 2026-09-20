@@ -1,88 +1,92 @@
-using UrbanAdmin.Tenant.Mobile.Core.Formatting;
-using UrbanAdmin.Tenant.Mobile.Core.Models;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 namespace UrbanAdmin.Tenant.Mobile.Pagos;
 
-// Display-only row translating PagoModel.Amount into Colombian peso format via
-// CopCurrencyFormatter (009-tenant-pagos-period-pesos FR-004) - mirrors NotificacionDisplayRow's
-// existing pattern. Paid stays a plain bool so PagosPage.xaml's existing chip DataTriggers keep
-// working unchanged.
-public record PagoDisplayRow(string Utility, string AmountDisplay, string DueDateDisplay, bool Paid)
-{
-    public static PagoDisplayRow From(PagoModel model) => new(
-        model.Utility,
-        CopCurrencyFormatter.Format(model.Amount),
-        model.DueDate.ToString("dd/MM/yyyy"),
-        model.Paid);
-}
-
+// 013-tenant-pagos-alertas-redesign: all wording, dates, totals and status keys come from
+// PagosViewModel / Core (unit-tested); this page only maps them onto the approved layout. It stays
+// strictly read-only (FR-008) - the only gestures are the month arrows and the header logout.
 public partial class PagosPage : ContentPage
 {
     private readonly PagosViewModel _viewModel;
-    private readonly List<int> _years;
-    private bool _isInitializing = true;
+    private readonly AlertsBadgeService _badgeService;
 
-    public PagosPage(PagosViewModel viewModel)
+    public PagosPage(PagosViewModel viewModel, AlertsBadgeService badgeService)
     {
         InitializeComponent();
         _viewModel = viewModel;
-
-        // 009-tenant-pagos-period-pesos FR-001/research.md §3: a backward-leaning window sized
-        // for checking payment history, not the admin Payments screen's future-leaning one.
-        var currentYear = DateTime.Now.Year;
-        _years = Enumerable.Range(currentYear - 3, 5).ToList();
-        YearPicker.ItemsSource = _years;
-
-        MonthPicker.SelectedIndex = _viewModel.Month - 1;
-        YearPicker.SelectedIndex = _years.IndexOf(_viewModel.Year);
-        _isInitializing = false;
+        _badgeService = badgeService;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         await ReloadAsync();
+
+        // Keeps the Alertas tab badge fresh even if the tenant has not opened Alertas yet.
+        await _badgeService.RefreshAsync();
     }
 
-    private async void OnPeriodChanged(object? sender, EventArgs e)
+    private async void OnPreviousTapped(object? sender, TappedEventArgs e)
     {
-        if (_isInitializing || MonthPicker.SelectedIndex < 0 || YearPicker.SelectedIndex < 0)
+        if (_viewModel.Navigator.Previous())
         {
-            return;
+            await ReloadAsync();
         }
-
-        _viewModel.Month = MonthPicker.SelectedIndex + 1;
-        _viewModel.Year = _years[YearPicker.SelectedIndex];
-        await ReloadAsync();
     }
+
+    private async void OnNextTapped(object? sender, TappedEventArgs e)
+    {
+        if (_viewModel.Navigator.Next())
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private async void OnRetryClicked(object? sender, EventArgs e) => await ReloadAsync();
 
     private async Task ReloadAsync()
     {
         BusyIndicator.IsVisible = true;
         BusyIndicator.IsRunning = true;
-        ItemsList.IsVisible = false;
-        EmptyLabel.IsVisible = false;
-        ErrorLabel.IsVisible = false;
+        ErrorPanel.IsVisible = false;
+        ContentPanel.IsVisible = false;
+        RenderNavigator();
 
         await _viewModel.LoadAsync();
 
         BusyIndicator.IsVisible = false;
         BusyIndicator.IsRunning = false;
+        RenderState();
+    }
+
+    private void RenderNavigator()
+    {
+        MonthLabel.Text = _viewModel.MonthLabel;
+
+        // At either end of the reachable range the arrow dims instead of doing nothing silently.
+        PreviousButton.Opacity = _viewModel.Navigator.CanGoPrevious ? 1 : 0.35;
+        NextButton.Opacity = _viewModel.Navigator.CanGoNext ? 1 : 0.35;
+    }
+
+    private void RenderState()
+    {
+        Header.Kicker = _viewModel.HeaderKicker;
+        RenderNavigator();
 
         if (_viewModel.HasError)
         {
             ErrorLabel.Text = _viewModel.ErrorMessage;
-            ErrorLabel.IsVisible = true;
+            ErrorPanel.IsVisible = true;
+            ContentPanel.IsVisible = false;
+            return;
         }
-        else if (_viewModel.IsEmpty)
-        {
-            EmptyLabel.IsVisible = true;
-        }
-        else
-        {
-            ItemsList.ItemsSource = _viewModel.Items.Select(PagoDisplayRow.From).ToList();
-            ItemsList.IsVisible = true;
-        }
+
+        ErrorPanel.IsVisible = false;
+        ContentPanel.IsVisible = true;
+
+        TotalLabel.Text = _viewModel.PendingTotalDisplay;
+        HintLabel.Text = _viewModel.SummaryHint;
+        EmptyPanel.IsVisible = _viewModel.IsEmpty;
+        BindableLayout.SetItemsSource(TimelineList, _viewModel.Rows);
     }
 }

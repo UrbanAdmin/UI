@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign: the colored dot of a Pagos timeline entry or an Alertas card.
+  Kind is one of paid | overdue | due-today | due-soon | not-due | confirmation | announcement; the
+  colors come only from the Organic theme keys (light and dark), never from literals.
+-->
+<ContentView
+    x:Class="UrbanAdmin.Tenant.Mobile.Controls.StatusDot"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root">
+
+    <BoxView
+        x:Name="Dot"
+        WidthRequest="16"
+        HeightRequest="16"
+        CornerRadius="8"
+        Color="{StaticResource Gray300}">
+        <BoxView.Triggers>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="paid">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Accent2}, Dark={StaticResource Accent2Dark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="confirmation">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Accent2}, Dark={StaticResource Accent2Dark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="announcement">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Accent2}, Dark={StaticResource Accent2Dark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="overdue">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-today">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="BoxView" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-soon">
+                <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                <Setter Property="Opacity" Value="0.55" />
+            </DataTrigger>
+        </BoxView.Triggers>
+    </BoxView>
+</ContentView>

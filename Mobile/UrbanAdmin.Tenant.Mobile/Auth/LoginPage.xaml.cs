@@ -137,6 +137,6 @@ public partial class LoginPage : ContentPage
             appShell.ApplyRoleVisibility(role);
         }
 
-        await Shell.Current.GoToAsync(role == "Admin" ? "//Apartments" : "//Notificaciones");
+        await Shell.Current.GoToAsync(role == "Admin" ? "//Apartments" : "//Pagos");
     }
 }

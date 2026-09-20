@@ -1,35 +1,15 @@
-using UrbanAdmin.Tenant.Mobile.Core.Formatting;
-using UrbanAdmin.Tenant.Mobile.Core.Models;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 namespace UrbanAdmin.Tenant.Mobile.Notificaciones;
 
-// Display-only row translating NotificacionModel.Status's raw key ("due-soon", etc.) into the
-// canonical Spanish label + chip color, matching Angular's status-chip.component.ts exactly -
-// that component is this app's single source of truth for status labels/colors.
-public record NotificacionDisplayRow(string Utility, string AmountDisplay, string DueDateDisplay, string StatusLabel, string StatusKind)
-{
-    public static NotificacionDisplayRow From(NotificacionModel model)
-    {
-        var (label, kind) = model.Status switch
-        {
-            "paid" => ("Pagado", "paid"),
-            "due-soon" => ("Vence en 2 días", "due-soon"),
-            "due-today" => ("Vence hoy", "due-today"),
-            "overdue" => ("Vencido", "overdue"),
-            _ => ("No vence aún", "not-due"),
-        };
-
-        var amount = model.Amount is null ? "—" : $"Monto: {CopCurrencyFormatter.Format(model.Amount)}";
-        return new NotificacionDisplayRow(model.Utility, amount, $"Vence: {model.DueDate:dd/MM/yyyy}", label, kind);
-    }
-}
-
+// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen. Every word, date and status key comes
+// from AlertasViewModel / Core (unit-tested); this page only maps the cards onto the approved layout.
+// AlertasViewModel also keeps the Alertas tab badge in sync after each load.
 public partial class NotificacionesPage : ContentPage
 {
-    private readonly NotificacionesViewModel _viewModel;
+    private readonly AlertasViewModel _viewModel;
 
-    public NotificacionesPage(NotificacionesViewModel viewModel)
+    public NotificacionesPage(AlertasViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
@@ -38,12 +18,18 @@ public partial class NotificacionesPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        await ReloadAsync();
+    }
 
+    private async void OnRetryClicked(object? sender, EventArgs e) => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
         BusyIndicator.IsVisible = true;
         BusyIndicator.IsRunning = true;
-        ItemsList.IsVisible = false;
-        EmptyLabel.IsVisible = false;
-        ErrorLabel.IsVisible = false;
+        ErrorPanel.IsVisible = false;
+        EmptyPanel.IsVisible = false;
+        CardsList.IsVisible = false;
 
         await _viewModel.LoadAsync();
 
@@ -53,16 +39,16 @@ public partial class NotificacionesPage : ContentPage
         if (_viewModel.HasError)
         {
             ErrorLabel.Text = _viewModel.ErrorMessage;
-            ErrorLabel.IsVisible = true;
+            ErrorPanel.IsVisible = true;
         }
         else if (_viewModel.IsEmpty)
         {
-            EmptyLabel.IsVisible = true;
+            EmptyPanel.IsVisible = true;
         }
         else
         {
-            ItemsList.ItemsSource = _viewModel.Items.Select(NotificacionDisplayRow.From).ToList();
-            ItemsList.IsVisible = true;
+            BindableLayout.SetItemsSource(CardsList, _viewModel.Cards);
+            CardsList.IsVisible = true;
         }
     }
 }

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign: the header shared by the redesigned screens (mockups
+  tenant-pagos-timeline / tenant-alertas-cards / admin-comunicados): an optional back arrow (pushed
+  screens), an uppercase kicker, the Caprasimo title, an optional action pill (for example "Agregar")
+  and, on the tenant screens, a round logout button that runs the same sign-out as the Cuenta tab.
+-->
+<ContentView
+    x:Class="UrbanAdmin.Tenant.Mobile.Controls.TenantHeader"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    x:Name="Root">
+
+    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Padding="0,10,0,14">
+        <!-- Back arrow (pushed screens only). -->
+        <Border
+            Grid.Column="0"
+            WidthRequest="44"
+            HeightRequest="44"
+            Padding="0"
+            Margin="-6,0,0,0"
+            VerticalOptions="Start"
+            StrokeShape="RoundRectangle 22"
+            BackgroundColor="Transparent"
+            IsVisible="{Binding Source={x:Reference Root}, Path=ShowBack}"
+            SemanticProperties.Description="Volver">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnBackTapped" />
+            </Border.GestureRecognizers>
+            <shapes:Path
+                Data="M15 18 9 12 15 6"
+                Aspect="Uniform"
+                WidthRequest="14"
+                HeightRequest="16"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                StrokeThickness="2.2"
+                StrokeLineCap="Round"
+                StrokeLineJoin="Round"
+                Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+        </Border>
+
+        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+            <Label
+                Text="{Binding Source={x:Reference Root}, Path=Kicker}"
+                IsVisible="{Binding Source={x:Reference Root}, Path=HasKicker}"
+                Style="{StaticResource Kicker}"
+                LineBreakMode="WordWrap" />
+            <Label
+                Text="{Binding Source={x:Reference Root}, Path=Title}"
+                Style="{StaticResource Headline}"
+                FontSize="32"
+                SemanticProperties.HeadingLevel="Level1" />
+        </VerticalStackLayout>
+
+        <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Start">
+            <!-- Action pill (for example "Agregar"). -->
+            <Border
+                HeightRequest="44"
+                Padding="16,0"
+                StrokeShape="RoundRectangle 22"
+                BackgroundColor="Transparent"
+                IsVisible="{Binding Source={x:Reference Root}, Path=HasAction}"
+                SemanticProperties.Description="{Binding Source={x:Reference Root}, Path=ActionText}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnActionTapped" />
+                </Border.GestureRecognizers>
+                <Label
+                    Text="{Binding Source={x:Reference Root}, Path=ActionText}"
+                    FontFamily="FigtreeSemibold"
+                    FontSize="13.5"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <!-- Logout (tenant screens). -->
+            <Border
+                WidthRequest="44"
+                HeightRequest="44"
+                Padding="0"
+                StrokeShape="RoundRectangle 22"
+                BackgroundColor="Transparent"
+                IsVisible="{Binding Source={x:Reference Root}, Path=ShowLogout}"
+                SemanticProperties.Description="Cerrar sesión"
+                SemanticProperties.Hint="Cierra tu sesión en este dispositivo">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLogoutTapped" />
+                </Border.GestureRecognizers>
+                <shapes:Path
+                    Data="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9"
+                    Aspect="Uniform"
+                    WidthRequest="20"
+                    HeightRequest="20"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    StrokeThickness="2.2"
+                    StrokeLineCap="Round"
+                    StrokeLineJoin="Round"
+                    Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+            </Border>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentView>

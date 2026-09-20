@@ -42,4 +42,22 @@ public class FakeTenantApiClient : ITenantApiClient
         LastGetPagosArgs = (month, year);
         return Task.FromResult(Pagos);
     }
+
+    public AlertasModel Alertas { get; set; } = new();
+    public PerfilModel Perfil { get; set; } = new();
+    public int GetAlertasCallCount { get; private set; }
+    public int GetPerfilCallCount { get; private set; }
+    public bool ThrowOnPerfil { get; set; }
+
+    public Task<AlertasModel> GetAlertasAsync(string token)
+    {
+        GetAlertasCallCount++;
+        return ThrowOnGet ? throw new HttpRequestException("boom", null, ThrowStatusCode) : Task.FromResult(Alertas);
+    }
+
+    public Task<PerfilModel> GetPerfilAsync(string token)
+    {
+        GetPerfilCallCount++;
+        return ThrowOnPerfil ? throw new HttpRequestException("boom") : ThrowOnGet ? throw new HttpRequestException("boom", null, ThrowStatusCode) : Task.FromResult(Perfil);
+    }
 }

@@ -52,6 +52,10 @@ public static class MauiProgram
 
 		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<NotificacionesViewModel>();
+		// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen and the shared tab-badge state.
+		builder.Services.AddTransient<AlertasViewModel>();
+		builder.Services.AddSingleton<AlertsBadgeState>();
+		builder.Services.AddSingleton<AlertsBadgeService>();
 		builder.Services.AddTransient<PagosViewModel>();
 		builder.Services.AddTransient<ApartmentsViewModel>();
 		builder.Services.AddTransient<ApartmentEditViewModel>();

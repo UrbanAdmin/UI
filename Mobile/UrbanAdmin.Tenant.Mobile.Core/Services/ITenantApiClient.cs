@@ -19,4 +19,11 @@ public interface ITenantApiClient
     // (009-tenant-pagos-period-pesos FR-001) - omitting them preserves the original
     // "current period" default (contracts/tenant-pagos-api.md).
     Task<List<PagoModel>> GetPagosAsync(string token, int? month = null, int? year = null);
+
+    // 013-tenant-pagos-alertas-redesign: the unified alert list (payment reminders, payment
+    // confirmations, announcements) and the number of payment alerts that need action (tab badge).
+    Task<AlertasModel> GetAlertasAsync(string token);
+
+    // The apartment number and owner name shown in the header of the tenant screens.
+    Task<PerfilModel> GetPerfilAsync(string token);
 }

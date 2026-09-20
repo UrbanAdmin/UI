@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign: the rounded status chip shared by the tenant Pagos timeline and the
+  Alertas cards, so a status reads the same on both screens (FR-005 / SC-003). Kind is one of
+  paid | overdue | due-today | due-soon | not-due | confirmation | announcement; Text is the label
+  (built in Core). Colors come only from the Organic theme keys, light and dark.
+-->
+<ContentView
+    x:Class="UrbanAdmin.Tenant.Mobile.Controls.StatusChip"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Name="Root"
+    HorizontalOptions="Start">
+
+    <Border
+        Style="{StaticResource ChipBorder}"
+        Padding="12,4"
+        BackgroundColor="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}">
+        <Border.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="paid">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="confirmation">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="announcement">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="overdue">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-today">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource UrgentBg}, Dark={StaticResource UrgentBgDark}}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-soon">
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
+            </DataTrigger>
+        </Border.Triggers>
+
+        <Label
+            Style="{StaticResource ChipLabel}"
+            Text="{Binding Source={x:Reference Root}, Path=Text}"
+            TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}">
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="paid">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="confirmation">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="announcement">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="overdue">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-today">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Urgent}, Dark={StaticResource UrgentDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Label" Binding="{Binding Source={x:Reference Root}, Path=Kind}" Value="due-soon">
+                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+    </Border>
+</ContentView>

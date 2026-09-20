@@ -11,4 +11,12 @@ public class PagoModel
     public string? Amount { get; set; }
     public DateTime DueDate { get; set; }
     public bool Paid { get; set; }
+
+    // 013-tenant-pagos-alertas-redesign (additive on GET /tenant/pagos): the server-decided status
+    // (paid | overdue | due-today | due-soon | not-due), the moment the administration marked the
+    // charge paid (null for unpaid charges and for charges paid before that was recorded) and the
+    // amount as a number (null when unrecorded).
+    public string Status { get; set; } = string.Empty;
+    public DateTime? PaidAt { get; set; }
+    public decimal? AmountValue { get; set; }
 }

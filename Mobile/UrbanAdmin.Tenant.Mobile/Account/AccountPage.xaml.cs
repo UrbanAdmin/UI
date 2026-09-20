@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
@@ -103,6 +104,7 @@ public partial class AccountPage : ContentPage
         BusyIndicator.IsRunning = true;
 
         await _viewModel.LogoutAsync();
+        Handler?.MauiContext?.Services.GetService<UrbanAdmin.Tenant.Mobile.Core.ViewModels.AlertsBadgeState>()?.Reset();
 
         BusyIndicator.IsVisible = false;
         BusyIndicator.IsRunning = false;

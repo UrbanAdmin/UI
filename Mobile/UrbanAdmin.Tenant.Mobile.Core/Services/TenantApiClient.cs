@@ -51,6 +51,21 @@ public class TenantApiClient(HttpClient httpClient) : ITenantApiClient
         return await GetAsync<PagoModel>(token, path);
     }
 
+    public async Task<AlertasModel> GetAlertasAsync(string token) =>
+        await GetOneAsync<AlertasModel>(token, "/tenant/alertas") ?? new AlertasModel();
+
+    public async Task<PerfilModel> GetPerfilAsync(string token) =>
+        await GetOneAsync<PerfilModel>(token, "/tenant/perfil") ?? new PerfilModel();
+
+    private async Task<T?> GetOneAsync<T>(string token, string path)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<T>(JsonOptions);
+    }
+
     private async Task<List<T>> GetAsync<T>(string token, string path)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);
