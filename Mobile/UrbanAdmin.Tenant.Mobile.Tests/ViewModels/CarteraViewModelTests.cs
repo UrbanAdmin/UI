@@ -287,7 +287,7 @@ public class CarteraViewModelTests
     }
 
     [Fact]
-    public async Task BuildApartmentConfirmation_NamesTheApartmentAndTheSelectedMonthsBalance()
+    public async Task BuildApartmentConfirmation_NamesTheApartmentAndTheCurrentMonthsBalance()
     {
         var model = WithApartments();
         // Apartment 1 has two September charges (10.000 + 15.000); its other months must not count.

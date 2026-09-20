@@ -103,4 +103,26 @@ public class CarteraFormattingTests
     {
         Assert.Equal(expected, CarteraFormatting.UpcomingCount(count));
     }
+
+    [Theory]
+    [InlineData(1, "ene")]
+    [InlineData(9, "sep")]
+    [InlineData(12, "dic")]
+    public void MonthAbbreviation_IsTheThreeLetterSpanishName(int month, string expected)
+    {
+        Assert.Equal(expected, CarteraFormatting.MonthAbbreviation(month));
+    }
+
+    [Fact]
+    public void PeriodChargeLabel_AddsTheBillingPeriodToTheService()
+    {
+        Assert.Equal("Agua · nov 2024", CarteraFormatting.PeriodChargeLabel("Agua", 11, 2024));
+    }
+
+    [Fact]
+    public void AnterioresTexts_NameTheFirstMonthOfTheRange()
+    {
+        Assert.Equal("Antes de enero 2025", CarteraFormatting.AnterioresChip(2025));
+        Assert.Equal("Deuda anterior a enero 2025. No se incluye en «Enviar notificación».", CarteraFormatting.AnterioresNote(2025));
+    }
 }

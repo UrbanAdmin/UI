@@ -4,8 +4,9 @@
   2026-09-20 (Mockups/cartera-vencida-timeline/index.html): overdue balance hero (Servicios /
   Arriendo split), bulk "Enviar notificación", and a flat month timeline (no year headings) whose months expand to
   per-apartment charge lists with a per-apartment notify action and a way into the detailed Pagos.
-  Post-build round (same mockup, v3): Mes/Año selectors, the timeline opens on the current month only,
-  and the hero, "Enviar notificación" and the per-apartment action follow the selected month.
+  Post-build rounds (mockup v6): no month/year pickers; the hero and the notify actions belong to the
+  current month; the list runs from the current month back through January of last year with one closing
+  "Anteriores" entry for older debt.
 -->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Cartera.CarteraPage"
@@ -128,6 +129,16 @@
                                                                         TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
                                                                 </Border>
                                                                 <Border
+                                                                    IsVisible="{Binding HasTag}"
+                                                                    Style="{StaticResource ChipBorder}"
+                                                                    Margin="0,4,6,0"
+                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}">
+                                                                    <Label
+                                                                        Style="{StaticResource ChipLabel}"
+                                                                        Text="{Binding TagLabel}"
+                                                                        TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
+                                                                </Border>
+                                                                <Border
                                                                     IsVisible="{Binding HasUpcoming}"
                                                                     Style="{StaticResource ChipBorder}"
                                                                     Margin="0,4,6,0"
@@ -187,6 +198,7 @@
                                                                                     FontSize="12.5"
                                                                                     Padding="12,0"
                                                                                     IsEnabled="{Binding CanNotify}"
+                                                                                    IsVisible="{Binding ShowNotify}"
                                                                                     VerticalOptions="Center"
                                                                                     Clicked="OnNotifyApartmentClicked" />
                                                                             </Grid>
@@ -231,7 +243,7 @@
 
                                                         <Label
                                                             Text="{Binding PagosLinkText}"
-                                                            IsVisible="{Binding IsExpanded}"
+                                                            IsVisible="{Binding PagosLinkVisible}"
                                                             TextDecorations="Underline"
                                                             FontAttributes="Bold"
                                                             FontSize="12.5"
@@ -246,28 +258,8 @@
                                             </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*">
-        <!-- Mes / Año selectors (FR-020): outside the ScrollView so the period stays changeable while
-             the timeline scrolls. Choosing one jumps the timeline to it; no reload. -->
-        <Grid
-            x:Name="PeriodRow"
-            Grid.Row="0"
-            IsVisible="False"
-            ColumnDefinitions="*,*"
-            ColumnSpacing="10"
-            Padding="22,4,22,10"
-            BackgroundColor="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}">
-            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                <Label Text="Mes" Style="{StaticResource Kicker}" />
-                <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodPickerChanged" />
-            </VerticalStackLayout>
-            <VerticalStackLayout Grid.Column="1" Spacing="2">
-                <Label Text="Año" Style="{StaticResource Kicker}" />
-                <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodPickerChanged" />
-            </VerticalStackLayout>
-        </Grid>
-
-        <ScrollView x:Name="MainScroll" Grid.Row="1">
+    <Grid>
+        <ScrollView x:Name="MainScroll">
             <VerticalStackLayout Padding="22,4,22,32" Spacing="0">
                 <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
 
@@ -408,7 +400,6 @@
         <!-- Result of a notify action: sage on success, terracotta tint otherwise. -->
         <Border
             x:Name="ResultBanner"
-            Grid.Row="1"
             IsVisible="False"
             VerticalOptions="End"
             Margin="18,0,18,16"

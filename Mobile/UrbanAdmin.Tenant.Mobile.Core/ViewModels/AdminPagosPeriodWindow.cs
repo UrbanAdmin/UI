@@ -17,8 +17,4 @@ public static class AdminPagosPeriodWindow
 
         return years;
     }
-
-    // The Cartera "Año" selector: the same window plus every year the overdue data reaches into.
-    public static List<int> YearsWithData(int currentYear, IEnumerable<int> dataYears) =>
-        YearsFor(currentYear).Concat(dataYears).Distinct().Order().ToList();
 }

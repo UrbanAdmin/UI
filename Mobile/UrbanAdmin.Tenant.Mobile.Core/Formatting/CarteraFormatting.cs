@@ -32,6 +32,17 @@ public static class CarteraFormatting
 
     public static string UpcomingCount(int count) => $"{count} por vencer";
 
+    public static string MonthAbbreviation(int month) => MonthNames[month - 1][..3].ToLowerInvariant();
+
+    // "Agua · nov 2024": a charge inside "Anteriores", which mixes several billing periods.
+    public static string PeriodChargeLabel(string service, int month, int year) =>
+        $"{service} · {MonthAbbreviation(month)} {year}";
+
+    public static string AnterioresChip(int fromYear) => $"Antes de enero {fromYear}";
+
+    public static string AnterioresNote(int fromYear) =>
+        $"Deuda anterior a enero {fromYear}. No se incluye en «Enviar notificación».";
+
     public static string DaysLabel(int days) => days == 1 ? "1 día" : $"{days} días";
 
     public static string MonthName(int month) => MonthNames[month - 1];

@@ -25,61 +25,86 @@ public class CarteraViewModel(
     private const string Deactivated = "Tu cuenta fue desactivada. Contacta a tu administrador.";
 
     private readonly Func<DateTime, DateTime> _toLocal = toLocalTime ?? (utc => utc.ToLocalTime());
-    private static readonly Func<DateTime> SystemNow = () => DateTime.Now;
-    private readonly Func<DateTime> _today = today ?? SystemNow;
+    private readonly Func<DateTime> _today = today ?? (() => DateTime.Now);
     private bool _hasLoaded;
 
-    // The screen works on one month at a time (FR-020); it opens on the current one.
-    public int SelectedMonth { get; private set; } = (today ?? SystemNow)().Month;
-    public int SelectedYear { get; private set; } = (today ?? SystemNow)().Year;
+    // The screen has no period pickers (FR-020): it works on the current month, and lists the months
+    // from the current one back through January of last year.
+    public int CurrentMonth => _today().Month;
+    public int CurrentYear => _today().Year;
 
-    public void SelectPeriod(int month, int year)
-    {
-        SelectedMonth = month;
-        SelectedYear = year;
-    }
+    private int CurrentIndex => (CurrentYear * 12) + CurrentMonth;
+    private int FirstIndex => ((CurrentYear - 1) * 12) + 1;
+    private static int IndexOf(CarteraMonthModel m) => (m.Year * 12) + m.Month;
 
-    // Año selector: the usual window plus every year that has overdue data.
-    public List<int> AvailableYears =>
-        AdminPagosPeriodWindow.YearsWithData(_today().Year, Cartera.Years.Select(y => y.Year));
+    // The current month's entry from the loaded data, or an empty one when nothing is listed for it
+    // (the summary card and the timeline still show it, at $0).
+    public CarteraMonthModel CurrentMonthEntry =>
+        Cartera.Years.SelectMany(y => y.Months).FirstOrDefault(m => m.Month == CurrentMonth && m.Year == CurrentYear)
+        ?? new CarteraMonthModel { Month = CurrentMonth, Year = CurrentYear };
 
-    // The selected month's entry from the timeline, or an empty one when nothing is overdue then
-    // (the hero and the timeline still show it, at $0).
-    public CarteraMonthModel SelectedMonthEntry =>
-        Cartera.Years.SelectMany(y => y.Months).FirstOrDefault(m => m.Month == SelectedMonth && m.Year == SelectedYear)
-        ?? new CarteraMonthModel { Month = SelectedMonth, Year = SelectedYear };
-
-    // The timeline is a flat list of months, newest first (no year headings): every month that has
-    // overdue or "por vencer" charges plus the selected month/year even when it has none (an empty
-    // entry, figures 0). Built fresh; Cartera is never mutated.
+    // The timeline is a flat list of months, newest first (no year headings): every month from the
+    // current one back through January of last year that has overdue or "por vencer" charges, plus
+    // the current month even when it has none. Later months are not shown; older overdue debt is
+    // in Anteriores. Built fresh; Cartera is never mutated.
     public List<CarteraMonthModel> TimelineMonths
     {
         get
         {
-            var months = Cartera.Years.SelectMany(y => y.Months).ToList();
-            if (!months.Any(m => m.Month == SelectedMonth && m.Year == SelectedYear))
+            var months = Cartera.Years.SelectMany(y => y.Months)
+                .Where(m => IndexOf(m) >= FirstIndex && IndexOf(m) <= CurrentIndex)
+                .ToList();
+            if (!months.Any(m => m.Month == CurrentMonth && m.Year == CurrentYear))
             {
-                months.Add(SelectedMonthEntry);
+                months.Add(CurrentMonthEntry);
             }
 
             return months.OrderByDescending(m => m.Year).ThenByDescending(m => m.Month).ToList();
         }
     }
 
-    // "Empty" is about OVERDUE charges (the hero's Cartera vencida); the month may still list
-    // "por vencer" ones.
-    public bool SelectedMonthIsEmpty => SelectedMonthEntry.Charges.Count == 0;
-
-    public bool SelectedMonthHasUpcoming => SelectedMonthEntry.UpcomingCharges.Count > 0;
-
-    private string SelectedMonthLabel =>
-        $"{CarteraFormatting.MonthName(SelectedMonth).ToLowerInvariant()} {SelectedYear}";
-
-    // Apartments with overdue charges in the selected month, joined with their reachability and
-    // "already notified today" state (both are per apartment, decided server-side).
-    private List<CarteraApartmentModel> SelectedMonthApartments()
+    // The overdue debt of every month before January of last year in one closing entry, or null
+    // when there is none (FR-020). "Por vencer" charges are never part of it.
+    public CarteraAnteriores? Anteriores
     {
-        var ids = SelectedMonthEntry.Charges.Select(c => c.ApartmentId).Distinct().ToHashSet();
+        get
+        {
+            var charges = Cartera.Years.SelectMany(y => y.Months)
+                .Where(m => IndexOf(m) < FirstIndex)
+                .OrderByDescending(m => m.Year).ThenByDescending(m => m.Month)
+                .SelectMany(m => m.Charges.Select(c => new CarteraPeriodCharge(c, m.Month, m.Year)))
+                .ToList();
+            if (charges.Count == 0)
+            {
+                return null;
+            }
+
+            return new CarteraAnteriores
+            {
+                FromYear = CurrentYear - 1,
+                TotalServicios = charges.Where(c => !c.Charge.IsRent).Sum(c => c.Charge.Amount ?? 0m),
+                TotalArriendo = charges.Where(c => c.Charge.IsRent).Sum(c => c.Charge.Amount ?? 0m),
+                ChargeCount = charges.Count,
+                ApartmentCount = charges.Select(c => c.Charge.ApartmentId).Distinct().Count(),
+                Charges = charges,
+            };
+        }
+    }
+
+    // "Empty" is about OVERDUE charges (the summary card's Cartera vencida); the month may still list
+    // "por vencer" ones.
+    public bool CurrentMonthIsEmpty => CurrentMonthEntry.Charges.Count == 0;
+
+    public bool CurrentMonthHasUpcoming => CurrentMonthEntry.UpcomingCharges.Count > 0;
+
+    private string CurrentMonthLabel =>
+        $"{CarteraFormatting.MonthName(CurrentMonth).ToLowerInvariant()} {CurrentYear}";
+
+    // Apartments with overdue charges in the current month, joined with their reachability and
+    // "already notified today" state (both are per apartment, decided server-side).
+    private List<CarteraApartmentModel> CurrentMonthApartments()
+    {
+        var ids = CurrentMonthEntry.Charges.Select(c => c.ApartmentId).Distinct().ToHashSet();
         return Cartera.Apartments.Where(a => ids.Contains(a.ApartmentId)).ToList();
     }
 
@@ -93,8 +118,8 @@ public class CarteraViewModel(
     // pesos yet are still listed ("sin monto"), so emptiness is about the charges, not the sum.
     public bool IsEmpty => _hasLoaded && !IsBusy && !HasError && Cartera.Years.Count == 0;
 
-    // The bulk button is enabled only when someone overdue in the selected month can be reached.
-    public bool CanNotifyAll => SelectedMonthApartments().Any(a => a.CanNotify);
+    // The bulk button is enabled only when someone overdue in the current month can be reached.
+    public bool CanNotifyAll => CurrentMonthApartments().Any(a => a.CanNotify);
 
     // The existing admin Pagos screen is now a pushed route (US2). A month entry opens it on that
     // month/year; the general access opens it on the current month, as it did as a tab.
@@ -139,12 +164,12 @@ public class CarteraViewModel(
     // FR-010/FR-019: who will be notified, who cannot be, and who already got a notice today.
     public string BuildBulkConfirmation()
     {
-        var inMonth = SelectedMonthApartments();
+        var inMonth = CurrentMonthApartments();
         var notifiable = inMonth.Where(a => a.CanNotify).ToList();
         var unreachable = inMonth.Count - notifiable.Count;
         var alreadyToday = notifiable.Count(a => a.NotifiedToday);
 
-        var lines = new List<string> { $"Se notificará a {CarteraFormatting.Apartments(notifiable.Count)} con cartera vencida de {SelectedMonthLabel}." };
+        var lines = new List<string> { $"Se notificará a {CarteraFormatting.Apartments(notifiable.Count)} con cartera vencida de {CurrentMonthLabel}." };
         if (unreachable > 0)
         {
             lines.Add(unreachable == 1
@@ -171,9 +196,9 @@ public class CarteraViewModel(
         }
 
         var who = string.IsNullOrWhiteSpace(apartment.Owner) ? "el propietario" : apartment.Owner;
-        var charges = SelectedMonthEntry.Charges.Where(c => c.ApartmentId == apartmentId).ToList();
+        var charges = CurrentMonthEntry.Charges.Where(c => c.ApartmentId == apartmentId).ToList();
         var total = charges.Sum(c => c.Amount ?? 0m);
-        var text = $"Se enviará a {who} el detalle de su cartera vencida de {SelectedMonthLabel}: " +
+        var text = $"Se enviará a {who} el detalle de su cartera vencida de {CurrentMonthLabel}: " +
                    $"{CarteraFormatting.Concepts(charges.Count)} por {CopCurrencyFormatter.Format(total)}.";
         if (apartment.NotifiedToday && apartment.LastNotifiedAt is DateTime last)
         {
@@ -205,7 +230,7 @@ public class CarteraViewModel(
             }
 
             var target = apartmentId is long id ? Cartera.Apartments.FirstOrDefault(a => a.ApartmentId == id) : null;
-            var result = await apiClient.NotificarCarteraAsync(token, apartmentId, SelectedMonth, SelectedYear);
+            var result = await apiClient.NotificarCarteraAsync(token, apartmentId, CurrentMonth, CurrentYear);
             var outcome = Describe(result, apartmentId is not null, target);
 
             // Refresh so "notificado hoy" (and any changed balance) is current for the next press.

@@ -28,6 +28,9 @@ public class CarteraApartmentRow
     public List<CarteraChargeRow> Upcoming { get; init; } = [];
     public bool HasOverdue { get; init; }
 
+    // False for the "Anteriores" rows: that debt is shown for reference and never notified.
+    public bool ShowNotify { get; init; } = true;
+
     public string NotifyText => !HasOverdue ? "Nada vencido" : CanNotify ? "Notificar" : "No disponible";
     public bool HasUpcoming => Upcoming.Count > 0;
     public bool HasCaption => CaptionText.Length > 0;
@@ -67,6 +70,37 @@ public static class CarteraRowsBuilder
             .OrderBy(r => r.Number, StringComparer.Ordinal)
             .ToList();
     }
+
+    // The rows inside the "Anteriores" entry: one row per apartment, every charge labeled with its
+    // own month and year, no notify action and no reachability caption.
+    public static List<CarteraApartmentRow> BuildAnterioresApartments(
+        IEnumerable<CarteraPeriodCharge> charges,
+        IReadOnlyDictionary<long, CarteraApartmentModel> apartments) =>
+        charges
+            .GroupBy(c => c.Charge.ApartmentId)
+            .Select(group =>
+            {
+                var first = group.First().Charge;
+                CarteraChargeRow ToRow(CarteraPeriodCharge c) => new(
+                    CarteraFormatting.PeriodChargeLabel(c.Charge.Service, c.Month, c.Year),
+                    CarteraFormatting.AmountDisplay(c.Charge.Amount),
+                    c.Charge.Amount is null,
+                    CarteraFormatting.DaysLabel(c.Charge.DaysOverdue));
+
+                return new CarteraApartmentRow
+                {
+                    ApartmentId = group.Key,
+                    Number = first.ApartmentNumber,
+                    OwnerDisplay = string.IsNullOrWhiteSpace(first.Owner) ? "Sin propietario" : first.Owner,
+                    Summary = CarteraFormatting.ApartmentSummary(group.Count(), group.Sum(c => c.Charge.Amount ?? 0m)),
+                    HasOverdue = true,
+                    ShowNotify = false,
+                    Services = group.Where(c => !c.Charge.IsRent).Select(ToRow).ToList(),
+                    Rent = group.Where(c => c.Charge.IsRent).Select(ToRow).ToList(),
+                };
+            })
+            .OrderBy(r => r.Number, StringComparer.Ordinal)
+            .ToList();
 
     private static CarteraApartmentRow BuildApartment(
         long apartmentId,

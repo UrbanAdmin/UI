@@ -27,6 +27,7 @@ public abstract class ExpandableRow : INotifyPropertyChanged
 
             _isExpanded = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PagosLinkVisible"));
         }
     }
 
@@ -44,6 +45,10 @@ public class CarteraMonthRow : ExpandableRow
     public string ArriendoLabel { get; init; } = string.Empty;
     public Brush DotBrush { get; init; } = Brush.Transparent;
     public string PagosLinkText { get; init; } = string.Empty;
+    public bool HasPagosLink { get; init; } = true;
+    public bool PagosLinkVisible => IsExpanded && HasPagosLink;
+    public string TagLabel { get; init; } = string.Empty;
+    public bool HasTag => TagLabel.Length > 0;
     public string UpcomingLabel { get; init; } = string.Empty;
     public bool HasUpcoming { get; init; }
     public string EmptyNote { get; init; } = string.Empty;
@@ -57,12 +62,44 @@ public static class CarteraRowBuilder
     public static List<CarteraMonthRow> Build(
         IEnumerable<CarteraMonthModel> months,
         IEnumerable<CarteraApartmentModel> apartmentModels,
+        CarteraAnteriores? anteriores,
         ISet<string> expanded,
         Func<string, Color> colorOf)
     {
         var apartments = apartmentModels.ToDictionary(a => a.ApartmentId);
-        return months.Select(month => BuildMonth(month, apartments, expanded, colorOf)).ToList();
+        var rows = months.Select(month => BuildMonth(month, apartments, expanded, colorOf)).ToList();
+        if (anteriores is not null)
+        {
+            rows.Add(BuildAnteriores(anteriores, apartments, expanded, colorOf));
+        }
+
+        return rows;
     }
+
+    public const string AnterioresKey = "anteriores";
+
+    // The closing entry for overdue debt older than the listed range (FR-020): same look as a month,
+    // a grey dot, a note that it is not part of the notice, no notify action and no Pagos link.
+    private static CarteraMonthRow BuildAnteriores(
+        CarteraAnteriores anteriores,
+        IReadOnlyDictionary<long, CarteraApartmentModel> apartments,
+        ISet<string> expanded,
+        Func<string, Color> colorOf) =>
+        new()
+        {
+            Key = AnterioresKey,
+            IsExpanded = expanded.Contains(AnterioresKey),
+            MonthLabel = "Anteriores",
+            TotalDisplay = CopCurrencyFormatter.Format(anteriores.Total),
+            Summary = CarteraFormatting.MonthSummary(anteriores.ChargeCount, anteriores.ApartmentCount),
+            ServiciosLabel = CarteraFormatting.ServiciosLabel(anteriores.TotalServicios),
+            ArriendoLabel = CarteraFormatting.ArriendoLabel(anteriores.TotalArriendo),
+            TagLabel = CarteraFormatting.AnterioresChip(anteriores.FromYear),
+            DotBrush = new SolidColorBrush(colorOf("Gray600")),
+            HasPagosLink = false,
+            EmptyNote = CarteraFormatting.AnterioresNote(anteriores.FromYear),
+            Apartments = CarteraRowsBuilder.BuildAnterioresApartments(anteriores.Charges, apartments),
+        };
 
     private static CarteraMonthRow BuildMonth(
         CarteraMonthModel month,
@@ -103,21 +140,19 @@ public static class CarteraRowBuilder
     }
 }
 
-// 012-cartera-vencida-timeline US1-US3: the Cartera tab (flat month timeline, no year headings). Reloads on every appearance so returning
+// 012-cartera-vencida-timeline US1-US3: the Cartera tab (flat month timeline, no year headings, no pickers). Reloads on every appearance so returning
 // from the detailed Pagos screen (or its edit screen) shows fresh figures (FR-009).
 public partial class CarteraPage : ContentPage
 {
     private readonly CarteraViewModel _viewModel;
     private readonly HashSet<string> _expanded = [];
     private bool _defaultsApplied;
-    private bool _updatingPickers;
     private int _bannerVersion;
 
     public CarteraPage(CarteraViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
-        MonthPicker.ItemsSource = Enumerable.Range(1, 12).Select(CarteraFormatting.MonthName).ToList();
     }
 
     protected override async void OnAppearing()
@@ -152,15 +187,13 @@ public partial class CarteraPage : ContentPage
 
         ErrorPanel.IsVisible = false;
         ContentPanel.IsVisible = true;
-        PeriodRow.IsVisible = true;
-        SyncPickers();
 
         var empty = _viewModel.IsEmpty;
-        var selected = _viewModel.SelectedMonthEntry;
-        var nothingThisMonth = _viewModel.SelectedMonthIsEmpty;
+        var selected = _viewModel.CurrentMonthEntry;
+        var nothingThisMonth = _viewModel.CurrentMonthIsEmpty;
         var monthName = $"{CarteraFormatting.MonthName(selected.Month).ToLowerInvariant()} {selected.Year}";
 
-        // The hero follows the selected month (FR-002): sage $0 when nothing is overdue in it.
+        // The card belongs to the current month (FR-002): sage $0 when nothing is overdue in it.
         HeroBorder.BackgroundColor = ColorResource(nothingThisMonth ? "Accent2Deep" : "Tertiary");
         HeroKickerLabel.Text = $"Cartera vencida · {monthName}";
         HeroTotalLabel.Text = CopCurrencyFormatter.Format(selected.Total);
@@ -171,7 +204,7 @@ public partial class CarteraPage : ContentPage
             ? $"Nada vencido en {monthName}."
             : CarteraFormatting.Summary(selected.ChargeCount, selected.ApartmentCount);
 
-        HeroUpcomingBorder.IsVisible = _viewModel.SelectedMonthHasUpcoming;
+        HeroUpcomingBorder.IsVisible = _viewModel.CurrentMonthHasUpcoming;
         HeroUpcomingAmountLabel.Text = CopCurrencyFormatter.Format(selected.UpcomingTotal);
         HeroUpcomingCountLabel.Text = CarteraFormatting.Concepts(selected.UpcomingChargeCount);
 
@@ -180,79 +213,22 @@ public partial class CarteraPage : ContentPage
         TimelineHeader.IsVisible = !empty;
         TimelineList.IsVisible = !empty;
 
-        // Only the selected month (and its year) starts open; after that the administrator's own
+        // Only the current month starts open; after that the administrator's own
         // expand/collapse choices survive reloads.
         if (!_defaultsApplied)
         {
-            OpenSelectedPeriod();
+            OpenCurrentMonth();
             _defaultsApplied = true;
         }
 
         BindableLayout.SetItemsSource(
             TimelineList,
-            CarteraRowBuilder.Build(_viewModel.TimelineMonths, _viewModel.Cartera.Apartments, _expanded, ColorResource));
+            CarteraRowBuilder.Build(_viewModel.TimelineMonths, _viewModel.Cartera.Apartments, _viewModel.Anteriores, _expanded, ColorResource));
     }
 
-    private void OpenSelectedPeriod()
+    private void OpenCurrentMonth()
     {
-        _expanded.Add(CarteraRowsBuilder.MonthKey(_viewModel.SelectedYear, _viewModel.SelectedMonth));
-    }
-
-    private void SyncPickers()
-    {
-        _updatingPickers = true;
-        var years = _viewModel.AvailableYears;
-        if (YearPicker.ItemsSource is not List<int> shown || !shown.SequenceEqual(years))
-        {
-            YearPicker.ItemsSource = years;
-        }
-
-        MonthPicker.SelectedIndex = _viewModel.SelectedMonth - 1;
-        YearPicker.SelectedIndex = years.IndexOf(_viewModel.SelectedYear);
-        _updatingPickers = false;
-    }
-
-    // Choosing a period jumps the timeline to it: that month (and its year) opens, the previously
-    // selected month closes, and it scrolls into view - without reloading data (FR-020).
-    private async void OnPeriodPickerChanged(object? sender, EventArgs e)
-    {
-        if (_updatingPickers || MonthPicker.SelectedIndex < 0 || YearPicker.SelectedIndex < 0)
-        {
-            return;
-        }
-
-        var month = MonthPicker.SelectedIndex + 1;
-        var year = _viewModel.AvailableYears[YearPicker.SelectedIndex];
-        if (month == _viewModel.SelectedMonth && year == _viewModel.SelectedYear)
-        {
-            return;
-        }
-
-        _expanded.Remove(CarteraRowsBuilder.MonthKey(_viewModel.SelectedYear, _viewModel.SelectedMonth));
-        _viewModel.SelectPeriod(month, year);
-        OpenSelectedPeriod();
-        RenderState();
-        await ScrollToSelectedMonthAsync();
-    }
-
-    private async Task ScrollToSelectedMonthAsync()
-    {
-        await Task.Delay(80); // let the rebuilt rows measure before scrolling
-        var monthIndex = _viewModel.TimelineMonths.FindIndex(m => m.Month == _viewModel.SelectedMonth && m.Year == _viewModel.SelectedYear);
-        try
-        {
-            if (monthIndex >= 0 && monthIndex < TimelineList.Children.Count && TimelineList.Children[monthIndex] is View monthView)
-            {
-                await MainScroll.ScrollToAsync(monthView, ScrollToPosition.Start, true);
-                return;
-            }
-
-            await MainScroll.ScrollToAsync(TimelineList, ScrollToPosition.Start, true);
-        }
-        catch (Exception)
-        {
-            // Scrolling is a convenience; the selected month is already open and rendered.
-        }
+        _expanded.Add(CarteraRowsBuilder.MonthKey(_viewModel.CurrentYear, _viewModel.CurrentMonth));
     }
 
     private async void OnRetryClicked(object? sender, EventArgs e) => await ReloadAsync();

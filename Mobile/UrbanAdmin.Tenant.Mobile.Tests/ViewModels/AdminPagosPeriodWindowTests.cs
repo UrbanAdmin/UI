@@ -38,19 +38,4 @@ public class AdminPagosPeriodWindowTests
         Assert.Equal(2033, years[^1]);
         Assert.Contains(2026, years);
     }
-
-    // 012 post-build round: the Cartera Año selector offers the same window plus any year that has data.
-    [Fact]
-    public void YearsWithData_IsTheWindowPlusEveryDataYear_AscendingWithoutDuplicates()
-    {
-        var years = AdminPagosPeriodWindow.YearsWithData(2026, [2023, 2026, 2023, 2033]);
-
-        Assert.Equal([2023, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2033], years);
-    }
-
-    [Fact]
-    public void YearsWithData_WithoutDataIsJustTheWindow()
-    {
-        Assert.Equal(AdminPagosPeriodWindow.YearsFor(2026), AdminPagosPeriodWindow.YearsWithData(2026, []));
-    }
 }

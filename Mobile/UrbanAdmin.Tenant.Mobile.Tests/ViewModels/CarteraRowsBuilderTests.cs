@@ -215,4 +215,37 @@ public class CarteraRowsBuilderTests
         Assert.False(rows[0].HasUpcoming);
         Assert.Equal("1 concepto vencido · $40.000", rows[0].Summary);
     }
+
+    // ---- "Anteriores" rows (FR-020) -------------------------------------------------------------
+
+    [Fact]
+    public void BuildAnterioresApartments_LabelsEachChargeWithItsPeriod_AndOffersNoNotify()
+    {
+        var old = new List<CarteraPeriodCharge>
+        {
+            new(Charge(3, "303", "Agua", 5000m, 700), 12, 2024),
+            new(Charge(3, "303", "Arriendo", 1450000m, 900, isRent: true), 3, 2024),
+            new(Charge(2, "202", "Luz", null, 650), 11, 2024),
+        };
+
+        var rows = CarteraRowsBuilder.BuildAnterioresApartments(old, Lookup(Apartment(3, 3, 1455000m), Apartment(2, 1, 0m)));
+
+        Assert.Equal(["202", "303"], rows.Select(r => r.Number));
+        Assert.All(rows, r => Assert.False(r.ShowNotify));
+        Assert.All(rows, r => Assert.False(r.HasCaption));
+        var r303 = rows[1];
+        Assert.Equal(["Agua · dic 2024"], r303.Services.Select(c => c.Service));
+        Assert.Equal(["Arriendo · mar 2024"], r303.Rent.Select(c => c.Service));
+        Assert.Equal("2 conceptos vencidos · $1.455.000", r303.Summary);
+        Assert.True(rows[0].Services[0].AmountMissing);
+        Assert.Empty(r303.Upcoming);
+    }
+
+    [Fact]
+    public void BuildApartments_OfTheMonths_KeepTheNotifyAction()
+    {
+        var rows = CarteraRowsBuilder.BuildApartments([Charge(1, "101", "Agua", 1000m, 3)], Lookup(Apartment(1, 1, 1000m)));
+
+        Assert.True(rows[0].ShowNotify);
+    }
 }
