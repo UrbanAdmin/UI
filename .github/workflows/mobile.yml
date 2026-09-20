@@ -101,3 +101,29 @@ jobs:
         if: always()
         shell: bash
         run: rm -f UrbanAdmin.Tenant.Mobile/GoogleService-Info.plist
+
+  build-maccatalyst:
+    # Compile check only: the interactive Organic-theme walkthrough (011 T021)
+    # still needs a Mac running a current Xcode, which local development lacks.
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: Mobile
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Install MAUI workloads
+        run: dotnet workload install maui-android maui-ios maui-maccatalyst
+      - name: Decode Firebase config (GoogleService-Info.plist)
+        shell: bash
+        run: echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST_BASE64 }}" | base64 --decode > GoogleService-Info.plist
+        working-directory: Mobile/UrbanAdmin.Tenant.Mobile
+      - name: Build (net10.0-maccatalyst)
+        run: dotnet build UrbanAdmin.Tenant.Mobile/UrbanAdmin.Tenant.Mobile.csproj -f net10.0-maccatalyst
+      - name: Remove decoded Firebase config
+        if: always()
+        shell: bash
+        run: rm -f UrbanAdmin.Tenant.Mobile/GoogleService-Info.plist
