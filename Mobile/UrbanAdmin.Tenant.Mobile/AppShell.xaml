@@ -8,6 +8,7 @@
     xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     xmlns:account="clr-namespace:UrbanAdmin.Tenant.Mobile.Account"
+    xmlns:cartera="clr-namespace:UrbanAdmin.Tenant.Mobile.Cartera"
     FlyoutBehavior="Disabled"
     Title="UrbanAdmin">
 
@@ -43,12 +44,14 @@
             Icon="icon_people.svg"
             Route="Users"
             ContentTemplate="{DataTemplate admin:UsersPage}" />
+        <!-- 012-cartera-vencida-timeline: replaces the "Pagos (Admin)" tab. The old Pagos screen is
+             now a pushed route ("AdminPagos", registered in AppShell.xaml.cs) opened from Cartera. -->
         <ShellContent
-            x:Name="AdminPagosTab"
-            Title="Pagos (Admin)"
-            Icon="icon_card.svg"
-            Route="AdminPagos"
-            ContentTemplate="{DataTemplate admin:AdminPagosPage}" />
+            x:Name="CarteraTab"
+            Title="Cartera"
+            Icon="icon_cartera.svg"
+            Route="Cartera"
+            ContentTemplate="{DataTemplate cartera:CarteraPage}" />
         <ShellContent
             x:Name="AdminNotificacionesTab"
             Title="Notificaciones (Admin)"

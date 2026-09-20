@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  012-cartera-vencida-timeline: the Administrator's Cartera screen, built to the mockup approved on
+  2026-09-20 (Mockups/cartera-vencida-timeline/index.html): overdue balance hero (Servicios /
+  Arriendo split), bulk "Enviar notificación", and a flat month timeline (no year headings) whose months expand to
+  per-apartment charge lists with a per-apartment notify action and a way into the detailed Pagos.
+  Post-build round (same mockup, v3): Mes/Año selectors, the timeline opens on the current month only,
+  and the hero, "Enviar notificación" and the per-apartment action follow the selected month.
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Cartera.CarteraPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:cartera="clr-namespace:UrbanAdmin.Tenant.Mobile.Cartera"
+    xmlns:rows="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.ViewModels;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    Title="Cartera">
+
+    <!-- 011-organic-theme-reskin: Shell.TitleView so the toolbar title picks up Caprasimo. -->
+    <Shell.TitleView>
+        <Label Text="Cartera" Style="{StaticResource Headline}" VerticalOptions="Center" />
+    </Shell.TitleView>
+
+    <ContentPage.Resources>
+        <!-- One overdue charge line: service on the left, amount + days-overdue chip on the right. -->
+        <DataTemplate x:Key="ChargeTemplate" x:DataType="rows:CarteraChargeRow">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="53,9,0,0">
+                <Label Grid.Column="0" Text="{Binding Service}" FontAttributes="Bold" VerticalOptions="Start" />
+                <VerticalStackLayout Grid.Column="1" Spacing="3" HorizontalOptions="End">
+                    <Label Text="{Binding AmountDisplay}" FontAttributes="Bold" HorizontalTextAlignment="End">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding AmountMissing}" Value="True">
+                                <Setter Property="FontAttributes" Value="Italic" />
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Border
+                        Style="{StaticResource ChipBorder}"
+                        HorizontalOptions="End"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource DangerBg}, Dark={StaticResource DangerBgDark}}">
+                        <Label
+                            Style="{StaticResource ChipLabel}"
+                            Text="{Binding DaysLabel}"
+                            TextColor="{AppThemeBinding Light={StaticResource Danger}, Dark={StaticResource DangerDark}}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </DataTemplate>
+
+        <!-- One "por vencer" charge line: same shape as an overdue one, with a neutral days-left chip. -->
+        <DataTemplate x:Key="UpcomingChargeTemplate" x:DataType="rows:CarteraChargeRow">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="53,9,0,0">
+                <Label Grid.Column="0" Text="{Binding Service}" FontAttributes="Bold" VerticalOptions="Start" />
+                <VerticalStackLayout Grid.Column="1" Spacing="3" HorizontalOptions="End">
+                    <Label Text="{Binding AmountDisplay}" FontAttributes="Bold" HorizontalTextAlignment="End">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding AmountMissing}" Value="True">
+                                <Setter Property="FontAttributes" Value="Italic" />
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Border
+                        Style="{StaticResource ChipBorder}"
+                        HorizontalOptions="End"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}">
+                        <Label
+                            Style="{StaticResource ChipLabel}"
+                            Text="{Binding DaysLabel}"
+                            TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </DataTemplate>
+
+        <!-- One month of the flat timeline (no year headings): dot + title with year, figures, apartments. -->
+        <DataTemplate x:Key="MonthTemplate" x:DataType="cartera:CarteraMonthRow">
+                                                <Grid ColumnDefinitions="26,*">
+                                                    <BoxView Grid.Column="0" WidthRequest="2" HorizontalOptions="Center" VerticalOptions="Fill" />
+                                                    <shapes:Ellipse
+                                                        Grid.Column="0"
+                                                        WidthRequest="16"
+                                                        HeightRequest="16"
+                                                        HorizontalOptions="Center"
+                                                        VerticalOptions="Start"
+                                                        Margin="0,4,0,0"
+                                                        Fill="{Binding DotBrush}"
+                                                        StrokeThickness="3"
+                                                        Stroke="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}" />
+
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="8" Padding="0,0,0,18">
+                                                        <VerticalStackLayout Spacing="3">
+                                                            <VerticalStackLayout.GestureRecognizers>
+                                                                <TapGestureRecognizer Tapped="OnMonthTapped" />
+                                                            </VerticalStackLayout.GestureRecognizers>
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <Label Grid.Column="0" Text="{Binding MonthLabel}" Style="{StaticResource Kicker}" VerticalOptions="Center" />
+                                                                <Label Grid.Column="1" Text="›" FontSize="22" VerticalOptions="Center" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}">
+                                                                    <Label.Triggers>
+                                                                        <DataTrigger TargetType="Label" Binding="{Binding IsExpanded}" Value="True">
+                                                                            <Setter Property="Rotation" Value="90" />
+                                                                        </DataTrigger>
+                                                                    </Label.Triggers>
+                                                                </Label>
+                                                            </Grid>
+                                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                                <Label Grid.Column="0" Text="{Binding TotalDisplay}" Style="{StaticResource Amount}" />
+                                                                <Label Grid.Column="1" Text="{Binding Summary}" Style="{StaticResource Muted}" HorizontalTextAlignment="End" VerticalOptions="Center" />
+                                                            </Grid>
+                                                            <FlexLayout Wrap="Wrap" Direction="Row">
+                                                                <Border
+                                                                    Style="{StaticResource ChipBorder}"
+                                                                    Margin="0,4,6,0"
+                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}">
+                                                                    <Label
+                                                                        Style="{StaticResource ChipLabel}"
+                                                                        Text="{Binding ServiciosLabel}"
+                                                                        TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}" />
+                                                                </Border>
+                                                                <Border
+                                                                    Style="{StaticResource ChipBorder}"
+                                                                    Margin="0,4,6,0"
+                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                                                                    <Label
+                                                                        Style="{StaticResource ChipLabel}"
+                                                                        Text="{Binding ArriendoLabel}"
+                                                                        TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                                                </Border>
+                                                                <Border
+                                                                    IsVisible="{Binding HasUpcoming}"
+                                                                    Style="{StaticResource ChipBorder}"
+                                                                    Margin="0,4,6,0"
+                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}">
+                                                                    <Label
+                                                                        Style="{StaticResource ChipLabel}"
+                                                                        Text="{Binding UpcomingLabel}"
+                                                                        TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                                                </Border>
+                                                            </FlexLayout>
+                                                        </VerticalStackLayout>
+
+                                                        <VerticalStackLayout IsVisible="{Binding IsExpanded}">
+                                                            <Label
+                                                                Text="{Binding EmptyNote}"
+                                                                IsVisible="{Binding HasEmptyNote}"
+                                                                Style="{StaticResource Muted}"
+                                                                FontAttributes="Italic" />
+                                                        </VerticalStackLayout>
+
+                                                        <VerticalStackLayout Spacing="10" IsVisible="{Binding IsExpanded}" BindableLayout.ItemsSource="{Binding Apartments}">
+                                                            <BindableLayout.ItemTemplate>
+                                                                <DataTemplate x:DataType="rows:CarteraApartmentRow">
+                                                                    <Border Style="{StaticResource CardBorder}" Padding="14,12">
+                                                                        <VerticalStackLayout Spacing="2">
+                                                                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="11">
+                                                                                <Border
+                                                                                    Grid.Column="0"
+                                                                                    WidthRequest="42"
+                                                                                    HeightRequest="42"
+                                                                                    Padding="0"
+                                                                                    Stroke="Transparent"
+                                                                                    StrokeShape="RoundRectangle 21"
+                                                                                    VerticalOptions="Center"
+                                                                                    BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                                                                                    <Border.Triggers>
+                                                                                        <DataTrigger TargetType="Border" Binding="{Binding CanNotify}" Value="False">
+                                                                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource NeutralBg}, Dark={StaticResource NeutralBgDark}}" />
+                                                                                        </DataTrigger>
+                                                                                    </Border.Triggers>
+                                                                                    <Label
+                                                                                        Text="{Binding Number}"
+                                                                                        Style="{StaticResource Amount}"
+                                                                                        FontSize="15"
+                                                                                        HorizontalOptions="Center"
+                                                                                        VerticalOptions="Center"
+                                                                                        TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                                                                </Border>
+                                                                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                                                                    <Label Text="{Binding OwnerDisplay}" FontAttributes="Bold" />
+                                                                                    <Label Text="{Binding Summary}" Style="{StaticResource Muted}" FontSize="12" />
+                                                                                </VerticalStackLayout>
+                                                                                <Button
+                                                                                    Grid.Column="2"
+                                                                                    Style="{StaticResource ButtonSecondary}"
+                                                                                    Text="{Binding NotifyText}"
+                                                                                    FontSize="12.5"
+                                                                                    Padding="12,0"
+                                                                                    IsEnabled="{Binding CanNotify}"
+                                                                                    VerticalOptions="Center"
+                                                                                    Clicked="OnNotifyApartmentClicked" />
+                                                                            </Grid>
+                                                                            <Label
+                                                                                Text="{Binding CaptionText}"
+                                                                                IsVisible="{Binding HasCaption}"
+                                                                                FontSize="12"
+                                                                                FontAttributes="Bold"
+                                                                                Margin="53,6,0,0"
+                                                                                TextColor="{AppThemeBinding Light={StaticResource Neutral}, Dark={StaticResource NeutralDark}}">
+                                                                                <Label.Triggers>
+                                                                                    <DataTrigger TargetType="Label" Binding="{Binding CaptionIsDone}" Value="True">
+                                                                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                                                                    </DataTrigger>
+                                                                                </Label.Triggers>
+                                                                            </Label>
+                                                                            <VerticalStackLayout
+                                                                                Spacing="0"
+                                                                                BindableLayout.ItemsSource="{Binding Services}"
+                                                                                BindableLayout.ItemTemplate="{StaticResource ChargeTemplate}" />
+                                                                            <VerticalStackLayout Spacing="0" IsVisible="{Binding HasRent}">
+                                                                                <BoxView HeightRequest="1" Margin="53,10,0,0" />
+                                                                                <Label Text="Arriendo" Style="{StaticResource Kicker}" Margin="53,8,0,0" />
+                                                                                <VerticalStackLayout
+                                                                                    Spacing="0"
+                                                                                    BindableLayout.ItemsSource="{Binding Rent}"
+                                                                                    BindableLayout.ItemTemplate="{StaticResource ChargeTemplate}" />
+                                                                            </VerticalStackLayout>
+                                                                            <VerticalStackLayout Spacing="0" IsVisible="{Binding HasUpcoming}">
+                                                                                <BoxView HeightRequest="1" Margin="53,10,0,0" />
+                                                                                <Label Text="Por vencer" Style="{StaticResource Kicker}" Margin="53,8,0,0" />
+                                                                                <VerticalStackLayout
+                                                                                    Spacing="0"
+                                                                                    BindableLayout.ItemsSource="{Binding Upcoming}"
+                                                                                    BindableLayout.ItemTemplate="{StaticResource UpcomingChargeTemplate}" />
+                                                                            </VerticalStackLayout>
+                                                                        </VerticalStackLayout>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </BindableLayout.ItemTemplate>
+                                                        </VerticalStackLayout>
+
+                                                        <Label
+                                                            Text="{Binding PagosLinkText}"
+                                                            IsVisible="{Binding IsExpanded}"
+                                                            TextDecorations="Underline"
+                                                            FontAttributes="Bold"
+                                                            FontSize="12.5"
+                                                            Padding="0,12"
+                                                            TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
+                                                            <Label.GestureRecognizers>
+                                                                <TapGestureRecognizer Tapped="OnMonthPagosTapped" />
+                                                            </Label.GestureRecognizers>
+                                                        </Label>
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Mes / Año selectors (FR-020): outside the ScrollView so the period stays changeable while
+             the timeline scrolls. Choosing one jumps the timeline to it; no reload. -->
+        <Grid
+            x:Name="PeriodRow"
+            Grid.Row="0"
+            IsVisible="False"
+            ColumnDefinitions="*,*"
+            ColumnSpacing="10"
+            Padding="22,4,22,10"
+            BackgroundColor="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}">
+            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                <Label Text="Mes" Style="{StaticResource Kicker}" />
+                <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodPickerChanged" />
+            </VerticalStackLayout>
+            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                <Label Text="Año" Style="{StaticResource Kicker}" />
+                <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodPickerChanged" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <ScrollView x:Name="MainScroll" Grid.Row="1">
+            <VerticalStackLayout Padding="22,4,22,32" Spacing="0">
+                <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
+
+                <VerticalStackLayout x:Name="ErrorPanel" IsVisible="False" Spacing="12" Margin="0,10,0,0">
+                    <Border
+                        Padding="18,16"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 22"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                        <Label
+                            x:Name="ErrorLabel"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                    </Border>
+                    <Button Text="Reintentar" HorizontalOptions="Center" Clicked="OnRetryClicked" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout x:Name="ContentPanel" IsVisible="False" Spacing="0">
+                    <!-- Hero follows the selected month: deep terracotta for an overdue balance, sage when that month has none. -->
+                    <Border x:Name="HeroBorder" Style="{StaticResource HeroBorder}" BackgroundColor="{StaticResource Tertiary}" Padding="22,20,22,18">
+                        <VerticalStackLayout Spacing="0">
+                            <Label
+                                x:Name="HeroKickerLabel"
+                                Text="Cartera vencida"
+                                Style="{StaticResource Kicker}"
+                                TextColor="{StaticResource Danger}"
+                                Opacity="0.85" />
+                            <Label
+                                x:Name="HeroTotalLabel"
+                                FontFamily="CaprasimoRegular"
+                                FontSize="34"
+                                TextColor="{StaticResource Danger}"
+                                Margin="0,8,0,0" />
+                            <Grid x:Name="HeroSplit" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,14,0,0">
+                                <Border
+                                    Grid.Column="0"
+                                    Padding="13,9"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="{StaticResource DangerDark}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Servicios" Style="{StaticResource Kicker}" TextColor="{StaticResource Danger}" />
+                                        <Label x:Name="HeroServiciosLabel" FontAttributes="Bold" TextColor="{StaticResource Danger}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                                <Border
+                                    Grid.Column="1"
+                                    Padding="13,9"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 18"
+                                    BackgroundColor="{StaticResource DangerDark}">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label Text="Arriendo" Style="{StaticResource Kicker}" TextColor="{StaticResource Danger}" />
+                                        <Label x:Name="HeroArriendoLabel" FontAttributes="Bold" TextColor="{StaticResource Danger}" />
+                                    </VerticalStackLayout>
+                                </Border>
+                            </Grid>
+                            <Label x:Name="HeroHintLabel" Margin="0,12,0,0" TextColor="{StaticResource Danger}" />
+                            <Border
+                                x:Name="HeroUpcomingBorder"
+                                IsVisible="False"
+                                Margin="0,12,0,0"
+                                Padding="13,9"
+                                Stroke="Transparent"
+                                StrokeShape="RoundRectangle 18"
+                                BackgroundColor="{StaticResource DangerDark}">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                    <Label Grid.Column="0" Text="Por vencer" Style="{StaticResource Kicker}" TextColor="{StaticResource Danger}" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" x:Name="HeroUpcomingAmountLabel" FontAttributes="Bold" TextColor="{StaticResource Danger}" VerticalOptions="Center" />
+                                    <Label Grid.Column="2" x:Name="HeroUpcomingCountLabel" TextColor="{StaticResource Danger}" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Button
+                        x:Name="NotifyAllButton"
+                        Text="Enviar notificación"
+                        Margin="0,12,0,0"
+                        MinimumHeightRequest="52"
+                        Clicked="OnNotifyAllClicked" />
+
+                    <Border
+                        x:Name="EmptyPanel"
+                        IsVisible="False"
+                        Margin="0,16,0,0"
+                        Padding="18,22"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                        StrokeDashArray="4,4"
+                        StrokeShape="RoundRectangle 22">
+                        <VerticalStackLayout Spacing="6">
+                            <Label
+                                Text="Sin cartera vencida"
+                                Style="{StaticResource SubHeadline}"
+                                HorizontalOptions="Center"
+                                HorizontalTextAlignment="Center" />
+                            <Label
+                                Text="Cuando un cargo pase su fecha límite sin pagarse, aparecerá aquí por mes."
+                                Style="{StaticResource Muted}"
+                                HorizontalTextAlignment="Center" />
+                            <Label
+                                Text="Ver todos los pagos"
+                                TextDecorations="Underline"
+                                FontAttributes="Bold"
+                                Padding="0,14"
+                                HorizontalOptions="Center"
+                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAllPagosTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Grid x:Name="TimelineHeader" ColumnDefinitions="*,Auto" Margin="2,22,2,4">
+                        <Label Grid.Column="0" Text="Por mes" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            Text="Ver todos los pagos"
+                            TextDecorations="Underline"
+                            FontAttributes="Bold"
+                            FontSize="12.5"
+                            Padding="0,14"
+                            VerticalOptions="Center"
+                            TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnAllPagosTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
+
+                    <!-- Year > month > apartment > charge, all expandable rows bound to display models. -->
+                    <VerticalStackLayout x:Name="TimelineList" Spacing="0" BindableLayout.ItemTemplate="{StaticResource MonthTemplate}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Result of a notify action: sage on success, terracotta tint otherwise. -->
+        <Border
+            x:Name="ResultBanner"
+            Grid.Row="1"
+            IsVisible="False"
+            VerticalOptions="End"
+            Margin="18,0,18,16"
+            Padding="18,13"
+            Stroke="Transparent"
+            StrokeShape="RoundRectangle 20">
+            <Label x:Name="ResultLabel" FontAttributes="Bold" FontSize="13.5" />
+        </Border>
+    </Grid>
+
+</ContentPage>

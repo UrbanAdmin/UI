@@ -50,10 +50,10 @@ public class ApartmentPagoGroup : List<AdminPagoDisplayRow>
 // 008-mobile-admin-views T045/T064: US4 - read-only, all-apartments Payments summary for a
 // selectable month/year, grouped by apartment with a per-apartment subtotal excluding Arriendo
 // (FR-005c). Editing lives on the separate AdminPagosEditPage (FR-005a/b).
-public partial class AdminPagosPage : ContentPage
+public partial class AdminPagosPage : ContentPage, IQueryAttributable
 {
     private readonly AdminPagosViewModel _viewModel;
-    private readonly List<int> _years;
+    private List<int> _years;
     private bool _isInitializing = true;
 
     public AdminPagosPage(AdminPagosViewModel viewModel)
@@ -62,12 +62,33 @@ public partial class AdminPagosPage : ContentPage
         _viewModel = viewModel;
 
         // Mirrors Angular's 7-year sliding window centered on "now" (payments.component.ts).
-        var currentYear = DateTime.Now.Year;
-        _years = Enumerable.Range(currentYear - 1, 7).ToList();
+        _years = AdminPagosPeriodWindow.YearsFor(DateTime.Now.Year);
         YearPicker.ItemsSource = _years;
 
         MonthPicker.SelectedIndex = _viewModel.Month - 1;
         YearPicker.SelectedIndex = _years.IndexOf(_viewModel.Year);
+        _isInitializing = false;
+    }
+
+    // 012-cartera-vencida-timeline US2: opened from a Cartera month (route "AdminPagos?month=&year=")
+    // this screen starts on that period instead of the current month. The year window widens to
+    // include the requested year, since overdue debt can be older than the default window.
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (!query.TryGetValue("month", out var rawMonth) || !query.TryGetValue("year", out var rawYear)
+            || !int.TryParse(rawMonth?.ToString(), out var month) || !int.TryParse(rawYear?.ToString(), out var year)
+            || month < 1 || month > 12)
+        {
+            return;
+        }
+
+        _isInitializing = true;
+        _viewModel.Month = month;
+        _viewModel.Year = year;
+        _years = AdminPagosPeriodWindow.YearsFor(DateTime.Now.Year, year);
+        YearPicker.ItemsSource = _years;
+        MonthPicker.SelectedIndex = month - 1;
+        YearPicker.SelectedIndex = _years.IndexOf(year);
         _isInitializing = false;
     }
 

@@ -212,4 +212,27 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         var error = await response.Content.ReadFromJsonAsync<string>(JsonOptions);
         return new AdminWriteResult(false, error);
     }
+
+    public async Task<CarteraModel> GetCarteraAsync(string token)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/admin/cartera");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<CarteraModel>(JsonOptions);
+        return result ?? new CarteraModel();
+    }
+
+    public async Task<CarteraNotifyResultModel> NotificarCarteraAsync(string token, long? apartmentId, int? month, int? year)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/admin/cartera/notificar")
+        {
+            Content = JsonContent.Create(new { ApartmentId = apartmentId, Month = month, Year = year }),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<CarteraNotifyResultModel>(JsonOptions);
+        return result ?? new CarteraNotifyResultModel();
+    }
 }

@@ -13,6 +13,10 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("ApartmentEdit", typeof(ApartmentEditPage));
 		Routing.RegisterRoute("UserEdit", typeof(UserEditPage));
 		Routing.RegisterRoute("AdminPagosEdit", typeof(AdminPagosEditPage));
+
+		// 012-cartera-vencida-timeline US2: the existing admin Pagos screen, demoted from a tab to a
+		// pushed detail route opened from Cartera ("AdminPagos?month=&year=" or plain "AdminPagos").
+		Routing.RegisterRoute("AdminPagos", typeof(AdminPagosPage));
 	}
 
 	// 008-mobile-admin-views T005: called from LoginPage right after a successful login.
@@ -27,7 +31,7 @@ public partial class AppShell : Shell
 
 		ApartmentsTab.IsVisible = isAdmin;
 		UsersTab.IsVisible = isAdmin;
-		AdminPagosTab.IsVisible = isAdmin;
+		CarteraTab.IsVisible = isAdmin;
 		AdminNotificacionesTab.IsVisible = isAdmin;
 
 		// 010-logout-biometric-login: the app's first tab visible for both roles - research.md §2.

@@ -180,4 +180,51 @@ public class FakeAdminApiClient : IAdminApiClient
         LastSetAdminPagoDeadline = (service, month, year, dueDate);
         return Task.FromResult(SetAdminPagoDeadlineResult);
     }
+
+    // 012-cartera-vencida-timeline
+    public CarteraModel CarteraResult { get; set; } = new();
+    public bool ThrowOnGetCartera { get; set; }
+    public System.Net.HttpStatusCode? CarteraThrowStatusCode { get; set; }
+    public int GetCarteraCallCount { get; private set; }
+
+    public Task<CarteraModel> GetCarteraAsync(string token)
+    {
+        GetCarteraCallCount++;
+        if (ThrowOnGetCartera)
+        {
+            throw new HttpRequestException("boom", null, CarteraThrowStatusCode);
+        }
+
+        return Task.FromResult(CarteraResult);
+    }
+
+    public CarteraNotifyResultModel NotificarResult { get; set; } = new();
+    public bool ThrowOnNotificar { get; set; }
+    public System.Net.HttpStatusCode? NotificarThrowStatusCode { get; set; }
+    public int NotificarCallCount { get; private set; }
+    public long? LastNotificarApartmentId { get; private set; }
+    public int? LastNotificarMonth { get; private set; }
+    public int? LastNotificarYear { get; private set; }
+
+    // Lets a test hold the send "in flight" to prove a second press is ignored.
+    public TaskCompletionSource<bool>? NotificarGate { get; set; }
+
+    public async Task<CarteraNotifyResultModel> NotificarCarteraAsync(string token, long? apartmentId, int? month = null, int? year = null)
+    {
+        NotificarCallCount++;
+        LastNotificarApartmentId = apartmentId;
+        LastNotificarMonth = month;
+        LastNotificarYear = year;
+        if (NotificarGate is not null)
+        {
+            await NotificarGate.Task;
+        }
+
+        if (ThrowOnNotificar)
+        {
+            throw new HttpRequestException("boom", null, NotificarThrowStatusCode);
+        }
+
+        return NotificarResult;
+    }
 }

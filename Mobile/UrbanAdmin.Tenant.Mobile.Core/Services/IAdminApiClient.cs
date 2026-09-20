@@ -36,4 +36,13 @@ public interface IAdminApiClient
     Task<AdminWriteResult> SetAdminPagoPaymentAsync(string token, long apartmentId, string service, int month, int year, string? amount, bool paid);
 
     Task<AdminWriteResult> SetAdminPagoDeadlineAsync(string token, string service, int month, int year, DateTime dueDate);
+
+    // 012-cartera-vencida-timeline: building-wide overdue balance across every period
+    // (GET /admin/cartera).
+    Task<CarteraModel> GetCarteraAsync(string token);
+
+    // POST /admin/cartera/notificar - a null apartmentId notifies every apartment with overdue
+    // charges, a value notifies just that apartment. month + year (both or neither) limit the
+    // notice to that one billing period; the Cartera screen always sends its selected month.
+    Task<CarteraNotifyResultModel> NotificarCarteraAsync(string token, long? apartmentId, int? month, int? year);
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using UrbanAdmin.Tenant.Mobile.Account;
 using UrbanAdmin.Tenant.Mobile.Admin;
 using UrbanAdmin.Tenant.Mobile.Auth;
+using UrbanAdmin.Tenant.Mobile.Cartera;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 using UrbanAdmin.Tenant.Mobile.Notificaciones;
@@ -59,6 +60,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<AdminPagosViewModel>();
 		builder.Services.AddTransient<AdminPagosEditViewModel>();
 		builder.Services.AddTransient<AdminNotificacionesViewModel>();
+		builder.Services.AddTransient<CarteraViewModel>();
 		builder.Services.AddTransient<AccountViewModel>();
 
 		builder.Services.AddTransient<LoginPage>();
@@ -68,6 +70,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<UsersPage>();
 		builder.Services.AddTransient<AdminPagosPage>();
 		builder.Services.AddTransient<AdminNotificacionesPage>();
+		builder.Services.AddTransient<CarteraPage>();
 		builder.Services.AddTransient<ApartmentEditPage>();
 		builder.Services.AddTransient<UserEditPage>();
 		builder.Services.AddTransient<AdminPagosEditPage>();
