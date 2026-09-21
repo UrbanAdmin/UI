@@ -16,8 +16,8 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("UserEdit", typeof(UserEditPage));
 		Routing.RegisterRoute("AdminPagosEdit", typeof(AdminPagosEditPage));
 
-		// 012-cartera-vencida-timeline US2: the existing admin Pagos screen, demoted from a tab to a
-		// pushed detail route opened from Cartera ("AdminPagos?month=&year=" or plain "AdminPagos").
+		// 012/014: the admin Pagos screen also opens as a pushed detail from a Cartera month
+		// ("AdminPagos?month=&year="); as the first admin tab its route is "AdminPagosHome".
 		Routing.RegisterRoute("AdminPagos", typeof(AdminPagosPage));
 
 		// 013-tenant-pagos-alertas-redesign: paint the "Alertas" tab badge from the shared count
@@ -40,10 +40,10 @@ public partial class AppShell : Shell
 		NotificacionesTab.IsVisible = !isAdmin;
 		PagosTab.IsVisible = !isAdmin;
 
+		AdminPagosTab.IsVisible = isAdmin;
 		ApartmentsTab.IsVisible = isAdmin;
 		UsersTab.IsVisible = isAdmin;
 		CarteraTab.IsVisible = isAdmin;
-		AdminNotificacionesTab.IsVisible = isAdmin;
 
 		// 010-logout-biometric-login: the app's first tab visible for both roles - research.md §2.
 		AccountTab.IsVisible = true;

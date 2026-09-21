@@ -1,4 +1,5 @@
 using UrbanAdmin.Tenant.Mobile.Account;
+using UrbanAdmin.Tenant.Mobile.Core.Navigation;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
@@ -137,6 +138,6 @@ public partial class LoginPage : ContentPage
             appShell.ApplyRoleVisibility(role);
         }
 
-        await Shell.Current.GoToAsync(role == "Admin" ? "//Apartments" : "//Pagos");
+        await Shell.Current.GoToAsync(AdminLanding.RouteFor(role));
     }
 }

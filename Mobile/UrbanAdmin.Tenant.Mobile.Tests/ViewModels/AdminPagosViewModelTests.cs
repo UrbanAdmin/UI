@@ -100,4 +100,49 @@ public class AdminPagosViewModelTests
 
         Assert.Equal(10000m, total);
     }
+
+    // 014-admin-pagos-first-tab FR-010: the Pagos tab always opens on the current month.
+    [Fact]
+    public void ResetToCurrentPeriod_SetsMonthAndYearFromTheGivenDate()
+    {
+        var vm = NewViewModel();
+        vm.Month = 1;
+        vm.Year = 2024;
+
+        vm.ResetToCurrentPeriod(new DateTime(2026, 9, 20));
+
+        Assert.Equal(9, vm.Month);
+        Assert.Equal(2026, vm.Year);
+    }
+
+    [Fact]
+    public void ResetToCurrentPeriod_FollowsTheCalendarAcrossTheYearBoundary()
+    {
+        var vm = NewViewModel();
+
+        vm.ResetToCurrentPeriod(new DateTime(2027, 1, 1));
+
+        Assert.Equal(1, vm.Month);
+        Assert.Equal(2027, vm.Year);
+    }
+
+    [Fact]
+    public async Task ResetToCurrentPeriod_KeepsTheLoadedItemsUntilTheNextLoad()
+    {
+        var apiClient = new FakeAdminApiClient
+        {
+            AdminPagos = [new AdminPagoRowModel { ApartmentId = 1, ApartmentNumber = "101", Utility = "Agua" }],
+        };
+        var tokenStore = new FakeTokenStore();
+        await tokenStore.SaveTokenAsync("admin-jwt");
+        var vm = new AdminPagosViewModel(apiClient, tokenStore, new FakeCrashDiagnosticsService());
+        await vm.LoadAsync();
+
+        vm.ResetToCurrentPeriod(new DateTime(2026, 9, 20));
+
+        Assert.Single(vm.Items);
+    }
+
+    private static AdminPagosViewModel NewViewModel() =>
+        new(new FakeAdminApiClient(), new FakeTokenStore(), new FakeCrashDiagnosticsService());
 }

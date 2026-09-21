@@ -19,7 +19,6 @@
             Margin="22,0"
             Kicker="Cuentas y roles"
             Title="Usuarios"
-            ShowLogout="False"
             ActionText="Agregar"
             ActionClicked="OnAddClicked" />
 

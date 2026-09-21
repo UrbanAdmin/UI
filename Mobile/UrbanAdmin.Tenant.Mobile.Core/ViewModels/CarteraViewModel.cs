@@ -121,10 +121,9 @@ public class CarteraViewModel(
     // The bulk button is enabled only when someone overdue in the current month can be reached.
     public bool CanNotifyAll => CurrentMonthApartments().Any(a => a.CanNotify);
 
-    // The existing admin Pagos screen is now a pushed route (US2). A month entry opens it on that
-    // month/year; the general access opens it on the current month, as it did as a tab.
-    public string BuildPagosRoute(int? month, int? year) =>
-        month is int m && year is int y ? $"AdminPagos?month={m}&year={y}" : "AdminPagos";
+    // A Cartera month opens the admin Pagos screen as a pushed detail on that month and year
+    // (014-admin-pagos-first-tab: Pagos is also the first tab, so there is no general link any more).
+    public string BuildPagosRoute(int month, int year) => $"AdminPagos?month={month}&year={year}";
 
     public async Task LoadAsync()
     {

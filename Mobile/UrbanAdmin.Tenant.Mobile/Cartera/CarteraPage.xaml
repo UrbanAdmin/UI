@@ -259,7 +259,7 @@
     <Grid>
         <ScrollView x:Name="MainScroll">
             <VerticalStackLayout Padding="22,0,22,32" Spacing="0">
-                <controls:TenantHeader Kicker="Vencidos y por vencer" Title="Cartera" ShowLogout="False" />
+                <controls:TenantHeader Kicker="Vencidos y por vencer" Title="Cartera" />
 
                 <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
 
@@ -360,35 +360,11 @@
                                 Text="Cuando un cargo pase su fecha límite sin pagarse, aparecerá aquí por mes."
                                 Style="{StaticResource Muted}"
                                 HorizontalTextAlignment="Center" />
-                            <Label
-                                Text="Ver todos los pagos"
-                                TextDecorations="Underline"
-                                FontAttributes="Bold"
-                                Padding="0,14"
-                                HorizontalOptions="Center"
-                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
-                                <Label.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnAllPagosTapped" />
-                                </Label.GestureRecognizers>
-                            </Label>
                         </VerticalStackLayout>
                     </Border>
 
                     <Grid x:Name="TimelineHeader" ColumnDefinitions="*,Auto" Margin="2,22,2,4">
                         <Label Grid.Column="0" Text="Por mes" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                        <Label
-                            Grid.Column="1"
-                            Text="Ver todos los pagos"
-                            TextDecorations="Underline"
-                            FontAttributes="Bold"
-                            FontSize="12.5"
-                            Padding="0,14"
-                            VerticalOptions="Center"
-                            TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnAllPagosTapped" />
-                            </Label.GestureRecognizers>
-                        </Label>
                     </Grid>
 
                     <!-- Year > month > apartment > charge, all expandable rows bound to display models. -->

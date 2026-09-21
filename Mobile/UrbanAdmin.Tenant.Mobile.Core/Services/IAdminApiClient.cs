@@ -29,8 +29,6 @@ public interface IAdminApiClient
 
     Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null);
 
-    Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token);
-
     Task<List<UtilityModel>> GetUtilitiesAsync(string token);
 
     Task<AdminWriteResult> SetAdminPagoPaymentAsync(string token, long apartmentId, string service, int month, int year, string? amount, bool paid);

@@ -63,7 +63,6 @@ public static class MauiProgram
 		builder.Services.AddTransient<UserEditViewModel>();
 		builder.Services.AddTransient<AdminPagosViewModel>();
 		builder.Services.AddTransient<AdminPagosEditViewModel>();
-		builder.Services.AddTransient<AdminNotificacionesViewModel>();
 		builder.Services.AddTransient<CarteraViewModel>();
 		builder.Services.AddTransient<AccountViewModel>();
 
@@ -73,7 +72,6 @@ public static class MauiProgram
 		builder.Services.AddTransient<ApartmentsPage>();
 		builder.Services.AddTransient<UsersPage>();
 		builder.Services.AddTransient<AdminPagosPage>();
-		builder.Services.AddTransient<AdminNotificacionesPage>();
 		builder.Services.AddTransient<CarteraPage>();
 		builder.Services.AddTransient<ApartmentEditPage>();
 		builder.Services.AddTransient<UserEditPage>();

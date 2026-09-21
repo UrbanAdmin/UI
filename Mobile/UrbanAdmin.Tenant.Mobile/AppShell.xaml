@@ -34,6 +34,14 @@
             Icon="icon_bell.svg"
             Route="Notificaciones"
             ContentTemplate="{DataTemplate notificaciones:NotificacionesPage}" />
+        <!-- 014-admin-pagos-first-tab: the administrator's first tab. The same page is also pushed from a
+             Cartera month (route "AdminPagos"). -->
+        <ShellContent
+            x:Name="AdminPagosTab"
+            Title="Pagos"
+            Icon="icon_card.svg"
+            Route="AdminPagosHome"
+            ContentTemplate="{DataTemplate admin:AdminPagosPage}" />
         <ShellContent
             x:Name="ApartmentsTab"
             Title="Apartamentos"
@@ -46,20 +54,14 @@
             Icon="icon_people.svg"
             Route="Users"
             ContentTemplate="{DataTemplate admin:UsersPage}" />
-        <!-- 012-cartera-vencida-timeline: replaces the "Pagos (Admin)" tab. The old Pagos screen is
-             now a pushed route ("AdminPagos", registered in AppShell.xaml.cs) opened from Cartera. -->
+        <!-- 012-cartera-vencida-timeline: Cartera replaced the old "Pagos (Admin)" tab; 014 brings Pagos back as the
+             first admin tab and removes the admin Notificaciones tab. -->
         <ShellContent
             x:Name="CarteraTab"
             Title="Cartera"
             Icon="icon_cartera.svg"
             Route="Cartera"
             ContentTemplate="{DataTemplate cartera:CarteraPage}" />
-        <ShellContent
-            x:Name="AdminNotificacionesTab"
-            Title="Notificaciones (Admin)"
-            Icon="icon_bell.svg"
-            Route="AdminNotificaciones"
-            ContentTemplate="{DataTemplate admin:AdminNotificacionesPage}" />
         <!-- 010-logout-biometric-login: the app's first tab shared by both roles - visibility
              set unconditionally in AppShell.xaml.cs's ApplyRoleVisibility, unlike every tab above. -->
         <ShellContent

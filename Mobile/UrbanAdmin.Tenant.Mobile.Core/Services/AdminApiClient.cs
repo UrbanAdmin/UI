@@ -159,16 +159,6 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         return result ?? [];
     }
 
-    public async Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/admin/notificaciones");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        var response = await httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<List<AdminNotificationRowModel>>(JsonOptions);
-        return result ?? [];
-    }
-
     public async Task<List<UtilityModel>> GetUtilitiesAsync(string token)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/Utilities");

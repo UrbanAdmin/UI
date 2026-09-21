@@ -16,6 +16,13 @@ public class AdminPagosViewModel(IAdminApiClient apiClient, ITokenStore tokenSto
 
     public bool IsEmpty => !IsBusy && !HasError && Items.Count == 0;
 
+    // 014-admin-pagos-first-tab FR-010: the Pagos tab opens on the current month, not on a stale period.
+    public void ResetToCurrentPeriod(DateTime now)
+    {
+        Month = now.Month;
+        Year = now.Year;
+    }
+
     public async Task LoadAsync()
     {
         IsBusy = true;

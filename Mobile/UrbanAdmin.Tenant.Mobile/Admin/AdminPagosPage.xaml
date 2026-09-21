@@ -1,160 +1,237 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+  014-admin-pagos-first-tab: the administrator's Pagos, now the first tab and also the pushed detail opened from a
+  Cartera month. Built to the approved mockup (Mockups/admin-pagos-tab/index.html): month arrows, one card for the
+  selected month in the Cartera style, one row per apartment (with its arrendatario) that lists every service,
+  and a tap to see each service's deadline, amount and status. Read-only: amounts and deadlines are edited on the
+  separate edit screen (008-mobile-admin-views FR-005a/b). All wording and totals come from AdminPagosMonthCard (Core).
+-->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminPagosPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     Shell.NavBarIsVisible="False"
     Title="Pagos">
 
+    <ContentPage.Resources>
+        <!-- One service of an apartment, shown when the apartment is expanded. -->
+        <DataTemplate x:Key="LineTemplate" x:DataType="admin:PagoLineDisplay">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="4,8,0,4">
+                <VerticalStackLayout Grid.Column="0" Spacing="1">
+                    <Label Text="{Binding Utility}" FontFamily="FigtreeSemibold" FontSize="15" />
+                    <Label Text="{Binding DeadlineText}" Style="{StaticResource Muted}" FontSize="12" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
+                    <Label Text="{Binding AmountDisplay}" FontAttributes="Bold" HorizontalTextAlignment="End">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding AmountMuted}" Value="True">
+                                <Setter Property="FontAttributes" Value="Italic" />
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <controls:StatusChip Kind="{Binding ChipKind}" Text="{Binding StatusLabel}" HorizontalOptions="End" />
+                </VerticalStackLayout>
+            </Grid>
+        </DataTemplate>
 
-    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+        <!-- One service name in the subtitle: pending ones bold terracotta, paid ones muted. -->
+        <DataTemplate x:Key="ServiceNameTemplate" x:DataType="admin:ServiceNameDisplay">
+            <Label Text="{Binding Text}" FontSize="12.5" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding IsPending}" Value="True">
+                        <Setter Property="FontAttributes" Value="Bold" />
+                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+        </DataTemplate>
+
+        <!-- One apartment: "202 · Camilo Ochoa", every service, the amount owed; taps expand the services. -->
+        <DataTemplate x:Key="ApartmentTemplate" x:DataType="admin:ApartmentDisplay">
+            <VerticalStackLayout Spacing="0">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="0,10,0,6" SemanticProperties.Description="Ver los servicios del apartamento">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnApartmentTapped" />
+                    </Grid.GestureRecognizers>
+                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                        <Label Text="{Binding Title}" FontSize="15" />
+                        <FlexLayout Wrap="Wrap" Direction="Row" BindableLayout.ItemsSource="{Binding Services}" BindableLayout.ItemTemplate="{StaticResource ServiceNameTemplate}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="{Binding OwedDisplay}" FontAttributes="Bold" VerticalOptions="Start" HorizontalTextAlignment="End">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsUpToDate}" Value="True">
+                                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+                <VerticalStackLayout
+                    IsVisible="{Binding IsExpanded}"
+                    Spacing="0"
+                    Padding="10,0,0,6"
+                    BindableLayout.ItemsSource="{Binding Lines}"
+                    BindableLayout.ItemTemplate="{StaticResource LineTemplate}" />
+            </VerticalStackLayout>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
         <controls:TenantHeader
+            x:Name="Header"
             Grid.Row="0"
             Margin="22,0"
-            Kicker="Detalle del mes"
-            Title="Pagos"
-            ShowLogout="False"
-            ShowBack="True"
-            ActionText="Editar"
+            Kicker="Administración"
+            Title="Pagos del mes"
             ActionClicked="OnEditClicked" />
 
-        <HorizontalStackLayout Grid.Row="1" Margin="22,0" Spacing="8">
-            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-            <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
-                <Picker.ItemsSource>
-                    <x:Array Type="{x:Type x:String}">
-                        <x:String>Enero</x:String>
-                        <x:String>Febrero</x:String>
-                        <x:String>Marzo</x:String>
-                        <x:String>Abril</x:String>
-                        <x:String>Mayo</x:String>
-                        <x:String>Junio</x:String>
-                        <x:String>Julio</x:String>
-                        <x:String>Agosto</x:String>
-                        <x:String>Septiembre</x:String>
-                        <x:String>Octubre</x:String>
-                        <x:String>Noviembre</x:String>
-                        <x:String>Diciembre</x:String>
-                    </x:Array>
-                </Picker.ItemsSource>
-            </Picker>
-            </Border>
-            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-                <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
-            </Border>
-        </HorizontalStackLayout>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="22,0,22,28" Spacing="0">
+                <!-- Month navigator: previous / pill / next. Disabled arrows dim and ignore taps. -->
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="0,0,0,14">
+                    <Border
+                        x:Name="PreviousButton"
+                        Grid.Column="0"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 22"
+                        SemanticProperties.Description="Mes anterior">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPreviousTapped" />
+                        </Border.GestureRecognizers>
+                        <shapes:Path
+                            Data="M15 18 9 12 15 6"
+                            Aspect="Uniform"
+                            WidthRequest="14"
+                            HeightRequest="16"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+                    </Border>
 
-        <Grid Grid.Row="2" Padding="22,0,22,0">
-            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+                    <Border
+                        Grid.Column="1"
+                        Padding="10,12"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 999"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}">
+                        <Label
+                            x:Name="MonthLabel"
+                            FontAttributes="Bold"
+                            FontSize="15"
+                            HorizontalTextAlignment="Center"
+                            SemanticProperties.HeadingLevel="Level2" />
+                    </Border>
 
-            <Label
-                x:Name="EmptyLabel"
-                Text="No hay pagos registrados para este período."
-                IsVisible="False"
-                HorizontalOptions="Center"
-                VerticalOptions="Center" />
+                    <Border
+                        x:Name="NextButton"
+                        Grid.Column="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 22"
+                        SemanticProperties.Description="Mes siguiente">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNextTapped" />
+                        </Border.GestureRecognizers>
+                        <shapes:Path
+                            Data="M9 18 15 12 9 6"
+                            Aspect="Uniform"
+                            WidthRequest="14"
+                            HeightRequest="16"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+                    </Border>
+                </Grid>
 
-            <Label
-                x:Name="ErrorLabel"
-                Text="No se pudieron cargar los pagos."
-                FontAttributes="Bold"
-                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}"
-                IsVisible="False"
-                HorizontalOptions="Center"
-                VerticalOptions="Center" />
+                <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" HorizontalOptions="Center" Margin="0,60,0,0" />
 
-            <CollectionView x:Name="ItemsList" IsVisible="False" IsGrouped="True">
-                <CollectionView.GroupHeaderTemplate>
-                    <DataTemplate x:DataType="admin:ApartmentPagoGroup">
-                        <Border
-                            Margin="0,10,0,4"
-                            Padding="16,10"
-                            Stroke="Transparent"
-                            StrokeShape="RoundRectangle 18"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                <Label
+                <Border
+                    x:Name="EmptyPanel"
+                    IsVisible="False"
+                    Padding="18,22"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                    StrokeDashArray="4,4"
+                    StrokeShape="RoundRectangle 22">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Sin pagos este mes" Style="{StaticResource SubHeadline}" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                        <Label x:Name="EmptyLabel" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border
+                    x:Name="ErrorPanel"
+                    IsVisible="False"
+                    Padding="18,16"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 22"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="No se pudieron cargar los pagos. Verifica la conexión e intenta de nuevo."
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                        <Button Text="Reintentar" HorizontalOptions="Center" Clicked="OnRetryClicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout x:Name="ContentPanel" IsVisible="False" Spacing="12">
+                    <Border Style="{StaticResource CardBorder}" Padding="0" StrokeShape="RoundRectangle 22">
+                        <VerticalStackLayout Spacing="0">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="16,14">
+                                <shapes:Ellipse
+                                    x:Name="PendingDot"
                                     Grid.Column="0"
-                                    Text="{Binding ApartmentNumber}"
-                                    FontFamily="CaprasimoRegular"
-                                    FontSize="17"
-                                    TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
-                                <Label
-                                    Grid.Column="1"
-                                    Text="{Binding OwnerDisplay}"
-                                    Style="{StaticResource Muted}"
-                                    FontSize="13"
-                                    HorizontalTextAlignment="End"
-                                    VerticalOptions="Center" />
+                                    WidthRequest="14"
+                                    HeightRequest="14"
+                                    VerticalOptions="Center"
+                                    Fill="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}" />
+                                <shapes:Ellipse
+                                    x:Name="UpToDateDot"
+                                    Grid.Column="0"
+                                    IsVisible="False"
+                                    WidthRequest="14"
+                                    HeightRequest="14"
+                                    VerticalOptions="Center"
+                                    Fill="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label x:Name="CardTitleLabel" FontAttributes="Bold" FontSize="16" />
+                                    <Label x:Name="CardSummaryLabel" Style="{StaticResource Muted}" FontSize="13" />
+                                </VerticalStackLayout>
+                                <Label x:Name="CardTotalLabel" Grid.Column="2" FontAttributes="Bold" FontSize="16" VerticalOptions="Center" />
                             </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.GroupHeaderTemplate>
-                <CollectionView.GroupFooterTemplate>
-                    <DataTemplate x:DataType="admin:ApartmentPagoGroup">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="16,4,16,10">
-                            <Label
-                                Grid.Column="0"
-                                Text="{Binding SubtotalLabel}"
-                                FontAttributes="Bold"
-                                FontSize="12.5"
-                                TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                            <Label
-                                Grid.Column="1"
-                                Text="{Binding SubtotalValue}"
-                                FontAttributes="Bold"
-                                FontSize="12.5" />
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.GroupFooterTemplate>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="admin:AdminPagoDisplayRow">
-                        <Grid Padding="16,8,16,8" ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                            <VerticalStackLayout Grid.Column="0" Spacing="1">
-                                <Label Text="{Binding Utility}" FontAttributes="Bold" FontSize="13.5" />
-                                <Label
-                                    Text="{Binding AmountDisplay}"
-                                    FontSize="12"
-                                    TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
-                            </VerticalStackLayout>
-                            <Border
-                                Grid.Column="1"
-                                VerticalOptions="Center"
-                                Padding="9,3"
-                                Stroke="Transparent"
-                                StrokeShape="RoundRectangle 999">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="paid">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="pending">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border" Binding="{Binding StatusKind}" Value="placeholder">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource PlaceholderBg}, Dark={StaticResource PlaceholderBgDark}}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label Text="{Binding StatusDisplay}" FontSize="11" FontAttributes="Bold">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="paid">
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="pending">
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Label" Binding="{Binding StatusKind}" Value="placeholder">
-                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource PlaceholderText}, Dark={StaticResource PlaceholderTextDark}}" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </Border>
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
+                            <BoxView HeightRequest="1" BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                            <VerticalStackLayout
+                                x:Name="ApartmentList"
+                                Padding="16,2,16,10"
+                                Spacing="0"
+                                BindableLayout.ItemTemplate="{StaticResource ApartmentTemplate}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label Text="Toca un apartamento para ver cada servicio." Style="{StaticResource Muted}" FontSize="12.5" HorizontalTextAlignment="Center" />
+
+                    <!-- On the tab the header carries the logout button, so Editar sits under the card. -->
+                    <Button
+                        x:Name="EditButton"
+                        Text="Editar"
+                        Style="{StaticResource ButtonSecondary}"
+                        HorizontalOptions="Center"
+                        Clicked="OnEditClicked" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 
 </ContentPage>

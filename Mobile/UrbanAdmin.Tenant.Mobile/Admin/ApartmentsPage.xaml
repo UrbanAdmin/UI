@@ -19,7 +19,6 @@
             Margin="22,0"
             Kicker="Tu conjunto"
             Title="Apartamentos"
-            ShowLogout="False"
             ActionText="Agregar"
             ActionClicked="OnAddClicked" />
 

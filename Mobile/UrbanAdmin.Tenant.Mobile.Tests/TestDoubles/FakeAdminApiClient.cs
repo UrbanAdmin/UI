@@ -129,8 +129,6 @@ public class FakeAdminApiClient : IAdminApiClient
 
     public List<AdminPagoRowModel> AdminPagos { get; set; } = [];
     public bool ThrowOnGetAdminPagos { get; set; }
-    public List<AdminNotificationRowModel> AdminNotificaciones { get; set; } = [];
-    public bool ThrowOnGetAdminNotificaciones { get; set; }
     public (long? ApartmentId, int? Month, int? Year, string? Service)? LastGetAdminPagosArgs { get; private set; }
 
     public Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null)
@@ -143,9 +141,6 @@ public class FakeAdminApiClient : IAdminApiClient
         LastGetAdminPagosArgs = (apartmentId, month, year, service);
         return Task.FromResult(AdminPagos);
     }
-
-    public Task<List<AdminNotificationRowModel>> GetAdminNotificacionesAsync(string token) =>
-        ThrowOnGetAdminNotificaciones ? throw new HttpRequestException("boom") : Task.FromResult(AdminNotificaciones);
 
     public List<UtilityModel> Utilities { get; set; } = [];
     public bool ThrowOnGetUtilities { get; set; }

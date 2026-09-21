@@ -15,7 +15,7 @@
 
     <ScrollView>
         <VerticalStackLayout Padding="22,0,22,28" Spacing="16">
-            <controls:TenantHeader Kicker="Sesión y seguridad" Title="Cuenta" ShowLogout="False" />
+            <controls:TenantHeader Kicker="Sesión y seguridad" Title="Cuenta" />
 
             <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
 

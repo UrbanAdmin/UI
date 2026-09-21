@@ -167,23 +167,6 @@ public class CarteraViewModelTests
         Assert.Equal("AdminPagos?month=9&year=2026", vm.BuildPagosRoute(9, 2026));
     }
 
-    [Fact]
-    public async Task BuildPagosRoute_IsThePlainRouteForTheGeneralAccess()
-    {
-        var (vm, _, _) = await Build();
-
-        Assert.Equal("AdminPagos", vm.BuildPagosRoute(null, null));
-    }
-
-    [Fact]
-    public async Task BuildPagosRoute_IgnoresAHalfSpecifiedPeriod()
-    {
-        var (vm, _, _) = await Build();
-
-        Assert.Equal("AdminPagos", vm.BuildPagosRoute(9, null));
-        Assert.Equal("AdminPagos", vm.BuildPagosRoute(null, 2026));
-    }
-
     // ---- US3: notify (bulk and per apartment) -----------------------------------------------
 
     // September 2026 (the selected month in these tests) with one 10.000 charge per apartment given.

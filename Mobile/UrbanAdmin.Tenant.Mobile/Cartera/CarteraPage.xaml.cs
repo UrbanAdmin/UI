@@ -263,9 +263,6 @@ public partial class CarteraPage : ContentPage
         }
     }
 
-    private async void OnAllPagosTapped(object? sender, TappedEventArgs e) =>
-        await Shell.Current.GoToAsync(_viewModel.BuildPagosRoute(null, null));
-
     // US3: bulk notify - confirm with counts (and who already got a notice today), then send.
     private async void OnNotifyAllClicked(object? sender, EventArgs e)
     {
