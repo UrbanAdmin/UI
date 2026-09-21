@@ -57,7 +57,11 @@
             <VerticalStackLayout x:Name="CardsList" Spacing="12" IsVisible="False">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="rows:AlertCardRow">
-                        <Border Style="{StaticResource CardBorder}" Padding="18,16,18,15" StrokeShape="RoundRectangle 26">
+                        <Border
+                            Style="{StaticResource CardBorder}"
+                            Padding="18,16,18,15"
+                            StrokeShape="RoundRectangle 26"
+                            AutomationProperties.Name="{Binding AccessibleName}">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding Kind}" Value="announcement">
                                     <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
@@ -66,14 +70,24 @@
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                 <controls:StatusDot Grid.Column="0" Kind="{Binding Kind}" Size="12" Margin="0,6,0,0" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="3">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                        <Label
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                        <!-- 017: a small accent dot on a card that was unread when this screen opened (that visit only). -->
+                                        <Border
                                             Grid.Column="0"
+                                            WidthRequest="10"
+                                            HeightRequest="10"
+                                            VerticalOptions="Center"
+                                            Stroke="Transparent"
+                                            StrokeShape="RoundRectangle 5"
+                                            IsVisible="{Binding IsNew}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                                        <Label
+                                            Grid.Column="1"
                                             Text="{Binding Title}"
                                             FontFamily="FigtreeSemibold"
                                             FontSize="17" />
                                         <Label
-                                            Grid.Column="1"
+                                            Grid.Column="2"
                                             Text="{Binding When}"
                                             Style="{StaticResource Muted}"
                                             FontSize="13"

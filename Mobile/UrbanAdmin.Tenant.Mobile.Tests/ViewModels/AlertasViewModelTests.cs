@@ -17,12 +17,19 @@ public class AlertasViewModelTests
 
     private static async Task<(AlertasViewModel Vm, FakeTenantApiClient Api, AlertsBadgeState Badge, FakeCrashDiagnosticsService Diag)> Build(AlertasModel? alertas = null)
     {
+        var (vm, api, badge, diag, _) = await BuildWithTracker(alertas);
+        return (vm, api, badge, diag);
+    }
+
+    private static async Task<(AlertasViewModel Vm, FakeTenantApiClient Api, AlertsBadgeState Badge, FakeCrashDiagnosticsService Diag, AlertsReadTracker Tracker)> BuildWithTracker(AlertasModel? alertas = null)
+    {
         var api = new FakeTenantApiClient { Alertas = alertas ?? new AlertasModel() };
         var tokens = new FakeTokenStore();
-        await tokens.SaveTokenAsync("jwt");
+        await tokens.SaveTokenAsync(AlertsReadTrackerTests.Jwt("7"));
         var badge = new AlertsBadgeState();
         var diag = new FakeCrashDiagnosticsService();
-        return (new AlertasViewModel(api, tokens, diag, badge, NowUtc), api, badge, diag);
+        var tracker = new AlertsReadTracker(new FakeAlertsSeenStore(), tokens);
+        return (new AlertasViewModel(api, tokens, diag, badge, tracker, NowUtc), api, badge, diag, tracker);
     }
 
     [Fact]
@@ -111,14 +118,15 @@ public class AlertasViewModelTests
     }
 
     [Fact]
-    public async Task LoadingUpdatesTheTabBadgeFromTheServersCount()
+    public async Task LoadingClearsTheTabBadge_TheServersCountIsNoLongerUsed()
     {
         var (vm, _, badge, _) = await Build(new AlertasModel { NeedsActionCount = 3 });
+        badge.Set(3);
 
         await vm.LoadAsync();
 
-        Assert.Equal(3, badge.Count);
-        Assert.True(badge.HasBadge);
+        Assert.Equal(0, badge.Count);
+        Assert.False(badge.HasBadge);
     }
 
     [Fact]
@@ -139,6 +147,7 @@ public class AlertasViewModelTests
     {
         var (vm, api, badge, diag) = await Build(new AlertasModel { NeedsActionCount = 2, Items = [Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1m, NowUtc())] });
         await vm.LoadAsync();
+        badge.Set(2);
 
         api.ThrowOnGet = true;
         api.ThrowStatusCode = System.Net.HttpStatusCode.InternalServerError;
@@ -166,12 +175,112 @@ public class AlertasViewModelTests
     public async Task WithoutASessionItAsksToSignInAgain()
     {
         var api = new FakeTenantApiClient();
-        var vm = new AlertasViewModel(api, new FakeTokenStore(), new FakeCrashDiagnosticsService(), new AlertsBadgeState(), NowUtc);
+        var vm = new AlertasViewModel(api, new FakeTokenStore(), new FakeCrashDiagnosticsService(), new AlertsBadgeState(), new AlertsReadTracker(new FakeAlertsSeenStore(), new FakeTokenStore()), NowUtc);
 
         await vm.LoadAsync();
 
         Assert.True(vm.HasError);
         Assert.Equal("Sesión no válida. Inicia sesión de nuevo.", vm.ErrorMessage);
         Assert.Equal(0, api.GetAlertasCallCount);
+    }
+
+    // ---- 017-icon-only-tab-bar: read / unread -----------------------------------------------------------------------
+
+    private static AlertaModel Announce(long id, DateTime at) =>
+        new() { Kind = "announcement", Id = id, Title = "Aviso " + id, Body = "Texto", At = at };
+
+    [Fact]
+    public async Task LoadAsync_MarksEveryShownAlertAsSeen_AndTheBadgeGoesToZero()
+    {
+        var (vm, _, badge, _, tracker) = await BuildWithTracker(new AlertasModel
+        {
+            NeedsActionCount = 3,
+            Items = [Announce(1, NowUtc()), Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc())],
+        });
+        badge.Set(2);
+
+        await vm.LoadAsync();
+
+        Assert.Equal(0, badge.Count);
+        Assert.Equal(0, await tracker.UnreadCountAsync(
+            [Announce(1, NowUtc()), Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc())]));
+    }
+
+    [Fact]
+    public async Task LoadAsync_AFailedLoad_MarksNothingAndKeepsTheBadge()
+    {
+        var (vm, api, badge, _, tracker) = await BuildWithTracker(new AlertasModel { Items = [Announce(1, NowUtc())] });
+        badge.Set(1);
+        api.ThrowOnGet = true;
+
+        await vm.LoadAsync();
+
+        Assert.Equal(1, badge.Count);
+        Assert.Equal(1, await tracker.UnreadCountAsync([Announce(1, NowUtc())]));
+    }
+
+    [Fact]
+    public async Task LoadAsync_ANewAnnouncementAfterAVisit_IsTheOnlyUnreadOne()
+    {
+        var (vm, api, _, _, tracker) = await BuildWithTracker(new AlertasModel { Items = [Announce(1, NowUtc().AddDays(-1))] });
+        await vm.LoadAsync();
+
+        api.Alertas = new AlertasModel { Items = [Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-1))] };
+
+        Assert.Equal(["a:2"], await tracker.UnreadKeysAsync(api.Alertas.Items));
+    }
+
+    // ---- 017 US3: the "new" mark lasts one visit ---------------------------------------------------------------------
+
+    [Fact]
+    public async Task Cards_UnreadAtLoad_AreNew_AndAnnouncedAsNew()
+    {
+        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc()), Announce(2, NowUtc().AddHours(-1))] });
+
+        await vm.LoadAsync();
+
+        Assert.All(vm.Cards, c => Assert.True(c.IsNew));
+        Assert.All(vm.Cards, c => Assert.StartsWith("Nuevo. ", c.AccessibleName));
+    }
+
+    [Fact]
+    public async Task Cards_OnTheNextVisit_AreNotNew()
+    {
+        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc())] });
+        await vm.LoadAsync();
+
+        await vm.LoadAsync();
+
+        Assert.False(vm.Cards[0].IsNew);
+        Assert.False(vm.Cards[0].AccessibleName.StartsWith("Nuevo"));
+    }
+
+    [Fact]
+    public async Task Cards_AnAlertThatArrivedWhileAway_IsTheOnlyNewOne()
+    {
+        var (vm, api, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc().AddDays(-2))] });
+        await vm.LoadAsync();
+        api.Alertas = new AlertasModel { Items = [Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-2))] };
+
+        await vm.LoadAsync();
+
+        Assert.Equal([true, false], vm.Cards.Select(c => c.IsNew));
+    }
+
+    [Fact]
+    public async Task Cards_TextChipAndDateAreUnchangedByTheMark()
+    {
+        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, new DateTime(2026, 9, 15, 20, 0, 0, DateTimeKind.Utc))] });
+
+        await vm.LoadAsync();
+
+        Assert.Equal(("Aviso 1", "Texto", "Comunicado", "ayer"), (vm.Cards[0].Title, vm.Cards[0].Text, vm.Cards[0].Chip, vm.Cards[0].When));
+        Assert.Contains("Aviso 1", vm.Cards[0].AccessibleName);
+    }
+
+    private static async Task<(AlertasViewModel Vm, FakeTenantApiClient Api, AlertsBadgeState Badge)> BuildForCards(AlertasModel alertas)
+    {
+        var (vm, api, badge, _) = await Build(alertas);
+        return (vm, api, badge);
     }
 }

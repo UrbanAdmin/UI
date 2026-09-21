@@ -64,34 +64,106 @@ public class AlertsBadgeStateTests
 
 public class AlertsBadgeServiceTests
 {
-    private static async Task<(AlertsBadgeService Service, AlertsBadgeState State, FakeTenantApiClient Api)> Build(bool withToken = true)
+    private static readonly DateTime Now = new(2026, 9, 16, 15, 0, 0, DateTimeKind.Utc);
+
+    private static AlertaModel Announce(long id, DateTime at) =>
+        new() { Kind = "announcement", Id = id, Title = "Aviso", Body = "Texto", At = at };
+
+    private static AlertaModel Payment(string utility, DateTime at) =>
+        new() { Kind = "payment", Utility = utility, Month = 9, Year = 2026, Status = "overdue", At = at };
+
+    private static async Task<(AlertsBadgeService Service, AlertsBadgeState State, FakeTenantApiClient Api, AlertsReadTracker Tracker, FakeTokenStore Tokens)> Build(bool withToken = true)
     {
-        var api = new FakeTenantApiClient { Alertas = new AlertasModel { NeedsActionCount = 2 } };
+        var api = new FakeTenantApiClient
+        {
+            Alertas = new AlertasModel
+            {
+                NeedsActionCount = 9, // the server's count is no longer used for the badge
+                Items = [Announce(1, Now), Payment("Agua", Now), new AlertaModel { Kind = "confirmation", Utility = "Gas", Month = 9, Year = 2026, At = Now }],
+            },
+        };
         var tokens = new FakeTokenStore();
         if (withToken)
         {
-            await tokens.SaveTokenAsync("jwt");
+            await tokens.SaveTokenAsync(AlertsReadTrackerTests.Jwt("7"));
         }
 
         var state = new AlertsBadgeState();
-        return (new AlertsBadgeService(api, tokens, state), state, api);
+        var tracker = new AlertsReadTracker(new FakeAlertsSeenStore(), tokens);
+        return (new AlertsBadgeService(api, tokens, state, tracker), state, api, tracker, tokens);
     }
 
     [Fact]
-    public async Task RefreshAsync_SetsTheBadgeFromTheServersCount()
+    public async Task RefreshAsync_SetsTheBadgeToTheUnreadCount_OfEveryAlertKind()
     {
-        var (service, state, api) = await Build();
+        var (service, state, api, _, _) = await Build();
 
         await service.RefreshAsync();
 
-        Assert.Equal(2, state.Count);
+        Assert.Equal(3, state.Count);
         Assert.Equal(1, api.GetAlertasCallCount);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_NeverMarksAlertsAsSeen()
+    {
+        var (service, state, _, tracker, _) = await Build();
+
+        await service.RefreshAsync();
+        await service.RefreshAsync();
+
+        Assert.Equal(3, state.Count);
+        Assert.Equal(3, await tracker.UnreadCountAsync(
+            [Announce(1, Now), Payment("Agua", Now), new AlertaModel { Kind = "confirmation", Utility = "Gas", Month = 9, Year = 2026, At = Now }]));
+    }
+
+    [Fact]
+    public async Task RefreshAsync_AfterTheTenantReadEverything_ShowsNoNumber_UntilSomethingNewArrives()
+    {
+        var (service, state, api, tracker, _) = await Build();
+        await tracker.MarkSeenAsync(api.Alertas.Items);
+
+        await service.RefreshAsync();
+        Assert.Equal(0, state.Count);
+
+        api.Alertas.Items.Insert(0, Announce(2, Now.AddHours(1)));
+        await service.RefreshAsync();
+        Assert.Equal(1, state.Count);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_ANewerReminderForAChargeCountsAgain_AStillOverdueChargeDoesNot()
+    {
+        var (service, state, api, tracker, _) = await Build();
+        await tracker.MarkSeenAsync(api.Alertas.Items);
+
+        api.Alertas.Items[1] = Payment("Agua", Now.AddDays(1));
+        await service.RefreshAsync();
+
+        Assert.Equal(1, state.Count);
+    }
+
+    [Fact]
+    public async Task RefreshAsync_EachTenantSeesTheirOwnCount()
+    {
+        var (service, state, api, tracker, tokens) = await Build();
+        await tracker.MarkSeenAsync(api.Alertas.Items);
+        await service.RefreshAsync();
+        Assert.Equal(0, state.Count);
+
+        await tokens.SaveTokenAsync(AlertsReadTrackerTests.Jwt("8"));
+        await service.RefreshAsync();
+        Assert.Equal(3, state.Count);
+
+        await tokens.SaveTokenAsync(AlertsReadTrackerTests.Jwt("7"));
+        await service.RefreshAsync();
+        Assert.Equal(0, state.Count);
     }
 
     [Fact]
     public async Task RefreshAsync_WithoutASession_DoesNothing()
     {
-        var (service, state, api) = await Build(withToken: false);
+        var (service, state, api, _, _) = await Build(withToken: false);
 
         await service.RefreshAsync();
 
@@ -102,12 +174,12 @@ public class AlertsBadgeServiceTests
     [Fact]
     public async Task RefreshAsync_AFailureKeepsThePreviousBadgeAndNeverThrows()
     {
-        var (service, state, api) = await Build();
+        var (service, state, api, _, _) = await Build();
         await service.RefreshAsync();
         api.ThrowOnGet = true;
 
         await service.RefreshAsync();
 
-        Assert.Equal(2, state.Count);
+        Assert.Equal(3, state.Count);
     }
 }

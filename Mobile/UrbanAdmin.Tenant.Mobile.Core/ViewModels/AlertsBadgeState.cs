@@ -3,7 +3,8 @@ using UrbanAdmin.Tenant.Mobile.Core.Services;
 namespace UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 // 013-tenant-pagos-alertas-redesign: the number shown on the tenant's Alertas tab - the payment alerts
-// that need action (FR-009). One shared instance (registered as a singleton); the shell subscribes to
+// that need action (FR-009); since 017-icon-only-tab-bar it is the number of alerts not read yet (all kinds),
+// counted on the phone by AlertsReadTracker. One shared instance (registered as a singleton); the shell subscribes to
 // Changed to redraw the tab badge. Changed is raised only when the count really changes.
 public class AlertsBadgeState
 {
@@ -31,7 +32,7 @@ public class AlertsBadgeState
 
 // Keeps the badge fresh from screens other than Alertas (app start, Pagos appearing): one cheap read of
 // GET /tenant/alertas. It never throws and never clears the badge on a failure.
-public class AlertsBadgeService(ITenantApiClient apiClient, ITokenStore tokenStore, AlertsBadgeState state)
+public class AlertsBadgeService(ITenantApiClient apiClient, ITokenStore tokenStore, AlertsBadgeState state, AlertsReadTracker readTracker)
 {
     public async Task RefreshAsync()
     {
@@ -44,7 +45,8 @@ public class AlertsBadgeService(ITenantApiClient apiClient, ITokenStore tokenSto
             }
 
             var alertas = await apiClient.GetAlertasAsync(token);
-            state.Set(alertas.NeedsActionCount);
+            // 017: the number is the unread alerts (never marks them read; only opening Alertas does).
+            state.Set(await readTracker.UnreadCountAsync(alertas.Items));
         }
         catch (Exception)
         {

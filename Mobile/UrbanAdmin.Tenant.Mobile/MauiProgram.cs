@@ -56,6 +56,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<SlowSignInHint>();
 		// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen and the shared tab-badge state.
 		builder.Services.AddTransient<AlertasViewModel>();
+		// 017-icon-only-tab-bar: the phone remembers which alerts each tenant has read (the number over the bell).
+		builder.Services.AddSingleton<IAlertsSeenStore, PreferencesAlertsSeenStore>();
+		builder.Services.AddSingleton<AlertsReadTracker>();
 		builder.Services.AddSingleton<AlertsBadgeState>();
 		builder.Services.AddSingleton<AlertsBadgeService>();
 		builder.Services.AddTransient<PagosViewModel>();
