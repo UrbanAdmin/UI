@@ -60,7 +60,7 @@
                         <Label Grid.Column="0" Text="{Binding Number}" FontFamily="CaprasimoRegular" FontSize="20" VerticalOptions="Center" />
                         <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="14,0">
                             <Entry
-                                Text="{Binding AmountDisplay, Mode=OneWay}"
+                                Text="{Binding EditText, Mode=TwoWay}"
                                 Placeholder="$0"
                                 Keyboard="Numeric"
                                 ReturnType="Done"

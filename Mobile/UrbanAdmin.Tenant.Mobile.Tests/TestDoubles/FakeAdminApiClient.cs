@@ -131,15 +131,24 @@ public class FakeAdminApiClient : IAdminApiClient
     public bool ThrowOnGetAdminPagos { get; set; }
     public (long? ApartmentId, int? Month, int? Year, string? Service)? LastGetAdminPagosArgs { get; private set; }
 
-    public Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null)
+    // 016-fix-edit-service-values: per-service data and a per-call hook so overlapping loads can be simulated.
+    public Dictionary<string, List<AdminPagoRowModel>> AdminPagosByService { get; } = [];
+    public Func<string?, int?, int?, Task>? BeforeGetAdminPagos { get; set; }
+
+    public async Task<List<AdminPagoRowModel>> GetAdminPagosAsync(string token, long? apartmentId, int? month, int? year, string? service = null)
     {
+        if (BeforeGetAdminPagos is not null)
+        {
+            await BeforeGetAdminPagos(service, month, year);
+        }
+
         if (ThrowOnGetAdminPagos)
         {
             throw new HttpRequestException("boom");
         }
 
         LastGetAdminPagosArgs = (apartmentId, month, year, service);
-        return Task.FromResult(AdminPagos);
+        return service is not null && AdminPagosByService.TryGetValue(service, out var rows) ? rows : AdminPagos;
     }
 
     public List<UtilityModel> Utilities { get; set; } = [];
@@ -150,6 +159,7 @@ public class FakeAdminApiClient : IAdminApiClient
     public bool ThrowOnSetAdminPagoDeadline { get; set; }
     public (long ApartmentId, string Service, int Month, int Year, string? Amount, bool Paid)? LastSetAdminPagoPayment { get; private set; }
     public (string Service, int Month, int Year, DateTime DueDate)? LastSetAdminPagoDeadline { get; private set; }
+    public List<(long ApartmentId, string Service, int Month, int Year, string? Amount, bool Paid)> SavedAdminPagoPayments { get; } = [];
 
     public Task<List<UtilityModel>> GetUtilitiesAsync(string token) =>
         ThrowOnGetUtilities ? throw new HttpRequestException("boom") : Task.FromResult(Utilities);
@@ -162,6 +172,7 @@ public class FakeAdminApiClient : IAdminApiClient
         }
 
         LastSetAdminPagoPayment = (apartmentId, service, month, year, amount, paid);
+        SavedAdminPagoPayments.Add((apartmentId, service, month, year, amount, paid));
         return Task.FromResult(SetAdminPagoPaymentResult);
     }
 

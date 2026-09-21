@@ -23,6 +23,10 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
     private bool _isFirstAppearance = true;
     private bool _settingDate;
 
+    // 016-fix-edit-service-values: the amount field that has focus, so it can be saved for the place it was typed in BEFORE a
+    // service or month change (the tap changes the selection first and the field only loses focus afterwards).
+    private Entry? _focusedEntry;
+
     public AdminPagosEditPage(AdminPagosEditViewModel viewModel)
     {
         InitializeComponent();
@@ -72,6 +76,7 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
     {
         if ((sender as BindableObject)?.BindingContext is ServiceChipItem chip && chip.Name != _viewModel.Service)
         {
+            await FlushPendingAmountAsync();
             _viewModel.Service = chip.Name;
             RenderServices();
             await ReloadAsync();
@@ -96,6 +101,7 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
 
     private async Task MoveToNavigatorMonthAsync()
     {
+        await FlushPendingAmountAsync();
         _viewModel.Month = _navigator.Month;
         _viewModel.Year = _navigator.Year;
         await ReloadAsync();
@@ -154,23 +160,47 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
     {
         if (sender is Entry { BindingContext: AdminPagoEditRow row } entry)
         {
-            entry.Text = AmountInput.Raw(row.Amount);
+            _focusedEntry = entry;
+            row.BeginEdit();
             entry.CursorPosition = 0;
-            entry.SelectionLength = entry.Text.Length;
+            entry.SelectionLength = row.EditText.Length;
         }
     }
 
     private async void OnAmountUnfocused(object? sender, FocusEventArgs e)
     {
-        if (sender is Entry { BindingContext: AdminPagoEditRow row } entry)
+        if (ReferenceEquals(_focusedEntry, sender))
         {
-            var typed = entry.Text;
-            await _viewModel.CommitAmountAsync(row, typed);
+            _focusedEntry = null;
+        }
 
-            // Back to the formatted amount, also when nothing changed (so no property notification re-set the text).
-            entry.Text = row.AmountDisplay;
+        if (sender is Entry { BindingContext: AdminPagoEditRow row })
+        {
+            // The box is bound two-way to row.EditText, which is what was typed; the commit returns it to "$420.000".
+            await _viewModel.CommitAmountAsync(row, row.EditText);
             AfterSave(row);
         }
+    }
+
+    // Saves the amount being typed (if any) for the service and month of its own row, now. Called before the selection
+    // changes and when the screen is left, so a typed value is never dropped and never lands on another service or month.
+    // Afterwards the field's own Unfocused finds nothing changed and does nothing.
+    private async Task FlushPendingAmountAsync()
+    {
+        if (_focusedEntry is not { BindingContext: AdminPagoEditRow row } entry)
+        {
+            return;
+        }
+
+        _focusedEntry = null;
+        await _viewModel.CommitAmountAsync(row, row.EditText);
+        AfterSave(row);
+    }
+
+    protected override async void OnDisappearing()
+    {
+        base.OnDisappearing();
+        await FlushPendingAmountAsync();
     }
 
     private void OnAmountCompleted(object? sender, EventArgs e) => (sender as Entry)?.Unfocus();
@@ -212,7 +242,11 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
         ErrorPanel.IsVisible = false;
         ErrorLabel.IsVisible = false;
 
-        await _viewModel.LoadAsync();
+        // 016: a load that a newer selection superseded is ignored; the newer one is updating the screen.
+        if (!await _viewModel.LoadAsync())
+        {
+            return;
+        }
 
         BusyIndicator.IsVisible = false;
         BusyIndicator.IsRunning = false;
@@ -230,6 +264,9 @@ public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
 
         PaidSummaryLabel.Text = _viewModel.PaidSummary;
         EmptyPanel.IsVisible = _viewModel.IsEmpty;
+
+        // Clear first so every row's views are rebuilt from scratch for the new service and month.
+        BindableLayout.SetItemsSource(RowList, null);
         BindableLayout.SetItemsSource(RowList, _viewModel.Rows);
         ContentPanel.IsVisible = true;
     }

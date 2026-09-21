@@ -68,14 +68,22 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
             return false;
         }
 
-        if (!await SetDeadlineAsync(pending))
+        // 016: the date belongs to the service and month it was set for, even if the screen moves on while it saves.
+        var service = Service;
+        var month = Month;
+        var year = Year;
+        if (!await SetDeadlineAsync(service, month, year, pending))
         {
             return false;
         }
 
-        _savedDeadline = pending;
-        _pendingDeadline = null;
-        DeadlineNote = "Fecha guardada ✓";
+        if (service == Service && month == Month && year == Year)
+        {
+            _savedDeadline = pending;
+            _pendingDeadline = null;
+            DeadlineNote = "Fecha guardada ✓";
+        }
+
         return true;
     }
 
@@ -83,7 +91,7 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
     public async Task<bool> SaveRowAsync(AdminPagoEditRow row)
     {
         row.MarkSaving();
-        var ok = await SetPaymentAsync(row.ApartmentId, row.Amount, row.Paid);
+        var ok = await SetPaymentAsync(row.ApartmentId, row.Service, row.Month, row.Year, row.Amount, row.Paid);
         if (ok)
         {
             row.MarkSaved();
@@ -102,10 +110,12 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
         var parsed = AmountInput.Parse(typed);
         if (parsed == row.Amount)
         {
+            row.EndEdit();
             return true;
         }
 
         row.Amount = parsed;
+        row.EndEdit();
         return await SaveRowAsync(row);
     }
 
@@ -133,8 +143,17 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
         }
     }
 
-    public async Task LoadAsync()
+    private int _loadNumber;
+
+    // 016-fix-edit-service-values: returns true when this load is the latest and was applied to the screen state, false when a
+    // newer selection superseded it (its response is discarded: no rows, no error, no busy change), so overlapping loads can
+    // never leave an older service or month on screen.
+    public async Task<bool> LoadAsync()
     {
+        var number = ++_loadNumber;
+        var service = Service;
+        var month = Month;
+        var year = Year;
         IsBusy = true;
         HasError = false;
         try
@@ -143,30 +162,46 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
             if (token is null)
             {
                 HasError = true;
-                return;
+                return true;
             }
 
-            Items = string.IsNullOrEmpty(Service)
+            var items = string.IsNullOrEmpty(service)
                 ? []
-                : await apiClient.GetAdminPagosAsync(token, apartmentId: null, month: Month, year: Year, service: Service);
-            BuildRows();
+                : await apiClient.GetAdminPagosAsync(token, apartmentId: null, month: month, year: year, service: service);
+            if (number != _loadNumber)
+            {
+                return false;
+            }
+
+            Items = items;
+            BuildRows(service, month, year);
+            return true;
         }
         catch (Exception ex)
         {
             diagnostics.LogApiError("admin-pagos-edit", ex.ToApiStatusCode());
+            if (number != _loadNumber)
+            {
+                return false;
+            }
+
             HasError = true;
+            return true;
         }
         finally
         {
-            IsBusy = false;
+            if (number == _loadNumber)
+            {
+                IsBusy = false;
+            }
         }
     }
 
-    private void BuildRows()
+    private void BuildRows(string service, int month, int year)
     {
         Rows = Items
             .OrderBy(i => i.ApartmentNumber, StringComparer.Ordinal)
-            .Select(i => new AdminPagoEditRow(i))
+            .Select(i => new AdminPagoEditRow(i, service, month, year))
             .ToList();
 
         // Every apartment shares the service's deadline; no saved deadline comes back as the default date.
@@ -176,7 +211,12 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
         DeadlineNote = string.Empty;
     }
 
-    public async Task<bool> SetPaymentAsync(long apartmentId, string? amount, bool paid)
+    // Saves for the screen's current selection (kept for callers that have no row).
+    public Task<bool> SetPaymentAsync(long apartmentId, string? amount, bool paid) =>
+        SetPaymentAsync(apartmentId, Service, Month, Year, amount, paid);
+
+    // Saves for an explicit service and month - the row's own (016): the selection may have changed since it was loaded.
+    public async Task<bool> SetPaymentAsync(long apartmentId, string service, int month, int year, string? amount, bool paid)
     {
         ErrorMessage = null;
         try
@@ -188,7 +228,7 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
                 return false;
             }
 
-            var result = await apiClient.SetAdminPagoPaymentAsync(token, apartmentId, Service, Month, Year, amount, paid);
+            var result = await apiClient.SetAdminPagoPaymentAsync(token, apartmentId, service, month, year, amount, paid);
             if (!result.Success)
             {
                 ErrorMessage = result.Error ?? "No se pudo guardar el pago.";
@@ -205,13 +245,15 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
         }
     }
 
-    public async Task<bool> SetDeadlineAsync(DateTime dueDate)
+    public Task<bool> SetDeadlineAsync(DateTime dueDate) => SetDeadlineAsync(Service, Month, Year, dueDate);
+
+    public async Task<bool> SetDeadlineAsync(string service, int month, int year, DateTime dueDate)
     {
         ErrorMessage = null;
 
         // Mirrors the Backend's own rejection (SetAdminPagoDeadlineHandler) for immediate
         // client-side feedback - Arriendo's due date is per-apartment, not a shared deadline.
-        if (IsArriendo)
+        if (service == "Arriendo")
         {
             ErrorMessage = "Arriendo no tiene una fecha límite compartida.";
             return false;
@@ -226,7 +268,7 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
                 return false;
             }
 
-            var result = await apiClient.SetAdminPagoDeadlineAsync(token, Service, Month, Year, dueDate);
+            var result = await apiClient.SetAdminPagoDeadlineAsync(token, service, month, year, dueDate);
             if (!result.Success)
             {
                 ErrorMessage = result.Error ?? "No se pudo guardar la fecha límite.";
