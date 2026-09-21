@@ -1,134 +1,215 @@
-using UrbanAdmin.Tenant.Mobile.Core.Models;
+using System.ComponentModel;
+using UrbanAdmin.Tenant.Mobile.Core.Formatting;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
 namespace UrbanAdmin.Tenant.Mobile.Admin;
 
-// Display-only editable row for the CollectionView - Amount/Paid are plain settable
-// properties (not INotifyPropertyChanged) that the Entry/Switch two-way-bind into; saves are
-// triggered explicitly from the Unfocused/Toggled event handlers below, not by the binding
-// itself (Phase 6b).
-public class AdminPagoEditRow(AdminPagoRowModel row)
+// One service button of the edit screen; the selected one is filled.
+public class ServiceChipItem(string name, bool isSelected)
 {
-    public long ApartmentId { get; } = row.ApartmentId;
-    public string ApartmentLabel { get; } = string.IsNullOrWhiteSpace(row.Owner) ? row.ApartmentNumber : $"{row.ApartmentNumber} — {row.Owner}";
-    public string? Amount { get; set; } = row.Amount;
-    public bool Paid { get; set; } = row.Paid;
+    public string Name { get; } = name;
+    public bool IsSelected { get; } = isSelected;
 }
 
-// 008-mobile-admin-views T069 (Phase 6b): select a Servicio/Mes/Año, set the shared deadline
-// (hidden for Arriendo), and edit each apartment's amount/paid status - every change saves
-// immediately. Matches Mockups/admin-payments-summary-and-edit/index.html's confirmed layout.
-public partial class AdminPagosEditPage : ContentPage
+// 014-admin-pagos-first-tab US4 (built to Mockups/admin-pagos-edit): pick a service and a month, set the service's deadline,
+// and edit each apartment's amount and paid state. Every change still saves immediately (008-mobile-admin-views
+// Phase 6b), but each row now shows the outcome. State and wording live in AdminPagosEditViewModel / AdminPagoEditRow
+// (Core, unit-tested); this page only maps them onto the layout. It opens on the month the administrator was viewing on
+// Pagos ("AdminPagosEdit?month=&year=").
+public partial class AdminPagosEditPage : ContentPage, IQueryAttributable
 {
     private readonly AdminPagosEditViewModel _viewModel;
-    private readonly List<int> _years;
-    private bool _isInitializing = true;
+    private readonly PagosMonthNavigator _navigator = new();
     private bool _isFirstAppearance = true;
+    private bool _settingDate;
 
     public AdminPagosEditPage(AdminPagosEditViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _navigator.Set(_viewModel.Month, _viewModel.Year);
+    }
 
-        var currentYear = DateTime.Now.Year;
-        _years = Enumerable.Range(currentYear - 1, 7).ToList();
-        YearPicker.ItemsSource = _years;
-
-        MonthPicker.SelectedIndex = _viewModel.Month - 1;
-        YearPicker.SelectedIndex = _years.IndexOf(_viewModel.Year);
-        _isInitializing = false;
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("month", out var rawMonth) && query.TryGetValue("year", out var rawYear)
+            && int.TryParse(rawMonth?.ToString(), out var month) && int.TryParse(rawYear?.ToString(), out var year)
+            && month is >= 1 and <= 12)
+        {
+            _navigator.Set(month, year);
+            _viewModel.Month = _navigator.Month;
+            _viewModel.Year = _navigator.Year;
+        }
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        if (_isFirstAppearance)
+        if (!_isFirstAppearance)
         {
-            _isFirstAppearance = false;
-            await _viewModel.LoadUtilitiesAsync();
-            var names = _viewModel.Utilities.Select(u => u.Name).ToList();
-            ServicioPicker.ItemsSource = names;
-            if (names.Count > 0)
-            {
-                ServicioPicker.SelectedIndex = 0;
-            }
+            return;
         }
-        else
+
+        _isFirstAppearance = false;
+        await _viewModel.LoadUtilitiesAsync();
+        var names = _viewModel.ServiceNames;
+        if (names.Count > 0)
         {
+            _viewModel.Service = names[0];
+        }
+
+        RenderServices();
+        await ReloadAsync();
+    }
+
+    private void RenderServices() =>
+        BindableLayout.SetItemsSource(
+            ServiceList,
+            _viewModel.ServiceNames.Select(n => new ServiceChipItem(n, n == _viewModel.Service)).ToList());
+
+    private async void OnServiceTapped(object? sender, TappedEventArgs e)
+    {
+        if ((sender as BindableObject)?.BindingContext is ServiceChipItem chip && chip.Name != _viewModel.Service)
+        {
+            _viewModel.Service = chip.Name;
+            RenderServices();
             await ReloadAsync();
         }
     }
 
-    private async void OnServicioChanged(object? sender, EventArgs e)
+    private async void OnPreviousTapped(object? sender, TappedEventArgs e)
     {
-        if (ServicioPicker.SelectedIndex < 0)
+        if (_navigator.Previous())
         {
-            return;
+            await MoveToNavigatorMonthAsync();
         }
+    }
 
-        _viewModel.Service = (string)ServicioPicker.ItemsSource[ServicioPicker.SelectedIndex]!;
-        DeadlineRow.IsVisible = !_viewModel.IsArriendo;
-        ArriendoHintLabel.IsVisible = _viewModel.IsArriendo;
+    private async void OnNextTapped(object? sender, TappedEventArgs e)
+    {
+        if (_navigator.Next())
+        {
+            await MoveToNavigatorMonthAsync();
+        }
+    }
+
+    private async Task MoveToNavigatorMonthAsync()
+    {
+        _viewModel.Month = _navigator.Month;
+        _viewModel.Year = _navigator.Year;
         await ReloadAsync();
     }
 
-    private async void OnPeriodChanged(object? sender, EventArgs e)
+    private async void OnRetryClicked(object? sender, EventArgs e) => await ReloadAsync();
+
+    // ---- deadline -------------------------------------------------------------------------
+
+    private void OnDeadlineDateSelected(object? sender, DateChangedEventArgs e)
     {
-        if (_isInitializing || MonthPicker.SelectedIndex < 0 || YearPicker.SelectedIndex < 0)
+        if (_settingDate || e.NewDate is not DateTime date)
         {
             return;
         }
 
-        _viewModel.Month = MonthPicker.SelectedIndex + 1;
-        _viewModel.Year = _years[YearPicker.SelectedIndex];
-        await ReloadAsync();
+        _viewModel.SetPendingDeadline(date);
+        RenderDeadline();
     }
 
     private async void OnSaveDeadlineClicked(object? sender, EventArgs e)
     {
         ErrorLabel.IsVisible = false;
-        var success = await _viewModel.SetDeadlineAsync(DeadlineDatePicker.Date ?? DateTime.Today);
-        if (!success)
+        var success = await _viewModel.SaveDeadlineAsync();
+        if (!success && _viewModel.ErrorMessage is not null)
         {
             ErrorLabel.Text = _viewModel.ErrorMessage;
             ErrorLabel.IsVisible = true;
+        }
+
+        RenderDeadline();
+    }
+
+    private void RenderDeadline()
+    {
+        var showCard = _viewModel.ShowDeadlineCard;
+        DeadlineCard.IsVisible = showCard;
+        ArriendoCard.IsVisible = !showCard;
+        ArriendoHintLabel.Text = _viewModel.ArriendoHint;
+        if (!showCard)
+        {
+            return;
+        }
+
+        DeadlineTitleLabel.Text = _viewModel.DeadlineTitle;
+        DeadlineValueLabel.Text = _viewModel.DeadlineDisplay;
+        SaveDeadlineButton.IsEnabled = _viewModel.DeadlineDirty;
+        DeadlineNoteLabel.Text = _viewModel.DeadlineNote;
+        DeadlineNoteLabel.IsVisible = _viewModel.DeadlineNote.Length > 0 && !_viewModel.DeadlineDirty;
+    }
+
+    // ---- rows -----------------------------------------------------------------------------
+
+    // The field shows the plain digits while it is being edited and "$420.000" at rest.
+    private void OnAmountFocused(object? sender, FocusEventArgs e)
+    {
+        if (sender is Entry { BindingContext: AdminPagoEditRow row } entry)
+        {
+            entry.Text = AmountInput.Raw(row.Amount);
+            entry.CursorPosition = 0;
+            entry.SelectionLength = entry.Text.Length;
         }
     }
 
     private async void OnAmountUnfocused(object? sender, FocusEventArgs e)
     {
-        if (sender is Entry { BindingContext: AdminPagoEditRow row })
+        if (sender is Entry { BindingContext: AdminPagoEditRow row } entry)
         {
-            await SavePaymentAsync(row);
+            var typed = entry.Text;
+            await _viewModel.CommitAmountAsync(row, typed);
+
+            // Back to the formatted amount, also when nothing changed (so no property notification re-set the text).
+            entry.Text = row.AmountDisplay;
+            AfterSave(row);
         }
     }
 
-    private async void OnPaidToggled(object? sender, ToggledEventArgs e)
+    private void OnAmountCompleted(object? sender, EventArgs e) => (sender as Entry)?.Unfocus();
+
+    private async void OnStatusTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is Switch { BindingContext: AdminPagoEditRow row })
+        if ((sender as BindableObject)?.BindingContext is AdminPagoEditRow row)
         {
-            await SavePaymentAsync(row);
+            await _viewModel.TogglePaidAsync(row);
+            AfterSave(row);
         }
     }
 
-    private async Task SavePaymentAsync(AdminPagoEditRow row)
+    private async void OnRetryRowTapped(object? sender, TappedEventArgs e)
     {
-        ErrorLabel.IsVisible = false;
-        var success = await _viewModel.SetPaymentAsync(row.ApartmentId, row.Amount, row.Paid);
-        if (!success)
+        if ((sender as BindableObject)?.BindingContext is AdminPagoEditRow row)
         {
-            ErrorLabel.Text = _viewModel.ErrorMessage;
-            ErrorLabel.IsVisible = true;
+            await _viewModel.SaveRowAsync(row);
+            AfterSave(row);
+        }
+    }
+
+    // Refreshes the counter and lets "Guardado ✓" fade after a moment.
+    private void AfterSave(AdminPagoEditRow row)
+    {
+        PaidSummaryLabel.Text = _viewModel.PaidSummary;
+        if (row.SaveState == RowSaveState.Saved)
+        {
+            Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(2.5), row.ClearSavedNote);
         }
     }
 
     private async Task ReloadAsync()
     {
+        RenderNavigator();
         BusyIndicator.IsVisible = true;
         BusyIndicator.IsRunning = true;
-        ItemsList.IsVisible = false;
-        EmptyLabel.IsVisible = false;
+        ContentPanel.IsVisible = false;
+        ErrorPanel.IsVisible = false;
         ErrorLabel.IsVisible = false;
 
         await _viewModel.LoadAsync();
@@ -138,23 +219,25 @@ public partial class AdminPagosEditPage : ContentPage
 
         if (_viewModel.HasError)
         {
-            ErrorLabel.Text = "No se pudieron cargar los pagos.";
-            ErrorLabel.IsVisible = true;
+            ErrorPanel.IsVisible = true;
+            return;
         }
-        else if (_viewModel.IsEmpty)
-        {
-            EmptyLabel.IsVisible = true;
-        }
-        else
-        {
-            ItemsList.ItemsSource = _viewModel.Items.Select(r => new AdminPagoEditRow(r)).ToList();
-            ItemsList.IsVisible = true;
 
-            if (!_viewModel.IsArriendo)
-            {
-                var dueDate = _viewModel.Items[0].DueDate;
-                DeadlineDatePicker.Date = dueDate >= DeadlineDatePicker.MinimumDate ? dueDate : DateTime.Today;
-            }
-        }
+        _settingDate = true;
+        DeadlineDatePicker.Date = _viewModel.SavedDeadline ?? DateTime.Today;
+        _settingDate = false;
+        RenderDeadline();
+
+        PaidSummaryLabel.Text = _viewModel.PaidSummary;
+        EmptyPanel.IsVisible = _viewModel.IsEmpty;
+        BindableLayout.SetItemsSource(RowList, _viewModel.Rows);
+        ContentPanel.IsVisible = true;
+    }
+
+    private void RenderNavigator()
+    {
+        MonthLabel.Text = _navigator.Label;
+        PreviousButton.Opacity = _navigator.CanGoPrevious ? 1 : 0.35;
+        NextButton.Opacity = _navigator.CanGoNext ? 1 : 0.35;
     }
 }

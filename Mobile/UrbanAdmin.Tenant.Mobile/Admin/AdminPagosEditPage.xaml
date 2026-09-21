@@ -1,100 +1,280 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+  014-admin-pagos-first-tab US4: "Editar pagos" in the Organic style, built to the approved mockup
+  (Mockups/admin-pagos-edit/index.html): service buttons, month arrows, a deadline card and one row per apartment with the
+  amount and a tappable Pagado/Pendiente button. Changes still save automatically, now with a visible state per row
+  ("Guardando…", "Guardado ✓", "No se guardó" + Reintentar). All wording and state come from AdminPagosEditViewModel /
+  AdminPagoEditRow (Core, unit-tested).
+-->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Admin.AdminPagosEditPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    xmlns:rows="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.ViewModels;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
     Shell.NavBarIsVisible="False"
     Title="Editar pagos">
 
-
-    <ScrollView>
-        <VerticalStackLayout Padding="22,0,22,28" Spacing="12">
-            <controls:TenantHeader Kicker="Pagos del mes" Title="Editar pagos" ShowLogout="False" ShowBack="True" />
-
-            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-                <Picker x:Name="ServicioPicker" Title="Servicio" SelectedIndexChanged="OnServicioChanged" />
+    <ContentPage.Resources>
+        <!-- One service button: the selected one is filled terracotta. -->
+        <DataTemplate x:Key="ServiceChipTemplate" x:DataType="admin:ServiceChipItem">
+            <Border
+                Padding="16,9"
+                Margin="0,0,8,0"
+                StrokeShape="RoundRectangle 999"
+                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceDark}}"
+                SemanticProperties.Description="{Binding Name}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnServiceTapped" />
+                </Border.GestureRecognizers>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        <Setter Property="Stroke" Value="Transparent" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <Label Text="{Binding Name}" FontFamily="FigtreeSemibold" FontSize="14">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Bg}, Dark={StaticResource BgDark}}" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
             </Border>
+        </DataTemplate>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-                <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnPeriodChanged">
-                    <Picker.ItemsSource>
-                        <x:Array Type="{x:Type x:String}">
-                            <x:String>Enero</x:String>
-                            <x:String>Febrero</x:String>
-                            <x:String>Marzo</x:String>
-                            <x:String>Abril</x:String>
-                            <x:String>Mayo</x:String>
-                            <x:String>Junio</x:String>
-                            <x:String>Julio</x:String>
-                            <x:String>Agosto</x:String>
-                            <x:String>Septiembre</x:String>
-                            <x:String>Octubre</x:String>
-                            <x:String>Noviembre</x:String>
-                            <x:String>Diciembre</x:String>
-                        </x:Array>
-                    </Picker.ItemsSource>
-                </Picker>
-                </Border>
-                <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-                    <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnPeriodChanged" />
-                </Border>
-            </Grid>
-
-            <Grid x:Name="DeadlineRow" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
-                    <DatePicker x:Name="DeadlineDatePicker" />
-                </Border>
-                <Button x:Name="SaveDeadlineButton" Grid.Column="1" Text="Guardar" Clicked="OnSaveDeadlineClicked" />
-            </Grid>
-            <Label
-                x:Name="ArriendoHintLabel"
-                Text="El vencimiento de Arriendo se calcula por apartamento, desde la fecha de inicio del contrato — no se fija aquí."
-                Style="{StaticResource Muted}"
-                FontSize="13"
-                IsVisible="False" />
-
-            <Label
-                x:Name="ErrorLabel"
-                FontAttributes="Bold"
-                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}"
-                IsVisible="False" />
-
-            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
-
-            <Label
-                x:Name="EmptyLabel"
-                Text="No hay apartamentos para mostrar."
-                IsVisible="False"
-                HorizontalOptions="Center" />
-
-            <CollectionView x:Name="ItemsList" IsVisible="False">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="admin:AdminPagoEditRow">
-                        <Border Style="{StaticResource CardBorder}" Padding="16,12" Margin="0,4" StrokeShape="RoundRectangle 22">
-                            <VerticalStackLayout Spacing="8">
-                                <Label Text="{Binding ApartmentLabel}" FontAttributes="Bold" />
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
-                                    <Label Grid.Column="0" Text="$" VerticalOptions="Center" />
-                                    <Entry
-                                        Grid.Column="1"
-                                        Placeholder="Cantidad a pagar"
-                                        Keyboard="Numeric"
-                                        Text="{Binding Amount}"
-                                        Unfocused="OnAmountUnfocused" />
-                                    <Switch
-                                        Grid.Column="2"
-                                        IsToggled="{Binding Paid}"
-                                        Toggled="OnPaidToggled" />
-                                </Grid>
-                            </VerticalStackLayout>
+        <!-- One apartment: number, amount pill, Pagado/Pendiente button, owner and the save state. -->
+        <DataTemplate x:Key="EditRowTemplate" x:DataType="rows:AdminPagoEditRow">
+            <Border Style="{StaticResource CardBorder}" Padding="14,12" Margin="0,0,0,10" StrokeShape="RoundRectangle 22">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding ShowRetry}" Value="True">
+                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                        <Setter Property="StrokeThickness" Value="2" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <VerticalStackLayout Spacing="6">
+                    <Grid ColumnDefinitions="52,*,Auto" ColumnSpacing="10">
+                        <Label Grid.Column="0" Text="{Binding Number}" FontFamily="CaprasimoRegular" FontSize="20" VerticalOptions="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="14,0">
+                            <Entry
+                                Text="{Binding AmountDisplay, Mode=OneWay}"
+                                Placeholder="$0"
+                                Keyboard="Numeric"
+                                ReturnType="Done"
+                                FontAttributes="Bold"
+                                SemanticProperties.Description="Monto"
+                                Focused="OnAmountFocused"
+                                Unfocused="OnAmountUnfocused"
+                                Completed="OnAmountCompleted" />
                         </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </VerticalStackLayout>
-    </ScrollView>
+                        <Border
+                            Grid.Column="2"
+                            VerticalOptions="Center"
+                            MinimumHeightRequest="40"
+                            Padding="14,9"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 999"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}"
+                            SemanticProperties.Hint="Toca para cambiar entre pagado y pendiente">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnStatusTapped" />
+                            </Border.GestureRecognizers>
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Paid}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Label Text="{Binding StatusLabel}" FontAttributes="Bold" FontSize="13" TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding Paid}" Value="True">
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="62,0,0,0">
+                        <Label Grid.Column="0" Text="{Binding OwnerText}" Style="{StaticResource Muted}" FontSize="12.5" LineBreakMode="TailTruncation" />
+                        <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                            <Label Text="{Binding SaveMessage}" FontSize="12.5" TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label" Binding="{Binding SaveState}" Value="Saved">
+                                        <Setter Property="FontAttributes" Value="Bold" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label" Binding="{Binding SaveState}" Value="Failed">
+                                        <Setter Property="FontAttributes" Value="Bold" />
+                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label
+                                Text="Reintentar"
+                                IsVisible="{Binding ShowRetry}"
+                                FontAttributes="Bold"
+                                FontSize="12.5"
+                                TextDecorations="Underline"
+                                TextColor="{AppThemeBinding Light={StaticResource Tertiary}, Dark={StaticResource PrimaryDark}}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRetryRowTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*">
+        <controls:TenantHeader
+            Grid.Row="0"
+            Margin="22,0"
+            Kicker="Pagos del mes"
+            Title="Editar pagos"
+            ShowLogout="False"
+            ShowBack="True" />
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="22,0,22,28" Spacing="0">
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="0,0,0,12">
+                    <HorizontalStackLayout x:Name="ServiceList" BindableLayout.ItemTemplate="{StaticResource ServiceChipTemplate}" />
+                </ScrollView>
+
+                <!-- Month navigator: previous / pill / next. -->
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="0,0,0,14">
+                    <Border
+                        x:Name="PreviousButton"
+                        Grid.Column="0"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 22"
+                        SemanticProperties.Description="Mes anterior">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPreviousTapped" />
+                        </Border.GestureRecognizers>
+                        <shapes:Path
+                            Data="M15 18 9 12 15 6"
+                            Aspect="Uniform"
+                            WidthRequest="14"
+                            HeightRequest="16"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+                    </Border>
+                    <Border
+                        Grid.Column="1"
+                        Padding="10,12"
+                        Stroke="Transparent"
+                        StrokeShape="RoundRectangle 999"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Surface}, Dark={StaticResource SurfaceDark}}">
+                        <Label x:Name="MonthLabel" FontAttributes="Bold" FontSize="15" HorizontalTextAlignment="Center" SemanticProperties.HeadingLevel="Level2" />
+                    </Border>
+                    <Border
+                        x:Name="NextButton"
+                        Grid.Column="2"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        StrokeShape="RoundRectangle 22"
+                        SemanticProperties.Description="Mes siguiente">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNextTapped" />
+                        </Border.GestureRecognizers>
+                        <shapes:Path
+                            Data="M9 18 15 12 9 6"
+                            Aspect="Uniform"
+                            WidthRequest="14"
+                            HeightRequest="16"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            StrokeThickness="2.2"
+                            StrokeLineCap="Round"
+                            StrokeLineJoin="Round"
+                            Stroke="{AppThemeBinding Light={StaticResource Ink}, Dark={StaticResource Gray100}}" />
+                    </Border>
+                </Grid>
+
+                <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" HorizontalOptions="Center" Margin="0,60,0,0" />
+
+                <Border
+                    x:Name="ErrorPanel"
+                    IsVisible="False"
+                    Padding="18,16"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 22"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="No se pudieron cargar los pagos. Verifica la conexión e intenta de nuevo."
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                        <Button Text="Reintentar" HorizontalOptions="Center" Clicked="OnRetryClicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <VerticalStackLayout x:Name="ContentPanel" IsVisible="False" Spacing="8">
+                    <!-- Deadline card (not for Arriendo, which explains where its due date comes from). -->
+                    <Border x:Name="DeadlineCard" Style="{StaticResource CardBorder}" Padding="18,14" StrokeShape="RoundRectangle 22">
+                        <VerticalStackLayout Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                    <Label x:Name="DeadlineTitleLabel" Style="{StaticResource Kicker}" />
+                                    <Label x:Name="DeadlineValueLabel" Style="{StaticResource Headline}" FontSize="22" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="12,0" VerticalOptions="Center">
+                                    <DatePicker x:Name="DeadlineDatePicker" DateSelected="OnDeadlineDateSelected" SemanticProperties.Description="Cambiar la fecha límite" />
+                                </Border>
+                            </Grid>
+                            <Button x:Name="SaveDeadlineButton" Text="Guardar fecha" MinimumHeightRequest="46" IsEnabled="False" Clicked="OnSaveDeadlineClicked" />
+                            <Label
+                                x:Name="DeadlineNoteLabel"
+                                IsVisible="False"
+                                FontAttributes="Bold"
+                                FontSize="13"
+                                TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border
+                        x:Name="ArriendoCard"
+                        IsVisible="False"
+                        Padding="16,14"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                        StrokeDashArray="4,4"
+                        StrokeShape="RoundRectangle 22">
+                        <Label x:Name="ArriendoHintLabel" Style="{StaticResource Muted}" FontSize="13.5" />
+                    </Border>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="2,14,2,0">
+                        <Label Grid.Column="0" Text="Apartamentos" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" x:Name="PaidSummaryLabel" Style="{StaticResource Muted}" FontSize="13" VerticalOptions="Center" />
+                    </Grid>
+                    <Label Text="Los cambios se guardan al instante." Style="{StaticResource Muted}" FontSize="12.5" Margin="2,0,2,4" />
+
+                    <Border
+                        x:Name="EmptyPanel"
+                        IsVisible="False"
+                        Padding="18,22"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                        StrokeDashArray="4,4"
+                        StrokeShape="RoundRectangle 22">
+                        <Label Text="No hay apartamentos para mostrar." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                    </Border>
+
+                    <Label x:Name="ErrorLabel" IsVisible="False" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+
+                    <VerticalStackLayout x:Name="RowList" Spacing="0" BindableLayout.ItemTemplate="{StaticResource EditRowTemplate}" />
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

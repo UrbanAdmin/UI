@@ -1,3 +1,4 @@
+using UrbanAdmin.Tenant.Mobile.Core.Formatting;
 using UrbanAdmin.Tenant.Mobile.Core.Models;
 using UrbanAdmin.Tenant.Mobile.Core.Services;
 
@@ -20,6 +21,99 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
 
     public bool IsEmpty => !IsBusy && !HasError && Items.Count == 0;
     public bool IsArriendo => Service == "Arriendo";
+
+    // 014-admin-pagos-first-tab US4 (approved mockup Mockups/admin-pagos-edit): rows with a visible save state,
+    // the paid summary and the deadline card state.
+    private DateTime? _savedDeadline;
+    private DateTime? _pendingDeadline;
+
+    public List<AdminPagoEditRow> Rows { get; private set; } = [];
+
+    public IReadOnlyList<string> ServiceNames => Utilities.Select(u => u.Name).ToList();
+
+    public string PaidSummary
+    {
+        get
+        {
+            var paid = Rows.Count(r => r.Paid);
+            return $"{paid} {(paid == 1 ? "pagado" : "pagados")} de {Rows.Count}";
+        }
+    }
+
+    public bool ShowDeadlineCard => !IsArriendo;
+    public string ArriendoHint => "El vencimiento de Arriendo se calcula por apartamento, desde la fecha de inicio del contrato. No se fija aquí.";
+    public string DeadlineTitle => $"Fecha límite de {Service.ToLowerInvariant()}";
+    public string DeadlineNote { get; private set; } = string.Empty;
+
+    public DateTime? SavedDeadline => _savedDeadline;
+
+    public DateTime? PendingDeadline => _pendingDeadline;
+
+    public string DeadlineDisplay => _savedDeadline is DateTime d
+        ? $"{d.Day} de {CarteraFormatting.MonthName(d.Month).ToLowerInvariant()}"
+        : "Sin fecha";
+
+    public bool DeadlineDirty => _pendingDeadline is DateTime p && p.Date != _savedDeadline?.Date;
+
+    public void SetPendingDeadline(DateTime date)
+    {
+        _pendingDeadline = date.Date;
+        DeadlineNote = string.Empty;
+    }
+
+    public async Task<bool> SaveDeadlineAsync()
+    {
+        if (!DeadlineDirty || _pendingDeadline is not DateTime pending)
+        {
+            return false;
+        }
+
+        if (!await SetDeadlineAsync(pending))
+        {
+            return false;
+        }
+
+        _savedDeadline = pending;
+        _pendingDeadline = null;
+        DeadlineNote = "Fecha guardada ✓";
+        return true;
+    }
+
+    // Saves one row and reports the outcome on the row itself ("Guardando…" then "Guardado ✓" or the failure).
+    public async Task<bool> SaveRowAsync(AdminPagoEditRow row)
+    {
+        row.MarkSaving();
+        var ok = await SetPaymentAsync(row.ApartmentId, row.Amount, row.Paid);
+        if (ok)
+        {
+            row.MarkSaved();
+        }
+        else
+        {
+            row.MarkFailed();
+        }
+
+        return ok;
+    }
+
+    // Called when the amount field loses focus; saves only when what was typed differs from what is stored.
+    public async Task<bool> CommitAmountAsync(AdminPagoEditRow row, string? typed)
+    {
+        var parsed = AmountInput.Parse(typed);
+        if (parsed == row.Amount)
+        {
+            return true;
+        }
+
+        row.Amount = parsed;
+        return await SaveRowAsync(row);
+    }
+
+    public async Task<bool> TogglePaidAsync(AdminPagoEditRow row)
+    {
+        row.Paid = !row.Paid;
+        return await SaveRowAsync(row);
+    }
 
     public async Task LoadUtilitiesAsync()
     {
@@ -55,6 +149,7 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
             Items = string.IsNullOrEmpty(Service)
                 ? []
                 : await apiClient.GetAdminPagosAsync(token, apartmentId: null, month: Month, year: Year, service: Service);
+            BuildRows();
         }
         catch (Exception ex)
         {
@@ -65,6 +160,20 @@ public class AdminPagosEditViewModel(IAdminApiClient apiClient, ITokenStore toke
         {
             IsBusy = false;
         }
+    }
+
+    private void BuildRows()
+    {
+        Rows = Items
+            .OrderBy(i => i.ApartmentNumber, StringComparer.Ordinal)
+            .Select(i => new AdminPagoEditRow(i))
+            .ToList();
+
+        // Every apartment shares the service's deadline; no saved deadline comes back as the default date.
+        var due = Items.Count > 0 ? Items[0].DueDate : default;
+        _savedDeadline = due.Year > 1 ? due.Date : null;
+        _pendingDeadline = null;
+        DeadlineNote = string.Empty;
     }
 
     public async Task<bool> SetPaymentAsync(long apartmentId, string? amount, bool paid)
