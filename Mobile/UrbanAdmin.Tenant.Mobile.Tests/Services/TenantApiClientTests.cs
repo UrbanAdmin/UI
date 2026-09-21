@@ -97,4 +97,34 @@ public class TenantApiClientTests
         Assert.Equal("/tenant/perfil", handler.Last!.RequestUri!.AbsolutePath);
         Assert.Equal(("502", "Laura Gómez"), (perfil.ApartmentNumber, perfil.OwnerName));
     }
+
+    // ---- 015-fix-fingerprint-reopen: only a real rejection means "wrong password" -----------------------------------
+
+    private sealed class StatusHandler(HttpStatusCode status, string body = "{}") : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+    }
+
+    private static TenantApiClient WithStatus(HttpStatusCode status, string body = "{}") =>
+        new(new HttpClient(new StatusHandler(status, body)) { BaseAddress = new Uri("https://api.test") });
+
+    [Fact]
+    public async Task LoginAsync_ReturnsTheTokenOnSuccess() =>
+        Assert.Equal("jwt-token", await WithStatus(HttpStatusCode.OK, "{\"token\":\"jwt-token\"}").LoginAsync("u", "p"));
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    public async Task LoginAsync_ReturnsNullWhenTheServerRejectsTheCredentials(HttpStatusCode status) =>
+        Assert.Null(await WithStatus(status).LoginAsync("u", "wrong"));
+
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.GatewayTimeout)]
+    public async Task LoginAsync_ThrowsForAnyOtherFailureSoItIsNotReadAsAWrongPassword(HttpStatusCode status) =>
+        await Assert.ThrowsAsync<HttpRequestException>(() => WithStatus(status).LoginAsync("u", "p"));
 }

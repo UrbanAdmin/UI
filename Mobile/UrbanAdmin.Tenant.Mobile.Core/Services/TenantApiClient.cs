@@ -11,10 +11,16 @@ public class TenantApiClient(HttpClient httpClient) : ITenantApiClient
     public async Task<string?> LoginAsync(string username, string password)
     {
         var response = await httpClient.PostAsJsonAsync("/auth/login", new { username, password });
-        if (!response.IsSuccessStatusCode)
+
+        // 015-fix-fingerprint-reopen: only a real rejection means "wrong password" (null). Any other failure (403, 5xx,
+        // a sleeping server's 502/503/504) throws, so callers report a connection problem and a saved fingerprint
+        // credential is never cleared by a server hiccup.
+        if (response.StatusCode is System.Net.HttpStatusCode.BadRequest or System.Net.HttpStatusCode.Unauthorized)
         {
             return null;
         }
+
+        response.EnsureSuccessStatusCode();
 
         var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(JsonOptions);
         return payload?.Token;

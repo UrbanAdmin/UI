@@ -1,4 +1,4 @@
-﻿using Maui.Biometric;
+using Maui.Biometric;
 using Microsoft.Extensions.Logging;
 using UrbanAdmin.Tenant.Mobile.Account;
 using UrbanAdmin.Tenant.Mobile.Admin;
@@ -51,6 +51,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ICrashDiagnosticsService, FirebaseCrashDiagnosticsService>();
 
 		builder.Services.AddTransient<LoginViewModel>();
+		// 015-fix-fingerprint-reopen: the launch sign-in decision and the slow-server hint of the sign-in page.
+		builder.Services.AddTransient<FingerprintSignIn>();
+		builder.Services.AddTransient<SlowSignInHint>();
 		builder.Services.AddTransient<NotificacionesViewModel>();
 		// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen and the shared tab-badge state.
 		builder.Services.AddTransient<AlertasViewModel>();

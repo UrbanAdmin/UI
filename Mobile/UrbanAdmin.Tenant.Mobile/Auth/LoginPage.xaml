@@ -87,6 +87,7 @@
                 <Button x:Name="LoginButton" Text="Ingresar" MinimumHeightRequest="52" Clicked="OnLoginClicked" />
 
                 <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,16,0,0" />
+                <Label x:Name="SlowHintLabel" IsVisible="False" Style="{StaticResource Muted}" FontSize="13.5" HorizontalTextAlignment="Center" Margin="0,8,0,0" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

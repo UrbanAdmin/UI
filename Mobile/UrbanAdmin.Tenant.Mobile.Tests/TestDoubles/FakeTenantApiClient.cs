@@ -15,8 +15,26 @@ public class FakeTenantApiClient : ITenantApiClient
     public (string Token, string Platform, string PushToken)? RegisteredDevice { get; private set; }
     public (int? Month, int? Year)? LastGetPagosArgs { get; private set; }
 
-    public Task<string?> LoginAsync(string username, string password) =>
-        ThrowOnLogin ? throw new HttpRequestException("boom") : Task.FromResult(TokenToReturn);
+    // 015-fix-fingerprint-reopen: a server that never answers, one that answers slowly, and the last credential sent.
+    public bool LoginNeverCompletes { get; set; }
+    public TimeSpan LoginDelay { get; set; }
+    public (string Username, string Password)? LastLogin { get; private set; }
+
+    public async Task<string?> LoginAsync(string username, string password)
+    {
+        LastLogin = (username, password);
+        if (LoginNeverCompletes)
+        {
+            await new TaskCompletionSource<string?>().Task;
+        }
+
+        if (LoginDelay > TimeSpan.Zero)
+        {
+            await Task.Delay(LoginDelay);
+        }
+
+        return ThrowOnLogin ? throw new HttpRequestException("boom") : TokenToReturn;
+    }
 
     public Task RegisterDeviceAsync(string token, string platform, string pushToken)
     {

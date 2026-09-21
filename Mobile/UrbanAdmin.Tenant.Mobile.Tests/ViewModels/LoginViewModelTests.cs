@@ -101,4 +101,88 @@ public class LoginViewModelTests
         Assert.NotNull(vm.ErrorMessage);
         Assert.Equal(["exception:HttpRequestException"], diagnostics.LoginFailureReasons);
     }
+
+    // ---- 015-fix-fingerprint-reopen: failure kinds and the sign-in time limit --------------------------------------
+
+    private static LoginViewModel Build(FakeTenantApiClient api, Func<TimeSpan, CancellationToken, Task>? delay = null) =>
+        new(api, new FakeTokenStore(), new FakeCrashDiagnosticsService(), TimeSpan.FromSeconds(60), delay)
+        {
+            Username = "owner101",
+            Password = "pw",
+        };
+
+    [Fact]
+    public async Task LastFailure_IsNoneOnSuccess()
+    {
+        var vm = Build(new FakeTenantApiClient { TokenToReturn = MakeToken("42") });
+
+        await vm.LoginAsync();
+
+        Assert.Equal(LoginFailure.None, vm.LastFailure);
+    }
+
+    [Fact]
+    public async Task LastFailure_IsInvalidCredentialsWhenTheServerRejectsThem()
+    {
+        var vm = Build(new FakeTenantApiClient { TokenToReturn = null });
+
+        var success = await vm.LoginAsync();
+
+        Assert.False(success);
+        Assert.Equal(LoginFailure.InvalidCredentials, vm.LastFailure);
+        Assert.Equal("Usuario o contraseña incorrectos", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task LastFailure_IsConnectionWhenTheCallThrows()
+    {
+        var vm = Build(new FakeTenantApiClient { ThrowOnLogin = true });
+
+        var success = await vm.LoginAsync();
+
+        Assert.False(success);
+        Assert.Equal(LoginFailure.Connection, vm.LastFailure);
+        Assert.Equal("No se pudo iniciar sesión. Verifica tu conexión e intenta de nuevo.", vm.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhenTheServerNeverAnswers_EndsAtTheTimeoutAsAConnectionFailure()
+    {
+        var api = new FakeTenantApiClient { LoginNeverCompletes = true };
+        var vm = Build(api, delay: (_, _) => Task.CompletedTask);
+
+        var success = await vm.LoginAsync();
+
+        Assert.False(success);
+        Assert.Equal(LoginFailure.Connection, vm.LastFailure);
+        Assert.Equal("No se pudo iniciar sesión. Verifica tu conexión e intenta de nuevo.", vm.ErrorMessage);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public async Task LoginAsync_ASlowButAnsweringServerStillSucceeds()
+    {
+        var api = new FakeTenantApiClient { TokenToReturn = MakeToken("42"), LoginDelay = TimeSpan.FromMilliseconds(50) };
+        var vm = Build(api);
+
+        var success = await vm.LoginAsync();
+
+        Assert.True(success);
+        Assert.Equal(LoginFailure.None, vm.LastFailure);
+    }
+
+    [Fact]
+    public async Task LastFailure_ResetsOnTheNextAttempt()
+    {
+        var api = new FakeTenantApiClient { ThrowOnLogin = true };
+        var vm = Build(api);
+        await vm.LoginAsync();
+
+        api.ThrowOnLogin = false;
+        api.TokenToReturn = MakeToken("42");
+        await vm.LoginAsync();
+
+        Assert.Equal(LoginFailure.None, vm.LastFailure);
+        Assert.Null(vm.ErrorMessage);
+    }
 }
