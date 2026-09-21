@@ -60,7 +60,7 @@ public class AlertsReadTrackerTests
         var (tracker, _, _) = await Build();
         var items = new[] { Payment("Agua", 9, T0), Announcement(1, T0) };
 
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
 
         Assert.Equal(0, await tracker.UnreadCountAsync(items));
         Assert.Empty(await tracker.UnreadKeysAsync(items));
@@ -70,7 +70,7 @@ public class AlertsReadTrackerTests
     public async Task ANewerDateForTheSameAlertIsUnreadAgain_AnUnchangedOneIsNot()
     {
         var (tracker, _, _) = await Build();
-        await tracker.MarkSeenAsync([Payment("Agua", 9, T0), Payment("Gas", 9, T0)]);
+        await tracker.MarkAllReadAsync([Payment("Agua", 9, T0), Payment("Gas", 9, T0)]);
 
         var later = new[] { Payment("Agua", 9, T0.AddDays(1)), Payment("Gas", 9, T0) };
 
@@ -81,7 +81,7 @@ public class AlertsReadTrackerTests
     public async Task ANewAlertIsUnread_EvenWithAnOlderDateThanWhatWasSeen()
     {
         var (tracker, _, _) = await Build();
-        await tracker.MarkSeenAsync([Announcement(1, T0.AddDays(5))]);
+        await tracker.MarkAllReadAsync([Announcement(1, T0.AddDays(5))]);
 
         var items = new[] { Announcement(1, T0.AddDays(5)), Payment("Luz", 9, T0) };
 
@@ -92,9 +92,9 @@ public class AlertsReadTrackerTests
     public async Task MarkSeen_DropsKeysThatAreNoLongerListed()
     {
         var (tracker, store, _) = await Build();
-        await tracker.MarkSeenAsync([Announcement(1, T0), Announcement(2, T0)]);
+        await tracker.MarkAllReadAsync([Announcement(1, T0), Announcement(2, T0)]);
 
-        await tracker.MarkSeenAsync([Announcement(2, T0)]);
+        await tracker.MarkAllReadAsync([Announcement(2, T0)]);
 
         Assert.Equal(["a:2"], store.Stored("7")!.Keys);
     }
@@ -104,7 +104,7 @@ public class AlertsReadTrackerTests
     {
         var (tracker, store, _) = await Build();
 
-        await tracker.MarkSeenAsync([Announcement(1, T0)]);
+        await tracker.MarkAllReadAsync([Announcement(1, T0)]);
 
         var stored = store.Stored("7")!;
         Assert.Equal(T0.Ticks, stored["a:1"]);
@@ -116,7 +116,7 @@ public class AlertsReadTrackerTests
     {
         var (tracker, store, tokens) = await Build("7");
         var items = new[] { Announcement(1, T0) };
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
 
         await tokens.SaveTokenAsync(Jwt("8"));
         Assert.Equal(1, await tracker.UnreadCountAsync(items));
@@ -134,7 +134,7 @@ public class AlertsReadTrackerTests
         var items = new[] { new AlertaModel { Kind = "mystery", Id = 9, At = T0 }, Announcement(1, T0) };
 
         Assert.Equal(1, await tracker.UnreadCountAsync(items));
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
         Assert.Equal(["a:1"], store.Stored("7")!.Keys);
     }
 
@@ -147,7 +147,7 @@ public class AlertsReadTrackerTests
         var items = new[] { Announcement(1, T0) };
 
         Assert.Equal(1, await tracker.UnreadCountAsync(items));
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class AlertsReadTrackerTests
         var tracker = new AlertsReadTracker(store, new FakeTokenStore());
         var items = new[] { Announcement(1, T0) };
 
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
 
         Assert.Equal(0, store.SaveCount);
         Assert.Equal(1, await tracker.UnreadCountAsync(items));
@@ -172,8 +172,72 @@ public class AlertsReadTrackerTests
         var tracker = new AlertsReadTracker(store, tokens);
         var items = new[] { Announcement(1, T0) };
 
-        await tracker.MarkSeenAsync(items);
+        await tracker.MarkAllReadAsync(items);
 
         Assert.Equal(0, await tracker.UnreadCountAsync(items));
+    }
+
+    // ---- 017: an alert is read only when the tenant marks it (one by swipe, or all) ------------------------------------
+
+    [Fact]
+    public async Task MarkRead_RecordsOnlyThatAlert()
+    {
+        var (tracker, store, _) = await Build();
+        var items = new[] { Announcement(1, T0), Announcement(2, T0) };
+
+        await tracker.MarkReadAsync(items[0], items);
+
+        Assert.Equal(["a:2"], await tracker.UnreadKeysAsync(items));
+        Assert.Equal(["a:1"], store.Stored("7")!.Keys);
+    }
+
+    [Fact]
+    public async Task MarkRead_KeepsTheOtherReadMarks_AndDropsAlertsNoLongerListed()
+    {
+        var (tracker, store, _) = await Build();
+        await tracker.MarkAllReadAsync([Announcement(1, T0), Announcement(2, T0)]);
+        var listed = new[] { Announcement(2, T0), Announcement(3, T0) };
+
+        await tracker.MarkReadAsync(listed[1], listed);
+
+        Assert.Equal(["a:2", "a:3"], store.Stored("7")!.Keys.Order());
+        Assert.Empty(await tracker.UnreadKeysAsync(listed));
+    }
+
+    [Fact]
+    public async Task MarkRead_ANewerDateForTheSameAlertIsUnreadAgain()
+    {
+        var (tracker, _, _) = await Build();
+        await tracker.MarkReadAsync(Payment("Agua", 9, T0), [Payment("Agua", 9, T0)]);
+
+        Assert.Equal(["p:Agua:2026-9"], await tracker.UnreadKeysAsync([Payment("Agua", 9, T0.AddDays(1))]));
+    }
+
+    [Fact]
+    public async Task MarkRead_WithoutASession_OrWithAFailingStore_DoesNothingAndNeverThrows()
+    {
+        var store = new FakeAlertsSeenStore();
+        var noSession = new AlertsReadTracker(store, new FakeTokenStore());
+        var item = Announcement(1, T0);
+        await noSession.MarkReadAsync(item, [item]);
+        Assert.Equal(0, store.SaveCount);
+
+        var (tracker, failing, _) = await Build();
+        failing.ThrowOnLoad = true;
+        failing.ThrowOnSave = true;
+        await tracker.MarkReadAsync(item, [item]);
+    }
+
+    [Fact]
+    public async Task MarkRead_IsPerTenant()
+    {
+        var (tracker, store, tokens) = await Build("7");
+        var item = Announcement(1, T0);
+        await tracker.MarkReadAsync(item, [item]);
+
+        await tokens.SaveTokenAsync(Jwt("8"));
+
+        Assert.Equal(1, await tracker.UnreadCountAsync([item]));
+        Assert.Null(store.Stored("8"));
     }
 }

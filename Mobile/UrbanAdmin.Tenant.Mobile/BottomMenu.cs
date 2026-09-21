@@ -37,7 +37,8 @@ public static class BottomMenu
         }
     }
 
-    // Hides the text under every icon. Safe to call repeatedly: the platform bar can be rebuilt (a role change,
+    // Hides the text under every icon (a backup: Platforms/Android/CustomShellRenderer sets the same mode each time
+    // the bar is styled and is the source of truth). Safe to call repeatedly: the platform bar can be rebuilt (a role change,
     // a rotation), so the shell calls this on every navigation.
     public static void ApplyIconOnly()
     {

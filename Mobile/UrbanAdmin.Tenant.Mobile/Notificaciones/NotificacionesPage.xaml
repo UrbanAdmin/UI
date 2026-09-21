@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
   013-tenant-pagos-alertas-redesign: the tenant "Alertas" screen, built to the approved mockup
-  (Mockups/tenant-alertas-cards/index.html): the shared header ("TUS AVISOS" / "Alertas" + logout) and
-  one rounded card per alert (colored dot, title, relative date, text, status chip). The route and
-  class name stay "Notificaciones" so navigation code is untouched; only the tab title changed.
+  (Mockups/tenant-alertas-cards/index.html). 017-icon-only-tab-bar (Mockups/tab-bar-icon-only): it lists only the
+  alerts the tenant has not read; a card is marked read by swiping it (green "Leída") and then disappears, the header
+  action "Marcar todas" clears the list, and the link "Ver todas las notificaciones" opens the full list. The route
+  and class name stay "Notificaciones" so navigation code is untouched.
 -->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Notificaciones.NotificacionesPage"
@@ -15,12 +16,12 @@
     Title="Alertas">
 
     <ScrollView>
-        <VerticalStackLayout Padding="22,0,22,28" Spacing="0">
-            <controls:TenantHeader Kicker="Tus avisos" Title="Alertas" />
+        <VerticalStackLayout Padding="16,0,16,28" Spacing="0">
+            <controls:TenantHeader x:Name="Header" Kicker="Tus avisos" Title="Alertas" ActionClicked="OnMarkAllClicked" />
 
             <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
 
-            <VerticalStackLayout x:Name="ErrorPanel" IsVisible="False" Spacing="12" Margin="0,4,0,0">
+            <VerticalStackLayout x:Name="ErrorPanel" IsVisible="False" Spacing="12" Margin="6,4,6,0">
                 <Border
                     Padding="18,16"
                     Stroke="Transparent"
@@ -37,6 +38,7 @@
             <Border
                 x:Name="EmptyPanel"
                 IsVisible="False"
+                Margin="6,0"
                 Padding="18,26"
                 Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                 StrokeDashArray="4,4"
@@ -47,60 +49,36 @@
                         Style="{StaticResource SubHeadline}"
                         HorizontalTextAlignment="Center" />
                     <Label
-                        Text="No tienes avisos por ahora. Aquí verás recordatorios de pago, pagos confirmados y comunicados."
+                        Text="No tienes alertas sin leer. Aquí verás los recordatorios de pago, los pagos confirmados y los comunicados nuevos."
                         Style="{StaticResource Muted}"
                         HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Border>
 
-            <!-- One card per alert. Announcements ("Comunicado") sit on a light sage ground. -->
-            <VerticalStackLayout x:Name="CardsList" Spacing="12" IsVisible="False">
+            <Label
+                x:Name="SwipeHint"
+                Text="Desliza una tarjeta hacia un lado para marcarla como leída."
+                Style="{StaticResource Muted}"
+                FontSize="13"
+                Margin="6,0,6,10"
+                IsVisible="False" />
+
+            <!-- One card per unread alert; marking one read removes it from this list. -->
+            <VerticalStackLayout x:Name="CardsList" Spacing="0" IsVisible="False">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="rows:AlertCardRow">
-                        <Border
-                            Style="{StaticResource CardBorder}"
-                            Padding="18,16,18,15"
-                            StrokeShape="RoundRectangle 26"
-                            AutomationProperties.Name="{Binding AccessibleName}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding Kind}" Value="announcement">
-                                    <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                                <controls:StatusDot Grid.Column="0" Kind="{Binding Kind}" Size="12" Margin="0,6,0,0" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="3">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                                        <!-- 017: a small accent dot on a card that was unread when this screen opened (that visit only). -->
-                                        <Border
-                                            Grid.Column="0"
-                                            WidthRequest="10"
-                                            HeightRequest="10"
-                                            VerticalOptions="Center"
-                                            Stroke="Transparent"
-                                            StrokeShape="RoundRectangle 5"
-                                            IsVisible="{Binding IsNew}"
-                                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                                        <Label
-                                            Grid.Column="1"
-                                            Text="{Binding Title}"
-                                            FontFamily="FigtreeSemibold"
-                                            FontSize="17" />
-                                        <Label
-                                            Grid.Column="2"
-                                            Text="{Binding When}"
-                                            Style="{StaticResource Muted}"
-                                            FontSize="13"
-                                            VerticalOptions="Start" />
-                                    </Grid>
-                                    <Label Text="{Binding Text}" FontSize="15" />
-                                    <controls:StatusChip Kind="{Binding Kind}" Text="{Binding Chip}" Margin="0,6,0,0" />
-                                </VerticalStackLayout>
-                            </Grid>
-                        </Border>
+                        <controls:AlertCardView MarkReadRequested="OnMarkReadRequested" />
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+
+            <Button
+                x:Name="SeeAllButton"
+                Text="Ver todas las notificaciones"
+                Style="{StaticResource ButtonSecondary}"
+                Margin="6,4,6,0"
+                IsVisible="False"
+                Clicked="OnSeeAllClicked" />
         </VerticalStackLayout>
     </ScrollView>
 

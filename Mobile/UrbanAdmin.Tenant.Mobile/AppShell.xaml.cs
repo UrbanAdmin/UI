@@ -18,6 +18,9 @@ public partial class AppShell : Shell
 
 		// 013 slice C: announcements, pushed from the "Comunicados" action in the Cartera header.
 		Routing.RegisterRoute("Comunicados", typeof(ComunicadosPage));
+
+		// 017: the full list of alerts, pushed from "Ver todas las notificaciones" in Alertas.
+		Routing.RegisterRoute("TodasAlertas", typeof(Notificaciones.TodasAlertasPage));
 		Routing.RegisterRoute("ComunicadoEdit", typeof(ComunicadoEditPage));
 
 		// 012/014: the admin Pagos screen also opens as a pushed detail from a Cartera month

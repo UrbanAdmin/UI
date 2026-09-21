@@ -33,6 +33,9 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
+		// 017-icon-only-tab-bar: no platform line inside the text boxes (Android).
+		FieldChrome.Apply();
+
 #if ANDROID
 		builder.ConfigureMauiHandlers(handlers =>
 		{
@@ -55,7 +58,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<FingerprintSignIn>();
 		builder.Services.AddTransient<SlowSignInHint>();
 		// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen and the shared tab-badge state.
-		builder.Services.AddTransient<AlertasViewModel>();
+		builder.Services.AddSingleton<AlertasViewModel>();
 		// 017-icon-only-tab-bar: the phone remembers which alerts each tenant has read (the number over the bell).
 		builder.Services.AddSingleton<IAlertsSeenStore, PreferencesAlertsSeenStore>();
 		builder.Services.AddSingleton<AlertsReadTracker>();
@@ -75,6 +78,7 @@ public static class MauiProgram
 
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<NotificacionesPage>();
+		builder.Services.AddTransient<TodasAlertasPage>();
 		builder.Services.AddTransient<PagosPage>();
 		builder.Services.AddTransient<ApartmentsPage>();
 		builder.Services.AddTransient<UsersPage>();

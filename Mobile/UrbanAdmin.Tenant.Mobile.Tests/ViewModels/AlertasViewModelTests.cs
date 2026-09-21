@@ -184,103 +184,191 @@ public class AlertasViewModelTests
         Assert.Equal(0, api.GetAlertasCallCount);
     }
 
-    // ---- 017-icon-only-tab-bar: read / unread -----------------------------------------------------------------------
+    // ---- 017: alerts are read by the tenant (swipe / "Marcar todas"), never by opening the screen -----------------------
 
     private static AlertaModel Announce(long id, DateTime at) =>
         new() { Kind = "announcement", Id = id, Title = "Aviso " + id, Body = "Texto", At = at };
 
-    [Fact]
-    public async Task LoadAsync_MarksEveryShownAlertAsSeen_AndTheBadgeGoesToZero()
+    private static async Task<(AlertasViewModel Vm, FakeTenantApiClient Api, AlertsBadgeState Badge, AlertsReadTracker Tracker, FakeAlertsSeenStore Store)> BuildAll(params AlertaModel[] items)
     {
-        var (vm, _, badge, _, tracker) = await BuildWithTracker(new AlertasModel
-        {
-            NeedsActionCount = 3,
-            Items = [Announce(1, NowUtc()), Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc())],
-        });
-        badge.Set(2);
-
-        await vm.LoadAsync();
-
-        Assert.Equal(0, badge.Count);
-        Assert.Equal(0, await tracker.UnreadCountAsync(
-            [Announce(1, NowUtc()), Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc())]));
+        var api = new FakeTenantApiClient { Alertas = new AlertasModel { NeedsActionCount = 99, Items = [.. items] } };
+        var tokens = new FakeTokenStore();
+        await tokens.SaveTokenAsync(AlertsReadTrackerTests.Jwt("7"));
+        var badge = new AlertsBadgeState();
+        var store = new FakeAlertsSeenStore();
+        var tracker = new AlertsReadTracker(store, tokens);
+        return (new AlertasViewModel(api, tokens, new FakeCrashDiagnosticsService(), badge, tracker, NowUtc), api, badge, tracker, store);
     }
 
     [Fact]
-    public async Task LoadAsync_AFailedLoad_MarksNothingAndKeepsTheBadge()
+    public async Task LoadAsync_NeverMarksAnythingRead_AndTheBadgeIsTheUnreadCount()
     {
-        var (vm, api, badge, _, tracker) = await BuildWithTracker(new AlertasModel { Items = [Announce(1, NowUtc())] });
-        badge.Set(1);
+        var (vm, _, badge, tracker, _) = await BuildAll(Announce(1, NowUtc()), Announce(2, NowUtc()));
+
+        await vm.LoadAsync();
+        await vm.LoadAsync();
+
+        Assert.Equal(2, badge.Count);
+        Assert.Equal(2, vm.Cards.Count);
+        Assert.Equal(2, await tracker.UnreadCountAsync([Announce(1, NowUtc()), Announce(2, NowUtc())]));
+    }
+
+    [Fact]
+    public async Task Cards_ListsOnlyTheUnread_AllCardsListsEverything()
+    {
+        var (vm, _, badge, tracker, _) = await BuildAll(Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-1)));
+        await tracker.MarkAllReadAsync([Announce(1, NowUtc().AddDays(-1))]);
+
+        await vm.LoadAsync();
+
+        Assert.Equal(["Aviso 2"], vm.Cards.Select(c => c.Title));
+        Assert.Equal(["Aviso 2", "Aviso 1"], vm.AllCards.Select(c => c.Title));
+        Assert.Equal([true, false], vm.AllCards.Select(c => c.IsUnread));
+        Assert.Equal(1, badge.Count);
+        Assert.True(vm.HasUnread);
+    }
+
+    [Fact]
+    public async Task MarkReadAsync_RemovesTheCardFromTheList_LowersTheBadge_AndItStaysInTheFullList()
+    {
+        var (vm, _, badge, _, _) = await BuildAll(Announce(1, NowUtc()), Announce(2, NowUtc()));
+        await vm.LoadAsync();
+        var first = vm.Cards[0];
+
+        await vm.MarkReadAsync(first);
+
+        Assert.Equal(["Aviso 2"], vm.Cards.Select(c => c.Title));
+        Assert.False(first.IsUnread);
+        Assert.Equal(1, badge.Count);
+        Assert.Equal(2, vm.AllCards.Count);
+        Assert.Contains(first, vm.AllCards);
+    }
+
+    [Fact]
+    public async Task MarkReadAsync_IsRememberedOnTheNextLoad()
+    {
+        var (vm, _, badge, _, _) = await BuildAll(Announce(1, NowUtc()), Announce(2, NowUtc()));
+        await vm.LoadAsync();
+        await vm.MarkReadAsync(vm.Cards[0]);
+
+        await vm.LoadAsync();
+
+        Assert.Single(vm.Cards);
+        Assert.Equal(1, badge.Count);
+    }
+
+    [Fact]
+    public async Task MarkReadAsync_OnAReadCard_DoesNothing()
+    {
+        var (vm, _, badge, _, store) = await BuildAll(Announce(1, NowUtc()));
+        await vm.LoadAsync();
+        var card = vm.Cards[0];
+        await vm.MarkReadAsync(card);
+        var saves = store.SaveCount;
+
+        await vm.MarkReadAsync(card);
+
+        Assert.Equal(saves, store.SaveCount);
+        Assert.Equal(0, badge.Count);
+    }
+
+    [Fact]
+    public async Task MarkAllReadAsync_ClearsTheListAndTheBadge_AndItIsRemembered()
+    {
+        var (vm, _, badge, _, _) = await BuildAll(Announce(1, NowUtc()), Announce(2, NowUtc()), Announce(3, NowUtc()));
+        await vm.LoadAsync();
+
+        await vm.MarkAllReadAsync();
+
+        Assert.Empty(vm.Cards);
+        Assert.False(vm.HasUnread);
+        Assert.True(vm.IsEmpty);
+        Assert.Equal(0, badge.Count);
+        Assert.All(vm.AllCards, c => Assert.False(c.IsUnread));
+
+        await vm.LoadAsync();
+        Assert.Empty(vm.Cards);
+        Assert.Equal(3, vm.AllCards.Count);
+    }
+
+    [Fact]
+    public async Task ANewOrChangedAlertAfterMarkingAll_IsTheOnlyOneListed()
+    {
+        var (vm, api, badge, _, _) = await BuildAll(Announce(1, NowUtc().AddDays(-2)), Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc().AddDays(-1)));
+        await vm.LoadAsync();
+        await vm.MarkAllReadAsync();
+
+        api.Alertas.Items.Insert(0, Announce(2, NowUtc()));                                                                // new announcement
+        api.Alertas.Items[2] = Payment("Agua", 9, "overdue", new DateTime(2026, 9, 15), 1000m, NowUtc());                  // newer reminder
+        await vm.LoadAsync();
+
+        Assert.Equal(["Aviso 2", "Agua · septiembre"], vm.Cards.Select(c => c.Title));
+        Assert.Equal(2, badge.Count);
+    }
+
+    [Fact]
+    public async Task Marking_StillUpdatesTheScreen_WhenThePhoneCannotRememberIt()
+    {
+        var (vm, _, badge, _, store) = await BuildAll(Announce(1, NowUtc()), Announce(2, NowUtc()));
+        await vm.LoadAsync();
+        store.ThrowOnSave = true;
+
+        await vm.MarkReadAsync(vm.Cards[0]);
+
+        Assert.Single(vm.Cards);
+        Assert.Equal(1, badge.Count);
+    }
+
+    [Fact]
+    public async Task ACard_RaisesPropertyChanged_WhenItIsMarkedRead()
+    {
+        var (vm, _, _, _, _) = await BuildAll(Announce(1, NowUtc()));
+        await vm.LoadAsync();
+        var card = vm.Cards[0];
+        var changed = new List<string?>();
+        card.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        await vm.MarkReadAsync(card);
+
+        Assert.Contains(nameof(card.IsUnread), changed);
+        Assert.Contains(nameof(card.AccessibleName), changed);
+    }
+
+    [Fact]
+    public async Task AccessibleName_AnnouncesUnreadCardsAsNew_AndOnlyThoseAreOfferedTheAction()
+    {
+        var (vm, _, _, tracker, _) = await BuildAll(Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-1)));
+        await tracker.MarkAllReadAsync([Announce(1, NowUtc().AddDays(-1))]);
+
+        await vm.LoadAsync();
+
+        Assert.StartsWith("Nuevo. ", vm.AllCards[0].AccessibleName);
+        Assert.DoesNotContain("Nuevo", vm.AllCards[1].AccessibleName);
+        Assert.Contains("Aviso 2", vm.AllCards[0].AccessibleName);
+    }
+
+    [Fact]
+    public async Task ACardKeepsItsTextChipAndDate_WhenItIsMarkedRead()
+    {
+        var (vm, _, _, _, _) = await BuildAll(Announce(1, new DateTime(2026, 9, 15, 20, 0, 0, DateTimeKind.Utc)));
+        await vm.LoadAsync();
+
+        await vm.MarkReadAsync(vm.Cards[0]);
+
+        var card = vm.AllCards[0];
+        Assert.Equal(("Aviso 1", "Texto", "Comunicado", "ayer"), (card.Title, card.Text, card.Chip, card.When));
+    }
+
+    [Fact]
+    public async Task AFailedLoad_LeavesTheCardsAndTheBadgeAsTheyWere()
+    {
+        var (vm, api, badge, _, _) = await BuildAll(Announce(1, NowUtc()));
+        await vm.LoadAsync();
         api.ThrowOnGet = true;
 
         await vm.LoadAsync();
 
+        Assert.True(vm.HasError);
         Assert.Equal(1, badge.Count);
-        Assert.Equal(1, await tracker.UnreadCountAsync([Announce(1, NowUtc())]));
-    }
-
-    [Fact]
-    public async Task LoadAsync_ANewAnnouncementAfterAVisit_IsTheOnlyUnreadOne()
-    {
-        var (vm, api, _, _, tracker) = await BuildWithTracker(new AlertasModel { Items = [Announce(1, NowUtc().AddDays(-1))] });
-        await vm.LoadAsync();
-
-        api.Alertas = new AlertasModel { Items = [Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-1))] };
-
-        Assert.Equal(["a:2"], await tracker.UnreadKeysAsync(api.Alertas.Items));
-    }
-
-    // ---- 017 US3: the "new" mark lasts one visit ---------------------------------------------------------------------
-
-    [Fact]
-    public async Task Cards_UnreadAtLoad_AreNew_AndAnnouncedAsNew()
-    {
-        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc()), Announce(2, NowUtc().AddHours(-1))] });
-
-        await vm.LoadAsync();
-
-        Assert.All(vm.Cards, c => Assert.True(c.IsNew));
-        Assert.All(vm.Cards, c => Assert.StartsWith("Nuevo. ", c.AccessibleName));
-    }
-
-    [Fact]
-    public async Task Cards_OnTheNextVisit_AreNotNew()
-    {
-        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc())] });
-        await vm.LoadAsync();
-
-        await vm.LoadAsync();
-
-        Assert.False(vm.Cards[0].IsNew);
-        Assert.False(vm.Cards[0].AccessibleName.StartsWith("Nuevo"));
-    }
-
-    [Fact]
-    public async Task Cards_AnAlertThatArrivedWhileAway_IsTheOnlyNewOne()
-    {
-        var (vm, api, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, NowUtc().AddDays(-2))] });
-        await vm.LoadAsync();
-        api.Alertas = new AlertasModel { Items = [Announce(2, NowUtc()), Announce(1, NowUtc().AddDays(-2))] };
-
-        await vm.LoadAsync();
-
-        Assert.Equal([true, false], vm.Cards.Select(c => c.IsNew));
-    }
-
-    [Fact]
-    public async Task Cards_TextChipAndDateAreUnchangedByTheMark()
-    {
-        var (vm, _, _) = await BuildForCards(new AlertasModel { Items = [Announce(1, new DateTime(2026, 9, 15, 20, 0, 0, DateTimeKind.Utc))] });
-
-        await vm.LoadAsync();
-
-        Assert.Equal(("Aviso 1", "Texto", "Comunicado", "ayer"), (vm.Cards[0].Title, vm.Cards[0].Text, vm.Cards[0].Chip, vm.Cards[0].When));
-        Assert.Contains("Aviso 1", vm.Cards[0].AccessibleName);
-    }
-
-    private static async Task<(AlertasViewModel Vm, FakeTenantApiClient Api, AlertsBadgeState Badge)> BuildForCards(AlertasModel alertas)
-    {
-        var (vm, api, badge, _) = await Build(alertas);
-        return (vm, api, badge);
     }
 }

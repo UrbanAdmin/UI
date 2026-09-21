@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  017-icon-only-tab-bar (Mockups/tab-bar-icon-only): "Todas las alertas", opened from the link at the bottom of
+  Alertas. Every alert of the last 90 days (at most 50), newest first: unread cards raised and swipeable, read
+  cards flat. A pushed screen (back arrow, no logout).
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Notificaciones.TodasAlertasPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    xmlns:rows="clr-namespace:UrbanAdmin.Tenant.Mobile.Core.ViewModels;assembly=UrbanAdmin.Tenant.Mobile.Core"
+    Shell.NavBarIsVisible="False"
+    Title="Todas las alertas">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16,0,16,28" Spacing="0">
+            <controls:TenantHeader Kicker="Últimos 90 días" Title="Todas las alertas" ShowLogout="False" ShowBack="True" />
+
+            <Label
+                x:Name="EmptyLabel"
+                Text="No hay alertas por ahora."
+                Style="{StaticResource Muted}"
+                Margin="6,20"
+                HorizontalTextAlignment="Center"
+                IsVisible="False" />
+
+            <Label
+                x:Name="SwipeHint"
+                Text="Las no leídas están elevadas: desliza una para marcarla como leída."
+                Style="{StaticResource Muted}"
+                FontSize="13"
+                Margin="6,0,6,10"
+                IsVisible="False" />
+
+            <VerticalStackLayout x:Name="CardsList" Spacing="0">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="rows:AlertCardRow">
+                        <controls:AlertCardView MarkReadRequested="OnMarkReadRequested" />
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

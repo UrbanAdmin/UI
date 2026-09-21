@@ -121,7 +121,7 @@ public class AlertsBadgeServiceTests
     public async Task RefreshAsync_AfterTheTenantReadEverything_ShowsNoNumber_UntilSomethingNewArrives()
     {
         var (service, state, api, tracker, _) = await Build();
-        await tracker.MarkSeenAsync(api.Alertas.Items);
+        await tracker.MarkAllReadAsync(api.Alertas.Items);
 
         await service.RefreshAsync();
         Assert.Equal(0, state.Count);
@@ -135,7 +135,7 @@ public class AlertsBadgeServiceTests
     public async Task RefreshAsync_ANewerReminderForAChargeCountsAgain_AStillOverdueChargeDoesNot()
     {
         var (service, state, api, tracker, _) = await Build();
-        await tracker.MarkSeenAsync(api.Alertas.Items);
+        await tracker.MarkAllReadAsync(api.Alertas.Items);
 
         api.Alertas.Items[1] = Payment("Agua", Now.AddDays(1));
         await service.RefreshAsync();
@@ -147,7 +147,7 @@ public class AlertsBadgeServiceTests
     public async Task RefreshAsync_EachTenantSeesTheirOwnCount()
     {
         var (service, state, api, tracker, tokens) = await Build();
-        await tracker.MarkSeenAsync(api.Alertas.Items);
+        await tracker.MarkAllReadAsync(api.Alertas.Items);
         await service.RefreshAsync();
         Assert.Equal(0, state.Count);
 

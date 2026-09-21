@@ -80,6 +80,8 @@
     <Color x:Key="SurfaceDark">#2e2b25</Color>
     <Color x:Key="Card">#f9f4ed</Color>             <!-- neutral-100, card fill -->
     <Color x:Key="CardDark">#2e2b25</Color>
+    <Color x:Key="CardRaised">#fffaf3</Color>       <!-- 017: an unread Alertas card, lifted -->
+    <Color x:Key="CardRaisedDark">#3b3226</Color>   <!-- lighter than CardDark so the lift reads in dark -->
     <Color x:Key="Ink">#201e1d</Color>
     <Color x:Key="Accent2">#7a8a5e</Color>          <!-- sage, second voice -->
     <Color x:Key="Accent2Dark">#aebf92</Color>
