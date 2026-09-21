@@ -43,4 +43,14 @@ public interface IAdminApiClient
     // charges, a value notifies just that apartment. month + year (both or neither) limit the
     // notice to that one billing period; the Cartera screen always sends its selected month.
     Task<CarteraNotifyResultModel> NotificarCarteraAsync(string token, long? apartmentId, int? month, int? year);
+
+    // 013-tenant-pagos-alertas-redesign slice C: the administrator's announcements (/admin/comunicados).
+    // The list is newest first; a 400 string body comes back as AdminWriteResult(false, message).
+    Task<List<ComunicadoModel>> GetComunicadosAsync(string token);
+
+    Task<AdminWriteResult> CreateComunicadoAsync(string token, string title, string body);
+
+    Task<AdminWriteResult> UpdateComunicadoAsync(string token, long id, string title, string body);
+
+    Task DeleteComunicadoAsync(string token, long id);
 }

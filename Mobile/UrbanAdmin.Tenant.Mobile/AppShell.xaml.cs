@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using UrbanAdmin.Tenant.Mobile.Admin;
 using UrbanAdmin.Tenant.Mobile.Core.ViewModels;
 
@@ -15,6 +15,10 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("ApartmentEdit", typeof(ApartmentEditPage));
 		Routing.RegisterRoute("UserEdit", typeof(UserEditPage));
 		Routing.RegisterRoute("AdminPagosEdit", typeof(AdminPagosEditPage));
+
+		// 013 slice C: announcements, pushed from the "Comunicados" action in the Cartera header.
+		Routing.RegisterRoute("Comunicados", typeof(ComunicadosPage));
+		Routing.RegisterRoute("ComunicadoEdit", typeof(ComunicadoEditPage));
 
 		// 012/014: the admin Pagos screen also opens as a pushed detail from a Cartera month
 		// ("AdminPagos?month=&year="); as the first admin tab its route is "AdminPagosHome".

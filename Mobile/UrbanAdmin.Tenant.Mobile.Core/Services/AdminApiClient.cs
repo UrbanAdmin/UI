@@ -225,4 +225,53 @@ public class AdminApiClient(HttpClient httpClient) : IAdminApiClient
         var result = await response.Content.ReadFromJsonAsync<CarteraNotifyResultModel>(JsonOptions);
         return result ?? new CarteraNotifyResultModel();
     }
+
+    public async Task<List<ComunicadoModel>> GetComunicadosAsync(string token)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/admin/comunicados");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<List<ComunicadoModel>>(JsonOptions);
+        return result ?? [];
+    }
+
+    public Task<AdminWriteResult> CreateComunicadoAsync(string token, string title, string body) =>
+        SendComunicadoAsync(token, HttpMethod.Post, "/admin/comunicados", title, body);
+
+    public Task<AdminWriteResult> UpdateComunicadoAsync(string token, long id, string title, string body) =>
+        SendComunicadoAsync(token, HttpMethod.Put, $"/admin/comunicados/{id}", title, body);
+
+    // Only a 400 carries a validation message (string body); any other failure (404, 5xx, network)
+    // throws so the view model shows its connection message.
+    private async Task<AdminWriteResult> SendComunicadoAsync(string token, HttpMethod method, string path, string title, string body)
+    {
+        var request = new HttpRequestMessage(method, path)
+        {
+            Content = JsonContent.Create(new { Title = title, Body = body }),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            return new AdminWriteResult(true, null);
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var error = await response.Content.ReadFromJsonAsync<string>(JsonOptions);
+            return new AdminWriteResult(false, error);
+        }
+
+        response.EnsureSuccessStatusCode();
+        return new AdminWriteResult(false, null);
+    }
+
+    public async Task DeleteComunicadoAsync(string token, long id)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/admin/comunicados/{id}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+    }
 }

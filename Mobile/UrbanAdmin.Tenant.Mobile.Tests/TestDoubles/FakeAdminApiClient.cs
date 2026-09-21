@@ -233,4 +233,50 @@ public class FakeAdminApiClient : IAdminApiClient
 
         return NotificarResult;
     }
+
+    // 013 slice C: announcements (comunicados).
+    public List<ComunicadoModel> Comunicados { get; set; } = [];
+    public bool ThrowOnGetComunicados { get; set; }
+    public bool ThrowOnSaveComunicado { get; set; }
+    public bool ThrowOnDeleteComunicado { get; set; }
+    public AdminWriteResult SaveComunicadoResult { get; set; } = new(true, null);
+    public (string Title, string Body)? LastCreatedComunicado { get; private set; }
+    public (long Id, string Title, string Body)? LastUpdatedComunicado { get; private set; }
+    public long? LastDeletedComunicadoId { get; private set; }
+
+    public Task<List<ComunicadoModel>> GetComunicadosAsync(string token) =>
+        ThrowOnGetComunicados ? throw new HttpRequestException("boom") : Task.FromResult(Comunicados);
+
+    public Task<AdminWriteResult> CreateComunicadoAsync(string token, string title, string body)
+    {
+        if (ThrowOnSaveComunicado)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastCreatedComunicado = (title, body);
+        return Task.FromResult(SaveComunicadoResult);
+    }
+
+    public Task<AdminWriteResult> UpdateComunicadoAsync(string token, long id, string title, string body)
+    {
+        if (ThrowOnSaveComunicado)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastUpdatedComunicado = (id, title, body);
+        return Task.FromResult(SaveComunicadoResult);
+    }
+
+    public Task DeleteComunicadoAsync(string token, long id)
+    {
+        if (ThrowOnDeleteComunicado)
+        {
+            throw new HttpRequestException("boom");
+        }
+
+        LastDeletedComunicadoId = id;
+        return Task.CompletedTask;
+    }
 }

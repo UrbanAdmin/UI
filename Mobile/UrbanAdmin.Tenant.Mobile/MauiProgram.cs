@@ -54,7 +54,6 @@ public static class MauiProgram
 		// 015-fix-fingerprint-reopen: the launch sign-in decision and the slow-server hint of the sign-in page.
 		builder.Services.AddTransient<FingerprintSignIn>();
 		builder.Services.AddTransient<SlowSignInHint>();
-		builder.Services.AddTransient<NotificacionesViewModel>();
 		// 013-tenant-pagos-alertas-redesign: the tenant Alertas screen and the shared tab-badge state.
 		builder.Services.AddTransient<AlertasViewModel>();
 		builder.Services.AddSingleton<AlertsBadgeState>();
@@ -67,6 +66,8 @@ public static class MauiProgram
 		builder.Services.AddTransient<AdminPagosViewModel>();
 		builder.Services.AddTransient<AdminPagosEditViewModel>();
 		builder.Services.AddTransient<CarteraViewModel>();
+		builder.Services.AddTransient<ComunicadosViewModel>();
+		builder.Services.AddTransient<ComunicadoEditViewModel>();
 		builder.Services.AddTransient<AccountViewModel>();
 
 		builder.Services.AddTransient<LoginPage>();
@@ -79,6 +80,8 @@ public static class MauiProgram
 		builder.Services.AddTransient<ApartmentEditPage>();
 		builder.Services.AddTransient<UserEditPage>();
 		builder.Services.AddTransient<AdminPagosEditPage>();
+		builder.Services.AddTransient<ComunicadosPage>();
+		builder.Services.AddTransient<ComunicadoEditPage>();
 		builder.Services.AddTransient<AccountPage>();
 
 		return builder.Build();

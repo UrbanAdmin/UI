@@ -259,7 +259,7 @@
     <Grid>
         <ScrollView x:Name="MainScroll">
             <VerticalStackLayout Padding="22,0,22,32" Spacing="0">
-                <controls:TenantHeader Kicker="Vencidos y por vencer" Title="Cartera" />
+                <controls:TenantHeader Kicker="Vencidos y por vencer" Title="Cartera" ActionText="Comunicados" ActionClicked="OnComunicadosClicked" />
 
                 <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
 

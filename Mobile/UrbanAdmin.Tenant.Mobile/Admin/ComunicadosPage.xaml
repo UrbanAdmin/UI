@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign slice C: the administrator's announcements list, built to the mockup approved on
+  2026-09-20 (Mockups/admin-comunicados/index.html): newest first, each card with Editar / Eliminar, an empty state
+  that explains what announcements are for, and a result line after publishing, editing or deleting. Pushed from the
+  "Comunicados" action in the Cartera header (back arrow, no logout).
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Admin.ComunicadosPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
+    Shell.NavBarIsVisible="False"
+    Title="Comunicados">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <controls:TenantHeader
+            Grid.Row="0"
+            Margin="22,0"
+            Kicker="Administración"
+            Title="Comunicados"
+            ShowLogout="False"
+            ShowBack="True"
+            ActionText="Nuevo"
+            ActionClicked="OnAddClicked" />
+
+        <Border
+            x:Name="ResultBanner"
+            Grid.Row="1"
+            Margin="22,0,22,10"
+            Padding="16,10"
+            Stroke="Transparent"
+            StrokeShape="RoundRectangle 999"
+            BackgroundColor="{AppThemeBinding Light={StaticResource SuccessBg}, Dark={StaticResource SuccessBgDark}}"
+            IsVisible="False">
+            <Label
+                x:Name="ResultLabel"
+                Style="{StaticResource ChipLabel}"
+                TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource SuccessDark}}" />
+        </Border>
+
+        <Grid Grid.Row="2" Padding="22,0,22,0">
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" VerticalOptions="Center" />
+
+            <VerticalStackLayout x:Name="EmptyPanel" IsVisible="False" Spacing="6" VerticalOptions="Center">
+                <Label Text="Aún no hay comunicados" FontFamily="FigtreeSemibold" FontSize="18" HorizontalTextAlignment="Center" />
+                <Label
+                    Text="Escribe un aviso para todos los inquilinos: mantenimientos, cambios de tarifa o cortes de servicio. Aparece en su pestaña Alertas."
+                    Style="{StaticResource Muted}"
+                    HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout x:Name="ErrorPanel" IsVisible="False" Spacing="12" VerticalOptions="Center">
+                <Label
+                    x:Name="ErrorLabel"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                <Button Text="Reintentar" Style="{StaticResource ButtonSecondary}" Clicked="OnRetryClicked" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+
+            <ScrollView x:Name="ItemsScroll" IsVisible="False">
+                <VerticalStackLayout x:Name="ItemsList" Spacing="12" Padding="0,0,0,24">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="admin:ComunicadoRow">
+                            <Border Style="{StaticResource CardBorder}" Padding="18,16,18,14" StrokeShape="RoundRectangle 26">
+                                <VerticalStackLayout Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0" Text="{Binding Title}" FontFamily="FigtreeSemibold" FontSize="17" />
+                                        <Label Grid.Column="1" Text="{Binding DateLabel}" Style="{StaticResource Muted}" FontSize="13" VerticalOptions="Start" />
+                                    </Grid>
+                                    <Label Text="{Binding Body}" FontSize="14" />
+                                    <HorizontalStackLayout Spacing="8" Margin="0,6,0,0">
+                                        <Button Text="Editar" Style="{StaticResource ButtonSecondary}" Padding="18,0" MinimumHeightRequest="40" Clicked="OnEditClicked" />
+                                        <Button
+                                            Text="Eliminar"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Padding="18,0"
+                                            MinimumHeightRequest="40"
+                                            TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}"
+                                            Clicked="OnDeleteClicked" />
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
+    </Grid>
+
+</ContentPage>

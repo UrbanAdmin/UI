@@ -233,6 +233,9 @@ public partial class CarteraPage : ContentPage
 
     private async void OnRetryClicked(object? sender, EventArgs e) => await ReloadAsync();
 
+    // 013 slice C: the administrator's announcements list (pushed, with a back arrow).
+    private async void OnComunicadosClicked(object? sender, EventArgs e) => await Shell.Current.GoToAsync("Comunicados");
+
     private void OnMonthTapped(object? sender, TappedEventArgs e)
     {
         if (sender is BindableObject { BindingContext: CarteraMonthRow row })

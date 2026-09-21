@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  013-tenant-pagos-alertas-redesign slice C: create / edit one announcement, built to the mockup approved on 2026-09-20
+  (Mockups/admin-comunicados/index.html): a title and a message with the validation text under each field, and
+  "Publicar" (new) or "Guardar cambios" (editing). Publishing is immediate; there is no push notification.
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Admin.ComunicadoEditPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    Shell.NavBarIsVisible="False"
+    Title="Comunicado">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="22,0,22,28" Spacing="10">
+            <controls:TenantHeader x:Name="Header" Kicker="Administración" Title="Nuevo comunicado" ShowLogout="False" ShowBack="True" />
+
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                <Entry x:Name="TitleEntry" Placeholder="Título" ReturnType="Next" />
+            </Border>
+            <Label
+                x:Name="TitleErrorLabel"
+                FontSize="13"
+                IsVisible="False"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+
+            <Border Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 22" Padding="20,6">
+                <Editor
+                    x:Name="BodyEditor"
+                    Placeholder="Escribe el aviso para los inquilinos…"
+                    AutoSize="TextChanges"
+                    MinimumHeightRequest="140" />
+            </Border>
+            <Label
+                x:Name="BodyErrorLabel"
+                FontSize="13"
+                IsVisible="False"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+
+            <Label
+                Text="Publicar es inmediato: todos los inquilinos lo ven en Alertas. No se envía notificación al teléfono."
+                Style="{StaticResource Muted}"
+                FontSize="13" />
+
+            <Label
+                x:Name="ErrorLabel"
+                FontAttributes="Bold"
+                IsVisible="False"
+                TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+
+            <Button x:Name="SaveButton" Text="Publicar" MinimumHeightRequest="52" Clicked="OnSaveClicked" />
+
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
