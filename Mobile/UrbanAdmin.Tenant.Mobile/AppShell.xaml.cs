@@ -35,10 +35,6 @@ public partial class AppShell : Shell
 			badge.Changed += () => MainThread.BeginInvokeOnMainThread(() => BottomMenu.Apply(badge.Count));
 			Navigated += (_, _) => BottomMenu.Apply(badge.Count);
 		}
-
-		// 017-icon-only-tab-bar: no text under the bottom menu icons, for both roles (the titles stay as the
-		// accessible names); repainted on every navigation because the platform bar can be rebuilt.
-		Navigated += (_, _) => BottomMenu.ApplyIconOnly();
 	}
 
 	// 008-mobile-admin-views T005: called from LoginPage right after a successful login.

@@ -8,10 +8,9 @@ namespace UrbanAdmin.Tenant.Mobile.Platforms.Android;
 // Android's BottomNavigationView defaults to "shifting" mode once a TabBar has more than
 // 3 items: only the selected tab shows its label at full size, the rest shrink/lose their
 // label, which reads as tabs being "cut off". The admin role has 5 visible tabs, so we
-// force a fixed mode here so every tab is equally sized.
-// 017-icon-only-tab-bar: that fixed mode is now "unlabeled" (icons only, no text under them; the tab titles
-// stay as the accessible names). It must be set here, on every appearance update: this override used to force
-// the labeled mode and undid the icon-only setting made elsewhere (BottomMenu.ApplyIconOnly is only a backup).
+// force a fixed, labeled mode here so every tab is equally sized and keeps its text.
+// 019-restore-tab-labels: 017-icon-only-tab-bar had switched this to "unlabeled" (icons only); reverted here,
+// the labels are back under every icon.
 public class CustomShellRenderer : ShellRenderer
 {
     protected override IShellBottomNavViewAppearanceTracker CreateBottomNavViewAppearanceTracker(ShellItem shellItem)
@@ -29,7 +28,7 @@ public class CustomShellRenderer : ShellRenderer
         public override void SetAppearance(BottomNavigationView bottomView, IShellAppearanceElement appearance)
         {
             base.SetAppearance(bottomView, appearance);
-            bottomView.LabelVisibilityMode = Google.Android.Material.Navigation.NavigationBarView.LabelVisibilityUnlabeled;
+            bottomView.LabelVisibilityMode = Google.Android.Material.Navigation.NavigationBarView.LabelVisibilityLabeled;
         }
     }
 }

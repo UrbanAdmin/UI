@@ -9,14 +9,12 @@ using UIKit;
 
 namespace UrbanAdmin.Tenant.Mobile;
 
-// The platform bottom menu. .NET MAUI Shell has no built-in tab badge and no "icons only" switch, so both are
-// done through the platform tab bar itself (Android BottomNavigationView, iOS/MacCatalyst UITabBarItem):
-//  - 013-tenant-pagos-alertas-redesign (research.md §7): the number over the tenant's "Alertas" icon;
-//  - 017-icon-only-tab-bar (research.md §1): no text drawn under the icons, for both roles. Every ShellContent
-//    keeps its Title: on Android it stays the item's accessible name and how the Alertas tab is found; on Apple
-//    it is copied into the item's AccessibilityLabel before the visible title is cleared.
-// The count comes from AlertsBadgeState (Core, unit-tested); this class only paints and never throws - a
-// missing tab bar simply means no badge and the labels stay.
+// The platform bottom menu badge. .NET MAUI Shell has no built-in tab badge, so the number over the tenant's
+// "Alertas" icon (013-tenant-pagos-alertas-redesign research.md §7) is painted through the platform tab bar
+// itself (Android BottomNavigationView, iOS/MacCatalyst UITabBarItem), found by its Title. The count comes from
+// AlertsBadgeState (Core, unit-tested); this class only paints and never throws - a missing tab bar simply
+// means no badge. (017-icon-only-tab-bar had also added label-hiding here; reverted by 019-restore-tab-labels -
+// the tab bar keeps its normal labels, set by the platform itself.)
 public static class BottomMenu
 {
     private const string AlertasTitle = "Alertas";
@@ -34,30 +32,6 @@ public static class BottomMenu
         catch (Exception)
         {
             // The badge is a convenience; the app works without it.
-        }
-    }
-
-    // Hides the text under every icon (a backup: Platforms/Android/CustomShellRenderer sets the same mode each time
-    // the bar is styled and is the source of truth). Safe to call repeatedly: the platform bar can be rebuilt (a role change,
-    // a rotation), so the shell calls this on every navigation.
-    public static void ApplyIconOnly()
-    {
-        try
-        {
-#if ANDROID
-            var nav = FindAndroidNavigation();
-            if (nav is not null)
-            {
-                // Material's "unlabeled" mode: icons only, the selected item keeps its indicator pill.
-                nav.LabelVisibilityMode = Google.Android.Material.Navigation.NavigationBarView.LabelVisibilityUnlabeled;
-            }
-#elif IOS || MACCATALYST
-            HideAppleTitles();
-#endif
-        }
-        catch (Exception)
-        {
-            // Labels simply stay visible.
         }
     }
 
@@ -126,31 +100,9 @@ public static class BottomMenu
 #elif IOS || MACCATALYST
     private static UITabBar? AppleTabBar() => Platform.GetCurrentUIViewController()?.TabBarController?.TabBar;
 
-    // A tab item has no "no title" mode: keep the name as the accessibility label, clear the visible title and
-    // centre the image where the title used to be. The Alertas item is found by that label.
-    private static void HideAppleTitles()
-    {
-        var items = AppleTabBar()?.Items;
-        if (items is null)
-        {
-            return;
-        }
-
-        foreach (var item in items)
-        {
-            if (!string.IsNullOrEmpty(item.Title))
-            {
-                item.AccessibilityLabel = item.Title;
-                item.Title = string.Empty;
-            }
-
-            item.ImageInsets = new UIEdgeInsets(6, 0, -6, 0);
-        }
-    }
-
     private static void ApplyApple(int count)
     {
-        var item = AppleTabBar()?.Items?.FirstOrDefault(i => i.AccessibilityLabel == AlertasTitle || i.Title == AlertasTitle);
+        var item = AppleTabBar()?.Items?.FirstOrDefault(i => i.Title == AlertasTitle);
         if (item is not null)
         {
             item.BadgeValue = count > 0 ? count.ToString() : null;
