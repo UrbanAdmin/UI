@@ -1,45 +1,149 @@
-.service-selector {
-  display: block;
-  max-width: 240px;
-  margin-bottom: 16px;
+/* Service pill row, above the card - a separate pill group from the apartment
+   tabs below (terracotta accent here, sage/olive accent-2 for the tabs). */
+.service-pills-wrap {
+  margin-bottom: 20px;
+}
+.pills-kicker {
+  margin: 0 0 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+.pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pill {
+  border: 1px solid var(--color-divider);
+  background: var(--color-card);
+  color: var(--color-neutral-700);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pill--active {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-accent-100);
 }
 
 .receipt-card {
   margin-bottom: 16px;
   background: var(--color-card);
+  border-radius: var(--radius-lg);
 }
 
-.receipt-filters {
-  display: flex;
-  flex-wrap: wrap;
+.receipt-row-top {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 8px;
+}
+
+.receipt-row-bottom {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr auto;
+  gap: 20px;
+  align-items: center;
 }
 
 .file-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 16px;
+  gap: 6px;
 }
 
 .file-field label {
-  font-size: 0.75rem;
-  opacity: 0.7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
 }
 
-.file-name {
-  font-size: 0.85rem;
-  opacity: 0.85;
+.file-drop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px dashed var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 10px 10px 10px 16px;
+  background: var(--color-bg);
+}
+
+.file-drop-name {
+  font-size: 13px;
+  color: var(--color-neutral-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-neutral-600);
+}
+
+.consumo-panel {
+  background: var(--color-accent-2-100);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.consumo-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-2-700);
+}
+.consumo-value {
+  margin: 6px 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+}
+.consumo-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-accent-2-700);
+}
+
+.save-total {
+  white-space: nowrap;
+}
+
+.actions-cell {
+  text-align: right;
+}
+.text-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.text-link:hover {
+  text-decoration: underline;
 }
 
 .error {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-top: 8px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
   font-size: 0.875rem;
@@ -47,6 +151,15 @@
 
 .full-width {
   width: 100%;
+}
+
+@media (max-width: 720px) {
+  .receipt-row-top {
+    grid-template-columns: 1fr;
+  }
+  .receipt-row-bottom {
+    grid-template-columns: 1fr;
+  }
 }
 
 mat-tab-group {
@@ -66,10 +179,10 @@ mat-tab-group {
   border-radius: var(--radius-pill);
 }
 ::ng-deep .mat-mdc-tab.mdc-tab--active {
-  background: var(--color-accent);
+  background: var(--color-accent-2-800);
 }
 ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-  color: var(--color-accent-100);
+  color: var(--color-accent-2-100);
 }
 
 .tab-content {

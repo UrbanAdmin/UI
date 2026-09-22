@@ -29,6 +29,7 @@ import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directiv
 import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -53,6 +54,7 @@ type ReadingRow = MeterReading & { monthLabel: string };
     CopCurrencyInputDirective,
     EmptyStateComponent,
     LoadingIndicatorComponent,
+    PageHeaderComponent,
   ],
 })
 export class CounterUtilitiesComponent {
@@ -90,6 +92,13 @@ export class CounterUtilitiesComponent {
   // why a single apartment's Cantidad a pagar equals the full Total del
   // recibo whenever it's currently the only one with a recorded reading.
   consumoTotal: number | null = null;
+
+  get consumoTotalFormatted(): string {
+    if (this.consumoTotal === null) {
+      return 'Sin lecturas registradas';
+    }
+    return `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(this.consumoTotal)} m³`;
+  }
 
   // getRows$ is called directly from the template on every apartment x
   // service tab, which re-evaluates on every change-detection cycle -

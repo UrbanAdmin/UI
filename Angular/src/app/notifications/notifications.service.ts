@@ -18,7 +18,7 @@ import { DatesService } from '../shared/dates.service';
 import { monthNumber } from './month-names';
 import { rentDueDate } from './rent-due-date';
 
-type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
+export type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
@@ -268,6 +268,7 @@ export class NotificationsService {
                 service: row.service,
                 dueDate: row.dueDate,
                 paid: row.paid,
+                amount: row.amount,
                 status: row.status,
                 month,
                 year,
@@ -306,6 +307,7 @@ export class NotificationsService {
                       service: row.service,
                       dueDate: new Date(deadline.dueDate),
                       paid: row.paid,
+                      amount: row.amount,
                       status: row.status,
                       month,
                       year,

@@ -1,17 +1,54 @@
-<div class="dashboard">
-  @for (card of quickAccessCards; track card.path) {
-    @if (!card.adminOnly || isAdmin) {
-      <mat-card class="quick-access-card" [routerLink]="[card.path]" data-testid="quick-access-card">
-        <mat-card-content>
-          <span class="card-icon-disc">
-            <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
-          </span>
-          <span class="card-label">{{ card.label }}</span>
-          @if (card.path === '/notifications' && pendingNotificationsCount() > 0) {
-            <span class="card-badge">{{ pendingNotificationsCount() }}</span>
-          }
-        </mat-card-content>
-      </mat-card>
-    }
+<app-page-header
+  [kicker]="kicker()"
+  title="Inicio"
+  [hint]="isAdmin ? 'Estado del recaudo del mes y acceso rápido a cada módulo.' : 'Tus pagos del mes y los avisos de la administración.'"
+/>
+
+<div class="dash">
+  @if (isAdmin) {
+    <div class="hero" data-testid="hero-card">
+      <p class="hero-kicker">Cartera vencida</p>
+      <p class="hero-amount">{{ carteraVencidaFormatted() }}</p>
+      <p class="hero-sub">{{ apartmentsAlDia() }} de {{ totalApartments() }} apartamentos al día</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>{{ apartmentsAlDia() }}</b><span>Pagados</span></div>
+        <div class="hero-stat"><b>{{ apartmentsPendientes() }}</b><span>Pendientes</span></div>
+        <div class="hero-stat"><b>{{ pendingNotificationsCount() }}</b><span>Avisos activos</span></div>
+      </div>
+    </div>
+  } @else {
+    <div class="hero" data-testid="hero-card">
+      <p class="hero-kicker">Pendiente este mes</p>
+      <p class="hero-amount">{{ pendienteEsteMesFormatted() }}</p>
+      <p class="hero-sub">{{ conceptosPorPagar() }} concepto{{ conceptosPorPagar() === 1 ? '' : 's' }} por pagar</p>
+      <div class="hero-stats">
+        @if (proximoVencimientoFormatted(); as due) {
+          <div class="hero-stat"><b>{{ due }}</b><span>Próximo vencimiento</span></div>
+        }
+        <div class="hero-stat"><b>{{ pendingNotificationsCount() }}</b><span>Avisos activos</span></div>
+      </div>
+    </div>
   }
+
+  <div class="dashboard">
+    @for (card of quickAccessCards; track card.path) {
+      @if (!card.adminOnly || isAdmin) {
+        <mat-card class="quick-access-card" [routerLink]="[card.path]" data-testid="quick-access-card">
+          <mat-card-content>
+            <span class="card-icon-disc">
+              <mat-icon class="card-icon">{{ card.icon }}</mat-icon>
+            </span>
+            <span class="card-text">
+              <span class="card-label">{{ card.label }}</span>
+              <span class="card-subtitle">{{ cardSubtitle(card.path) }}</span>
+            </span>
+            @if (card.path === '/notifications' && pendingNotificationsCount() > 0) {
+              <span class="card-badge">{{ pendingNotificationsCount() }}</span>
+            }
+            <mat-icon class="card-chevron">chevron_right</mat-icon>
+          </mat-card-content>
+        </mat-card>
+      }
+    }
+  </div>
 </div>

@@ -11,29 +11,14 @@
   box-sizing: border-box;
 }
 
-/* Brand mark: circular accent badge + Caprasimo wordmark, desktop only (FR-007's mobile
-   drawer keeps its pre-existing content unchanged). */
+/* Brand row: app-brand-mark (the real app icon, shared/brand-mark) + Caprasimo
+   wordmark, desktop only (FR-007's mobile drawer keeps its pre-existing content
+   unchanged). */
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 4px 6px 24px;
-}
-.brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent);
-  color: var(--color-accent-100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-}
-.brand-mark mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
 }
 .brand-name {
   font-family: var(--font-heading);

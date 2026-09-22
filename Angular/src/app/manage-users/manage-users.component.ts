@@ -17,6 +17,7 @@ import { UserDialogComponent } from '../user-dialog/user-dialog.component';
 import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 
 @Component({
   selector: 'app-manage-users',
@@ -32,6 +33,7 @@ import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-i
     MatTableModule,
     EmptyStateComponent,
     LoadingIndicatorComponent,
+    PageHeaderComponent,
   ],
 })
 export class ManageUsersComponent {

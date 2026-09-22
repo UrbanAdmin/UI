@@ -1,0 +1,9 @@
+<div class="page-header">
+  <div>
+    <p class="page-kicker">{{ kicker() }}</p>
+    <h1 class="page-title">{{ title() }}</h1>
+  </div>
+  @if (hint(); as text) {
+    <p class="page-hint">{{ text }}</p>
+  }
+</div>

@@ -289,7 +289,7 @@ describe('PaymentsComponent', () => {
 
   it('shows the Pagado toggle for an Admin', () => {
     expect(component.isReadOnly).toBe(false);
-    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.pay-chip')).toBeTruthy();
   });
 
   it('shows the editable Fecha límite de pago control for an Admin', () => {
@@ -325,7 +325,7 @@ describe('PaymentsComponent', () => {
     await setupOwner();
 
     expect(component.isReadOnly).toBe(true);
-    expect(fixture.nativeElement.querySelector('mat-slide-toggle')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.pay-chip')).toBeFalsy();
     expect(fixture.nativeElement.querySelector('mat-icon')).toBeTruthy();
   });
 

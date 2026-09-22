@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, Signal, computed, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
-import { Observable, map } from 'rxjs';
+import { Observable, map, shareReplay } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { NotificationStatus, ServicePayment } from './notification.model';
 import { monthName } from './month-names';
@@ -10,6 +11,7 @@ import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
+import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 
 type ActiveNotification = ServicePayment & { status: NotificationStatus; month: number; year: number };
 
@@ -37,6 +39,7 @@ interface ApartmentGroup {
     EmptyStateComponent,
     LoadingIndicatorComponent,
     StatusChipComponent,
+    PageHeaderComponent,
   ],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.css',
@@ -45,12 +48,30 @@ export class NotificationsComponent {
   protected readonly loadingService = inject(LoadingService);
   displayedColumns: string[] = ['service', 'dueDate', 'status'];
   readonly groups$: Observable<ApartmentGroup[]>;
+  private readonly groups: Signal<ApartmentGroup[]>;
 
   constructor(private notificationsService: NotificationsService) {
+    // shareReplay(1): both the template's `async` pipe and the hint's
+    // count/apartment signals below subscribe to this.
     this.groups$ = this.notificationsService
       .getActiveNotifications()
-      .pipe(map((notifications) => this.groupByApartmentAndPeriod(notifications)));
+      .pipe(
+        map((notifications) => this.groupByApartmentAndPeriod(notifications)),
+        shareReplay(1),
+      );
+    this.groups = toSignal(this.groups$, { initialValue: [] as ApartmentGroup[] });
   }
+
+  private readonly notificationCount = computed(() =>
+    this.groups().reduce((sum, g) => sum + g.periods.reduce((s, p) => s + p.items.length, 0), 0),
+  );
+  private readonly apartmentCount = computed(() => this.groups().length);
+
+  readonly hint = computed(() => {
+    const notifications = this.notificationCount();
+    const apartments = this.apartmentCount();
+    return `${notifications} aviso${notifications === 1 ? '' : 's'} activo${notifications === 1 ? '' : 's'} en ${apartments} apartamento${apartments === 1 ? '' : 's'}.`;
+  });
 
   private groupByApartmentAndPeriod(notifications: ActiveNotification[]): ApartmentGroup[] {
     const byApartment = new Map<string, ApartmentGroup>();

@@ -8,6 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service'; // <-- Import AuthService
+import { BrandMarkComponent } from '../shared/brand-mark/brand-mark.component';
 
 @Component({
   selector: 'app-login',
@@ -21,7 +22,8 @@ import { AuthService } from '../auth.service'; // <-- Import AuthService
     MatInputModule,
     MatButtonModule,
     MatCardModule,
-    MatIconModule
+    MatIconModule,
+    BrandMarkComponent,
 ]
 })
 export class LoginComponent {
@@ -29,6 +31,7 @@ export class LoginComponent {
   password = '';
   errorMessage = '';
   loading = false;
+  showPassword = false;
 
   constructor(private router: Router, private authService: AuthService) {}
 

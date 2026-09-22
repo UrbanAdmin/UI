@@ -10,6 +10,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../auth.service';
+import { BrandMarkComponent } from '../shared/brand-mark/brand-mark.component';
 
 interface NavLink {
   path: string;
@@ -31,6 +32,7 @@ interface NavLink {
     MatListModule,
     MatSidenavModule,
     MatToolbarModule,
+    BrandMarkComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',

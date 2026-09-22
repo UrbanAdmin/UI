@@ -1,62 +1,82 @@
-<mat-card>
-  <mat-card-title>Pagos</mat-card-title>
-  <mat-card-content>
-    <div class="filters">
-      @if (!isReadOnly) {
-        <mat-form-field appearance="outline">
-          <mat-label>Servicio</mat-label>
-          <mat-select [(ngModel)]="selectedService" (selectionChange)="onPeriodChange()">
-            @for (service of services; track service) {
-              <mat-option [value]="service">{{ service }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+<app-page-header
+  [kicker]="isReadOnly ? (monthNames[selectedMonth - 1] + ' ' + selectedYear) : (selectedService + ' · ' + monthNames[selectedMonth - 1] + ' ' + selectedYear)"
+  title="Pagos"
+  [hint]="isReadOnly ? undefined : 'Edita el valor de cada apartamento y marca los pagos recibidos.'"
+/>
+
+@if (isReadOnly) {
+  <div class="hero" data-testid="hero-card">
+    <p class="hero-kicker">Pendiente este mes</p>
+    <p class="hero-amount">{{ pendienteEsteMesFormatted() }}</p>
+    <p class="hero-sub">{{ conceptosPorPagar() }} concepto{{ conceptosPorPagar() === 1 ? '' : 's' }} por pagar</p>
+    @if (proximoVencimientoFormatted(); as due) {
+      <div class="hero-stats">
+        <div class="hero-stat"><b>{{ due }}</b><span>Próximo vencimiento</span></div>
+      </div>
+    }
+  </div>
+}
+
+<div class="filters">
+  @if (!isReadOnly) {
+    <mat-form-field appearance="outline">
+      <mat-label>Servicio</mat-label>
+      <mat-select [(ngModel)]="selectedService" (selectionChange)="onPeriodChange()">
+        @for (service of services; track service) {
+          <mat-option [value]="service">{{ service }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+
+  <mat-form-field appearance="outline">
+    <mat-label>Mes</mat-label>
+    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
+      @for (name of monthNames; track name; let i = $index) {
+        <mat-option [value]="i + 1">{{ name }}</mat-option>
       }
+    </mat-select>
+  </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Mes</mat-label>
-        <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
-          @for (name of monthNames; track name; let i = $index) {
-            <mat-option [value]="i + 1">{{ name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Año</mat-label>
-        <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
-          @for (year of years; track year) {
-            <mat-option [value]="year">{{ year }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </div>
-
-    @if (!isReadOnly) {
-      @if (selectedService !== 'Arriendo') {
-        <div class="deadline-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha límite de pago</mat-label>
-            <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
-            <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
-            <mat-datepicker #deadlinePicker></mat-datepicker>
-          </mat-form-field>
-          <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
-            Guardar
-          </button>
-        </div>
-      } @else {
-        <p class="arriendo-hint">El vencimiento del arriendo depende de la fecha de inicio de contrato de cada apartamento.</p>
+  <mat-form-field appearance="outline">
+    <mat-label>Año</mat-label>
+    <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
+      @for (year of years; track year) {
+        <mat-option [value]="year">{{ year }}</mat-option>
       }
+    </mat-select>
+  </mat-form-field>
 
-      @if (loadingService.isLoading()) {
-        <app-loading-indicator [loading]="true" />
-      } @else if (rows$ | async; as rows) {
-        @if (rows.length === 0) {
-          <app-empty-state icon="payments" message="No hay pagos registrados para este período." />
-        } @else {
+  @if (!isReadOnly && selectedService !== 'Arriendo') {
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha límite de pago</mat-label>
+      <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
+      <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
+      <mat-datepicker #deadlinePicker></mat-datepicker>
+    </mat-form-field>
+    <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
+      Guardar
+    </button>
+  }
+</div>
+
+@if (!isReadOnly) {
+  @if (selectedService === 'Arriendo') {
+    <p class="arriendo-hint">El vencimiento del arriendo depende de la fecha de inicio de contrato de cada apartamento.</p>
+  }
+
+  @if (loadingService.isLoading()) {
+    <app-loading-indicator [loading]="true" />
+  } @else if (rows$ | async; as rows) {
+    @if (rows.length === 0) {
+      <app-empty-state icon="payments" message="No hay pagos registrados para este período." />
+    } @else {
+      <div class="section-head">
+        <h2 class="section-title">{{ selectedService }} · {{ monthNames[selectedMonth - 1] }} {{ selectedYear }}</h2>
+        <p class="section-stat">{{ paidCount() }} pagados de {{ totalCount() }}</p>
+      </div>
       <div class="table-scroll">
-      <table mat-table [dataSource]="rows" class="mat-elevation-z1">
+      <table mat-table [dataSource]="rows">
         <ng-container matColumnDef="apartment">
           <th mat-header-cell *matHeaderCellDef>Apartamento</th>
           <td mat-cell *matCellDef="let row">{{ row.apartment }}</td>
@@ -99,7 +119,14 @@
         <ng-container matColumnDef="paid">
           <th mat-header-cell *matHeaderCellDef>Pagado</th>
           <td mat-cell *matCellDef="let row">
-            <mat-slide-toggle [checked]="row.paid" (change)="onTogglePaid(row, $event)"></mat-slide-toggle>
+            <button
+              type="button"
+              class="pay-chip"
+              [class.pay-chip--paid]="row.paid"
+              (click)="togglePaid(row, !row.paid)"
+            >
+              {{ row.paid ? 'Pagado' : 'Pendiente' }}
+            </button>
           </td>
         </ng-container>
 
@@ -107,17 +134,17 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
       </div>
-        }
-      }
+    }
+  }
+} @else {
+  @if (loadingService.isLoading()) {
+    <app-loading-indicator [loading]="true" />
+  } @else if (ownerRows$ | async; as ownerRows) {
+    @if (ownerRows.length === 0) {
+      <app-empty-state icon="payments" message="No hay pagos registrados para este período." />
     } @else {
-      @if (loadingService.isLoading()) {
-        <app-loading-indicator [loading]="true" />
-      } @else if (ownerRows$ | async; as ownerRows) {
-        @if (ownerRows.length === 0) {
-          <app-empty-state icon="payments" message="No hay pagos registrados para este período." />
-        } @else {
       <div class="table-scroll owner-table">
-      <table mat-table [dataSource]="ownerRows" class="mat-elevation-z1">
+      <table mat-table [dataSource]="ownerRows">
         <ng-container matColumnDef="service">
           <th mat-header-cell *matHeaderCellDef>Servicio</th>
           <td mat-cell *matCellDef="let row">{{ row.service }}</td>
@@ -151,8 +178,7 @@
         <tr mat-row *matRowDef="let row; columns: ownerDisplayedColumns"></tr>
       </table>
       </div>
-        }
-      }
+      <p class="owner-readonly-note">Los pagos se registran en la administración. Esta vista es de solo lectura.</p>
     }
-  </mat-card-content>
-</mat-card>
+  }
+}

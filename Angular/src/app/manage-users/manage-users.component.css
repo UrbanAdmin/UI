@@ -34,12 +34,38 @@ tr.mat-mdc-row:hover td.mat-mdc-cell {
   background: color-mix(in srgb, var(--color-accent) 5%, transparent);
 }
 
-/* Ghost action buttons: no resting fill, a soft accent tint on hover. */
-.actions-cell button[mat-icon-button] {
-  color: var(--color-neutral-600);
+/* Text-link actions, matching the reference: bold accent text, no button chrome. */
+.actions-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
 }
-.actions-cell button[mat-icon-button]:hover {
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+.text-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+}
+.status-chip--admin {
+  background: var(--color-accent-200);
   color: var(--color-accent-700);
 }
 

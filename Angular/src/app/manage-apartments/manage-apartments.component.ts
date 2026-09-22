@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, NgZone, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, NgZone, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { ApartmentDialogComponent } from '../apartment-dialog/apartment-dialog.c
 import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 
 @Component({
   selector: 'app-manage-apartments',
@@ -28,6 +29,7 @@ import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-i
     MatTableModule,
     EmptyStateComponent,
     LoadingIndicatorComponent,
+    PageHeaderComponent,
   ],
 })
 export class ManageApartmentsComponent {
@@ -38,6 +40,18 @@ export class ManageApartmentsComponent {
 
   readonly displayedColumns: string[] = ['number', 'owner', 'status', 'contractStartDate', 'contract', 'actions'];
   apartments$: Observable<Apartment[]> = this.apartmentsService.getApartments();
+
+  // A plain signal (not toSignal(apartments$)) because apartments$ itself is
+  // reassigned on refresh() - toSignal would keep following the original
+  // instance and go stale after a create/edit/delete.
+  readonly hint = signal('');
+  private updateHint(count: number): void {
+    this.hint.set(`${count} unidad${count === 1 ? '' : 'es'} registrada${count === 1 ? '' : 's'}.`);
+  }
+
+  constructor() {
+    this.apartments$.subscribe((list) => this.updateHint(list.length));
+  }
 
   viewContract(apartment: Apartment): void {
     this.apartmentsService.downloadContract(apartment.id).subscribe((blob) => {
@@ -87,5 +101,6 @@ export class ManageApartmentsComponent {
 
   private refresh(): void {
     this.apartments$ = this.apartmentsService.getApartments();
+    this.apartments$.subscribe((list) => this.updateHint(list.length));
   }
 }

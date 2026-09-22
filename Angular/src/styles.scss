@@ -155,6 +155,15 @@ a:hover { color: var(--color-accent-600); text-decoration: underline; }
   background: var(--color-card);
 }
 
+/* mat-card-title/mat-dialog's own title tier aren't guaranteed to pick up
+   brand-family from mat.theme()'s typography config (that depends on which
+   M3 tier Material maps them to internally) - set explicitly so every card
+   title reads as Caprasimo, not the Figtree plain-family fallback. */
+.mat-mdc-card-title, .mat-mdc-dialog-title {
+  font-family: var(--font-heading) !important;
+  font-weight: 400 !important;
+}
+
 /* The kicker above each page title. */
 .kicker {
   font-family: var(--font-body);

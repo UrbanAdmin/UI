@@ -1,76 +1,71 @@
-<mat-card>
-  <mat-card-title>Apartamentos</mat-card-title>
-  <mat-card-content>
-    <div class="toolbar">
-      <button mat-flat-button color="primary" (click)="openCreateDialog()">
-        <mat-icon>add</mat-icon>
-        Agregar apartamento
-      </button>
+<app-page-header kicker="Unidades y contratos" title="Apartamentos" [hint]="hint()" />
+
+<div class="toolbar">
+  <button mat-flat-button color="primary" (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon>
+    Agregar apartamento
+  </button>
+</div>
+
+@if (loadingService.isLoading()) {
+  <app-loading-indicator [loading]="true" />
+} @else if (apartments$ | async; as apartments) {
+  @if (apartments.length === 0) {
+    <app-empty-state
+      icon="home_work"
+      message="Todavía no hay apartamentos registrados."
+      actionLabel="Agregar apartamento"
+      (action)="openCreateDialog()"
+    />
+  } @else {
+    <div class="table-scroll">
+    <table mat-table [dataSource]="apartments">
+      <ng-container matColumnDef="number">
+        <th mat-header-cell *matHeaderCellDef>Apartamento</th>
+        <td mat-cell *matCellDef="let apartment">{{ apartment.number }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="owner">
+        <th mat-header-cell *matHeaderCellDef>Arrendatario</th>
+        <td mat-cell *matCellDef="let apartment">{{ apartment.owner || 'Sin arrendatario' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let apartment">
+          <span class="status-chip" [class.status-chip--active]="apartment.status === 'Arrendado'">{{ apartment.status }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="contractStartDate">
+        <th mat-header-cell *matHeaderCellDef>Fecha inicio</th>
+        <td mat-cell *matCellDef="let apartment">
+          {{ apartment.contractStartDate ? (apartment.contractStartDate | date: 'dd/MM/yyyy') : 'Sin definir' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="contract">
+        <th mat-header-cell *matHeaderCellDef>Contrato</th>
+        <td mat-cell *matCellDef="let apartment">
+          @if (apartment.hasContract) {
+            <button mat-button (click)="viewContract(apartment)">{{ apartment.contractFileName }}</button>
+          } @else {
+            Sin contrato
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let apartment" class="actions-cell">
+          <button class="text-link" (click)="openEditDialog(apartment)">Editar</button>
+          <button class="text-link" (click)="deleteApartment(apartment)">Eliminar</button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
     </div>
-
-    @if (loadingService.isLoading()) {
-      <app-loading-indicator [loading]="true" />
-    } @else if (apartments$ | async; as apartments) {
-      @if (apartments.length === 0) {
-        <app-empty-state
-          icon="home_work"
-          message="Todavía no hay apartamentos registrados."
-          actionLabel="Agregar apartamento"
-          (action)="openCreateDialog()"
-        />
-      } @else {
-        <div class="table-scroll">
-        <table mat-table [dataSource]="apartments" class="mat-elevation-z1">
-          <ng-container matColumnDef="number">
-            <th mat-header-cell *matHeaderCellDef>Apartamento</th>
-            <td mat-cell *matCellDef="let apartment">{{ apartment.number }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="owner">
-            <th mat-header-cell *matHeaderCellDef>Arrendatario</th>
-            <td mat-cell *matCellDef="let apartment">{{ apartment.owner || 'Sin arrendatario' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Estado</th>
-            <td mat-cell *matCellDef="let apartment">{{ apartment.status }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="contractStartDate">
-            <th mat-header-cell *matHeaderCellDef>Fecha inicio</th>
-            <td mat-cell *matCellDef="let apartment">
-              {{ apartment.contractStartDate ? (apartment.contractStartDate | date: 'dd/MM/yyyy') : 'Sin definir' }}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="contract">
-            <th mat-header-cell *matHeaderCellDef>Contrato</th>
-            <td mat-cell *matCellDef="let apartment">
-              @if (apartment.hasContract) {
-                <button mat-button (click)="viewContract(apartment)">{{ apartment.contractFileName }}</button>
-              } @else {
-                Sin contrato
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let apartment" class="actions-cell">
-              <button mat-icon-button (click)="openEditDialog(apartment)" aria-label="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button (click)="deleteApartment(apartment)" aria-label="Eliminar">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-        </div>
-      }
-    }
-  </mat-card-content>
-</mat-card>
+  }
+}

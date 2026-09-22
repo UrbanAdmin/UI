@@ -1,0 +1,14 @@
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 28%;
+  background: var(--color-accent-2-800);
+  overflow: hidden;
+}
+
+.brand-mark svg {
+  width: 78%;
+  height: 78%;
+}

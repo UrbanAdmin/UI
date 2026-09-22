@@ -1,37 +1,77 @@
 <div class="login-page">
-  <div class="login-brand">
-    <span class="brand-disc">
-      <mat-icon class="brand-icon">apartment</mat-icon>
-    </span>
-    <h1 class="brand-title">UrbanAdmin</h1>
-    <p class="brand-subtitle">Gestión de edificios y condominios</p>
+  <div class="login-hero">
+    <div class="hero-brand">
+      <app-brand-mark [size]="40" />
+      <span class="hero-wordmark">UrbanAdmin</span>
+    </div>
+
+    <h1 class="hero-headline">Todo el edificio, en orden.</h1>
+    <p class="hero-tagline">
+      Lecturas, recibos, pagos y avisos de tu conjunto en un solo lugar. Cada inquilino ve lo suyo; la
+      administración ve todo.
+    </p>
+
+    <div class="hero-preview" aria-hidden="true">
+      <div class="preview-head">
+        <span class="preview-kicker">Este mes</span>
+        <span class="preview-amount">$2.847.300</span>
+      </div>
+      <div class="preview-row">
+        <span class="preview-bar preview-bar--full"></span>
+        <span class="preview-label">3 al día</span>
+      </div>
+      <div class="preview-row">
+        <span class="preview-bar preview-bar--half"></span>
+        <span class="preview-label">2 por vencer</span>
+      </div>
+      <div class="preview-row">
+        <span class="preview-bar preview-bar--low preview-bar--overdue"></span>
+        <span class="preview-label">2 vencidos</span>
+      </div>
+      <div class="preview-chips">
+        <span class="preview-chip preview-chip--paid">Pagado</span>
+        <span class="preview-chip preview-chip--soon">Vence en 2 días</span>
+        <span class="preview-chip preview-chip--overdue">Vencido</span>
+      </div>
+    </div>
   </div>
 
-  <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
-    <mat-card appearance="outlined" class="login-card">
-      <mat-card-content>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Usuario</mat-label>
-          <mat-icon matPrefix>person</mat-icon>
-          <input matInput type="text" name="username" [(ngModel)]="username" required />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Contraseña</mat-label>
-          <mat-icon matPrefix>lock</mat-icon>
-          <input matInput type="password" name="password" [(ngModel)]="password" required />
-        </mat-form-field>
-        @if (errorMessage) {
-          <div class="error">
-            <mat-icon>error_outline</mat-icon>
-            <span>{{ errorMessage }}</span>
-          </div>
-        }
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loginForm.invalid || loading">
-          {{ loading ? 'Ingresando...' : 'Ingresar' }}
+  <div class="login-form-pane">
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <p class="form-kicker">Ingresar</p>
+      <h2 class="form-title">Bienvenido de vuelta</h2>
+      <p class="form-subtitle">Usa el usuario que te dio la administración.</p>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Usuario</mat-label>
+        <mat-icon matPrefix>person</mat-icon>
+        <input matInput type="text" name="username" [(ngModel)]="username" required />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password" required />
+        <button
+          type="button"
+          matSuffix
+          class="show-password"
+          (click)="showPassword = !showPassword"
+        >
+          {{ showPassword ? 'Ocultar' : 'Mostrar' }}
         </button>
-      </mat-card-actions>
-    </mat-card>
-  </form>
+      </mat-form-field>
+
+      @if (errorMessage) {
+        <div class="error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <button mat-flat-button color="primary" type="submit" class="full-width submit-button" [disabled]="loginForm.invalid || loading">
+        {{ loading ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+    </form>
+  </div>
 </div>

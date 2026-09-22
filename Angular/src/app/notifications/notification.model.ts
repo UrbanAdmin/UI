@@ -9,6 +9,10 @@ export interface ServicePayment {
   service: ServiceName;
   dueDate: Date;
   paid: boolean;
+  /** Optional: getNotificationStatus() (status derivation) doesn't need it, but
+   *  getActiveNotifications() populates it so dashboard-style totals (Inicio's
+   *  hero card) can sum real amounts instead of just counting rows. */
+  amount?: string | null;
 }
 
 /** A single deadline shared by every apartment for one service in one month/year. */

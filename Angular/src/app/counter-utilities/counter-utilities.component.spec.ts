@@ -190,7 +190,7 @@ describe('CounterUtilitiesComponent', () => {
     TestBed.resetTestingModule();
     await setup(true);
 
-    expect(fixture.nativeElement.querySelector('.service-selector')).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('.pill').length).toBe(3);
     expect(() => component.onServiceChanged()).not.toThrow();
   });
 

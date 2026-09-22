@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,17 +12,19 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
-import { BehaviorSubject, Observable, forkJoin, switchMap, map, of } from 'rxjs';
+import { BehaviorSubject, Observable, forkJoin, switchMap, map, of, shareReplay } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
+import { formatCop } from '../shared/cop-currency';
 import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
+import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 
 type OwnerRow = OwnerPayment & { status: NotificationStatus };
 type OwnerServiceRow = OwnerRow & { service: ServiceName };
@@ -57,6 +60,7 @@ interface MonthYear {
     EmptyStateComponent,
     LoadingIndicatorComponent,
     StatusChipComponent,
+    PageHeaderComponent,
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './payments.component.html',
@@ -86,6 +90,9 @@ export class PaymentsComponent {
   readonly ownerDisplayedColumns: string[] = ['service', 'dueDate', 'status', 'amount', 'paid'];
   readonly ownerRows$: Observable<OwnerServiceRow[]>;
 
+  private readonly adminRows: Signal<OwnerRow[]>;
+  private readonly ownerRowsSnapshot: Signal<OwnerServiceRow[]>;
+
   constructor(
     private notificationsService: NotificationsService,
     private authService: AuthService,
@@ -110,8 +117,12 @@ export class PaymentsComponent {
       ),
     );
 
+    // shareReplay(1): both the template's `async` pipe and the adminRows
+    // signal below (for the "N pagados de M" stat) subscribe to this - without
+    // it, each subscriber would re-trigger the whole HTTP chain separately.
     this.rows$ = this.period$.pipe(
       switchMap((p) => this.notificationsService.getOwnerPayments(p.service, p.month, p.year)),
+      shareReplay(1),
     );
 
     this.ownerPeriod$ = new BehaviorSubject<MonthYear>({ month: this.selectedMonth, year: this.selectedYear });
@@ -126,10 +137,41 @@ export class PaymentsComponent {
           ),
         ).pipe(map((groups) => groups.flat())),
       ),
+      shareReplay(1),
     );
+
+    // Only the branch the template actually renders for this role gets
+    // subscribed here - the other stream stays untouched, exactly as when
+    // only the template's `async` pipe drove these (Admin never touched
+    // ownerRows$, an Owner never touched rows$).
+    this.adminRows = toSignal(this.isReadOnly ? of([]) : this.rows$, { initialValue: [] as OwnerRow[] });
+    this.ownerRowsSnapshot = toSignal(this.isReadOnly ? this.ownerRows$ : of([]), {
+      initialValue: [] as OwnerServiceRow[],
+    });
   }
 
   readonly displayedColumns: string[] = ['apartment', 'owner', 'dueDate', 'status', 'amount', 'paid'];
+
+  // Admin sub-heading stat ("N pagados de M") for the selected Servicio/Mes/Año.
+  readonly paidCount = computed(() => this.adminRows().filter((r) => r.paid).length);
+  readonly totalCount = computed(() => this.adminRows().length);
+
+  // Owner hero ("Pendiente este mes") - ownerRows$ already fetches every
+  // servicio for the selected month/year, so no extra request is needed.
+  private readonly unpaidOwnerRows = computed(() => this.ownerRowsSnapshot().filter((r) => !r.paid));
+  readonly pendienteEsteMes = computed(() =>
+    this.unpaidOwnerRows().reduce((sum, r) => sum + (Number(r.amount) || 0), 0),
+  );
+  readonly pendienteEsteMesFormatted = computed(() => formatCop(this.pendienteEsteMes()));
+  readonly conceptosPorPagar = computed(() => this.unpaidOwnerRows().length);
+  readonly proximoVencimientoFormatted = computed(() => {
+    const rows = this.unpaidOwnerRows();
+    if (rows.length === 0) {
+      return null;
+    }
+    const earliest = rows.reduce((min, r) => (r.dueDate < min ? r.dueDate : min), rows[0].dueDate);
+    return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(earliest);
+  });
 
   onPeriodChange(): void {
     this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });

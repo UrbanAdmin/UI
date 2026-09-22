@@ -1,3 +1,5 @@
+<app-page-header kicker="Vencidos y por vencer" title="Notificaciones" [hint]="hint()" />
+
 @if (loadingService.isLoading()) {
   <app-loading-indicator [loading]="true" />
 } @else if (groups$ | async; as groups) {
