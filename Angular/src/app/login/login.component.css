@@ -5,7 +5,7 @@
   justify-content: center;
   min-height: 100vh;
   gap: 24px;
-  background: linear-gradient(135deg, var(--mat-sys-primary-container), var(--mat-sys-surface) 60%);
+  background: var(--color-bg);
   padding: 16px;
   box-sizing: border-box;
 }
@@ -15,25 +15,34 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  color: var(--mat-sys-on-primary-container);
+  color: var(--color-text);
+}
+
+.brand-disc {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand-icon {
-  font-size: 48px;
-  height: 48px;
-  width: 48px;
-  color: var(--mat-sys-primary);
+  font-size: 32px;
+  height: 32px;
+  width: 32px;
+  color: var(--color-accent-100);
 }
 
 .brand-title {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   font-size: 1.8rem;
-  font-weight: 500;
 }
 
 .brand-subtitle {
   margin: 4px 0 0;
-  opacity: 0.8;
+  color: var(--color-neutral-600);
 }
 
 .login-form {
@@ -45,8 +54,9 @@
 .login-card {
   width: 100%;
   max-width: 380px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 8px;
+  background: var(--color-card);
 }
 
 .full-width {
@@ -59,7 +69,7 @@
   gap: 8px;
   margin-top: 8px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
   font-size: 0.875rem;

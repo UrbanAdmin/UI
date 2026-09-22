@@ -8,34 +8,34 @@
 
 /* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain
    background-color override - Material's own .mat-mdc-standard-chip rule has higher
-   specificity than a single class and would win otherwise). Colors verified against
-   WCAG 2.1 AA (>=4.5:1) for their paired label-text-color (FR-009). */
+   specificity than a single class and would win otherwise). Colors are the Organic ramps
+   (research.md); overdue is the palette's only solid fill - there is no red (FR-004, FR-005). */
 .status-paid {
-  --mat-chip-elevated-container-color: #2e7d32;
-  --mat-chip-label-text-color: #ffffff;
+  --mat-chip-elevated-container-color: var(--color-accent-2-200);
+  --mat-chip-label-text-color: var(--color-accent-2-700);
   font-weight: 500;
 }
 
 .status-due-soon {
-  --mat-chip-elevated-container-color: #f9a825;
-  --mat-chip-label-text-color: #212121;
+  --mat-chip-elevated-container-color: var(--color-accent-200);
+  --mat-chip-label-text-color: var(--color-accent-700);
   font-weight: 500;
 }
 
 .status-due-today {
-  --mat-chip-elevated-container-color: #ef6c00;
-  --mat-chip-label-text-color: #212121;
+  --mat-chip-elevated-container-color: var(--color-accent-300);
+  --mat-chip-label-text-color: var(--color-accent-800);
   font-weight: 500;
 }
 
 .status-overdue {
-  --mat-chip-elevated-container-color: #c62828;
-  --mat-chip-label-text-color: #ffffff;
+  --mat-chip-elevated-container-color: var(--color-accent-700);
+  --mat-chip-label-text-color: var(--color-accent-100);
   font-weight: 500;
 }
 
 .status-not-due {
-  --mat-chip-elevated-container-color: #757575;
-  --mat-chip-label-text-color: #ffffff;
+  --mat-chip-elevated-container-color: var(--color-neutral-200);
+  --mat-chip-label-text-color: var(--color-neutral-700);
   font-weight: 500;
 }

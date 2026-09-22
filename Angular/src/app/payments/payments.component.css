@@ -33,6 +33,23 @@ table {
 /* Status chip colors now live in app-status-chip's own stylesheet - see
    shared/status-chip/status-chip.component.css. */
 
+th.mat-mdc-header-cell {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+
+td.mat-mdc-cell, th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
+}
+
+tr.mat-mdc-row:hover td.mat-mdc-cell {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
 /* Mobile-first table: on narrow viewports, drop the least-essential columns
    and let the table shrink to fit instead of forcing horizontal scroll
    (FR-005/SC-003). Due date is redundant with the status chip's meaning;

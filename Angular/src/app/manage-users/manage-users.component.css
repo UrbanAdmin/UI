@@ -17,13 +17,39 @@ table {
   text-align: right;
 }
 
+th.mat-mdc-header-cell {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+
+td.mat-mdc-cell, th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
+}
+
+tr.mat-mdc-row:hover td.mat-mdc-cell {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+/* Ghost action buttons: no resting fill, a soft accent tint on hover. */
+.actions-cell button[mat-icon-button] {
+  color: var(--color-neutral-600);
+}
+.actions-cell button[mat-icon-button]:hover {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent-700);
+}
+
 .error {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
   font-size: 0.875rem;

@@ -1,5 +1,6 @@
 .apartment-card {
   margin-bottom: 16px;
+  background: var(--color-card);
 }
 
 .period-group {
@@ -12,8 +13,11 @@
 
 .period-title {
   margin: 0 0 8px;
-  font-weight: 500;
-  opacity: 0.8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
 }
 
 .table-scroll {

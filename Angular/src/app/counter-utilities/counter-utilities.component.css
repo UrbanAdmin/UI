@@ -6,6 +6,7 @@
 
 .receipt-card {
   margin-bottom: 16px;
+  background: var(--color-card);
 }
 
 .receipt-filters {
@@ -52,6 +53,25 @@ mat-tab-group {
   position: relative;
 }
 
+/* Pill tab strip: the header sits on a surface pill, the selected tab is a filled accent
+   pill (the ink-bar underline mat-tab-group.mat-mdc-tab-group's own outliers, see T019). */
+::ng-deep .mat-mdc-tab-header {
+  border-bottom: none;
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  width: fit-content;
+}
+::ng-deep .mat-mdc-tab {
+  border-radius: var(--radius-pill);
+}
+::ng-deep .mat-mdc-tab.mdc-tab--active {
+  background: var(--color-accent);
+}
+::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--color-accent-100);
+}
+
 .tab-content {
   position: relative;
   min-height: 500px;
@@ -61,8 +81,8 @@ mat-tab-group {
 .table-container {
   margin: 24px auto;
   max-width: 800px;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 8px;
+  background: var(--color-accent-2-100);
+  border-radius: var(--radius-lg);
   padding: 16px;
 }
 

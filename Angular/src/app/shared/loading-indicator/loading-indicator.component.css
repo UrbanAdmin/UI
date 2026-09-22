@@ -4,7 +4,7 @@
   justify-content: center;
   gap: 12px;
   padding: 16px;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--color-neutral-700);
 }
 
 .loading-label {
