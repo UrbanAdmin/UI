@@ -86,6 +86,10 @@
     <Color x:Key="Accent2">#7a8a5e</Color>          <!-- sage, second voice -->
     <Color x:Key="Accent2Dark">#aebf92</Color>
     <Color x:Key="Accent2Deep">#3d472b</Color>      <!-- sage panel fill -->
+    <!-- 018-app-icon: the sign-in badge's three-bar mark, same colours as the app icon in light and dark
+         (it is a fixed brand mark, not theme-adaptive). Bar 3 reuses Primary (#c67139) below. -->
+    <Color x:Key="MarkBarLight">#aebf92</Color>
+    <Color x:Key="MarkBarMid">#ccdbb2</Color>
     <Color x:Key="Divider">#dcd3c4</Color>
     <Color x:Key="DividerDark">#474238</Color>
 

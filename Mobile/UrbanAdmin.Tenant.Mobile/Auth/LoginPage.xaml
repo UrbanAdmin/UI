@@ -46,17 +46,32 @@
                     StrokeShape="RoundRectangle 29"
                     BackgroundColor="{StaticResource Primary}"
                     SemanticProperties.Description="UrbanAdmin">
-                    <shapes:Path
-                        Data="M5 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16 M16 9h3a2 2 0 0 1 2 2v10 M3 21h18 M9 7h2 M9 11h2 M9 15h2"
-                        Aspect="Uniform"
-                        WidthRequest="28"
-                        HeightRequest="28"
+                    <!-- 018-app-icon: the app icon's three-bar mark (research.md "Sign-in badge geometry"),
+                         scaled from the 456 canvas (k = 30/204) to fit this 58 px circle. -->
+                    <VerticalStackLayout
+                        WidthRequest="30"
+                        Spacing="2.5"
                         HorizontalOptions="Center"
-                        VerticalOptions="Center"
-                        StrokeThickness="2.4"
-                        StrokeLineCap="Round"
-                        StrokeLineJoin="Round"
-                        Stroke="{StaticResource Bg}" />
+                        VerticalOptions="Center">
+                        <shapes:RoundRectangle
+                            WidthRequest="19"
+                            HeightRequest="7"
+                            HorizontalOptions="Start"
+                            CornerRadius="3.5"
+                            Fill="{StaticResource MarkBarLight}" />
+                        <shapes:RoundRectangle
+                            WidthRequest="25"
+                            HeightRequest="7"
+                            HorizontalOptions="Start"
+                            CornerRadius="3.5"
+                            Fill="{StaticResource MarkBarMid}" />
+                        <shapes:RoundRectangle
+                            WidthRequest="30"
+                            HeightRequest="7"
+                            HorizontalOptions="Start"
+                            CornerRadius="3.5"
+                            Fill="{StaticResource Bg}" />
+                    </VerticalStackLayout>
                 </Border>
 
                 <Label Text="UrbanAdmin" Style="{StaticResource Headline}" FontSize="38" SemanticProperties.HeadingLevel="Level1" />
