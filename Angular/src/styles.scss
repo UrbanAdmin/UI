@@ -94,6 +94,13 @@ body { margin: 0; }
    roles the app actually surfaces are listed; add rather than guess if a component still
    renders a generated color. */
 html {
+  /* mat-sidenav-content (the element that actually covers the viewport, not
+     mat-sidenav-container) reads --mat-sys-background/on-background for its
+     own background - a different M3 role from --mat-sys-surface below, and
+     easy to miss since most components DO read surface. Confirmed against
+     @angular/material/sidenav/_m3-sidenav.scss. */
+  --mat-sys-background: var(--color-bg);
+  --mat-sys-on-background: var(--color-text);
   --mat-sys-surface: var(--color-bg);
   --mat-sys-surface-container: var(--color-card);
   --mat-sys-surface-container-high: var(--color-surface);

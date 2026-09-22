@@ -52,3 +52,61 @@
     }
   </div>
 </div>
+
+@if (isAdmin) {
+  <h2 class="section-title">Cartera del mes</h2>
+  <div class="table-scroll">
+  <table mat-table [dataSource]="carteraDelMes()">
+    <ng-container matColumnDef="apartment">
+      <th mat-header-cell *matHeaderCellDef>Apartamento</th>
+      <td mat-cell *matCellDef="let row">{{ row.apartment }}</td>
+    </ng-container>
+    <ng-container matColumnDef="service">
+      <th mat-header-cell *matHeaderCellDef>Servicio</th>
+      <td mat-cell *matCellDef="let row">{{ row.service }}</td>
+    </ng-container>
+    <ng-container matColumnDef="dueDate">
+      <th mat-header-cell *matHeaderCellDef>Vence</th>
+      <td mat-cell *matCellDef="let row">{{ row.dueDate | date: 'dd/MM/yyyy' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let row"><app-status-chip [status]="row.status" /></td>
+    </ng-container>
+    <ng-container matColumnDef="amount">
+      <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
+      <td mat-cell *matCellDef="let row" class="num">{{ row.amount ? (row.amount | copCurrency) : '—' }}</td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="['apartment', 'service', 'dueDate', 'status', 'amount']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['apartment', 'service', 'dueDate', 'status', 'amount']"></tr>
+  </table>
+  </div>
+} @else {
+  <h2 class="section-title">Tus conceptos del mes</h2>
+  <div class="table-scroll">
+  <table mat-table [dataSource]="misConceptosDelMes()">
+    <ng-container matColumnDef="concept">
+      <th mat-header-cell *matHeaderCellDef>Concepto</th>
+      <td mat-cell *matCellDef="let row">{{ row.service }}</td>
+    </ng-container>
+    <ng-container matColumnDef="apartment">
+      <th mat-header-cell *matHeaderCellDef>Servicio</th>
+      <td mat-cell *matCellDef="let row">Apto {{ row.apartment }}</td>
+    </ng-container>
+    <ng-container matColumnDef="dueDate">
+      <th mat-header-cell *matHeaderCellDef>Vence</th>
+      <td mat-cell *matCellDef="let row">{{ row.dueDate | date: 'dd/MM/yyyy' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let row"><app-status-chip [status]="row.status" /></td>
+    </ng-container>
+    <ng-container matColumnDef="amount">
+      <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
+      <td mat-cell *matCellDef="let row" class="num">{{ row.amount ? (row.amount | copCurrency) : 'No definido' }}</td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="['concept', 'apartment', 'dueDate', 'status', 'amount']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['concept', 'apartment', 'dueDate', 'status', 'amount']"></tr>
+  </table>
+  </div>
+}

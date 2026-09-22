@@ -1,16 +1,25 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { map, of } from 'rxjs';
+import { MatTableModule } from '@angular/material/table';
+import { forkJoin, map, of } from 'rxjs';
 import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
 import { AuthService } from '../auth.service';
 import { ApartmentsService } from '../shared/apartments.service';
 import { UsersService } from '../shared/users.service';
 import { monthName } from '../notifications/month-names';
 import { PageHeaderComponent } from '../shared/page-header/page-header.component';
+import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
+import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { formatCop } from '../shared/cop-currency';
+
+const TRACKED_SERVICES: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
+
+type CarteraRow = OwnerPayment & { status: NotificationStatus };
 
 interface QuickAccessCard {
   path: string;
@@ -22,7 +31,16 @@ interface QuickAccessCard {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterModule, MatCardModule, MatIconModule, PageHeaderComponent],
+  imports: [
+    DatePipe,
+    RouterModule,
+    MatCardModule,
+    MatIconModule,
+    MatTableModule,
+    PageHeaderComponent,
+    StatusChipComponent,
+    CopCurrencyPipe,
+  ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
@@ -135,6 +153,37 @@ export class HomeComponent {
     }
     return rows.reduce((earliest, n) => (n.dueDate < earliest ? n.dueDate : earliest), rows[0].dueDate);
   });
+
+  // "Cartera del mes" (admin) / "Tus conceptos del mes" (owner): unlike
+  // activeNotifications above (which only covers deadlines that exist and
+  // excludes paid/not-due rows), this needs every tracked service's row for
+  // the current month regardless of paid status - the owner's statement
+  // shows what's already paid too. getOwnerPayments() is already
+  // server-scoped (an Owner only ever gets their own apartment's rows), so
+  // the same call serves both roles.
+  private readonly currentMonthByService = toSignal(
+    forkJoin(
+      TRACKED_SERVICES.map((service) => {
+        const now = new Date();
+        return this.notificationsService.getOwnerPayments(service, now.getMonth() + 1, now.getFullYear());
+      }),
+    ).pipe(map((groups): CarteraRow[] => groups.flat())),
+    { initialValue: [] as CarteraRow[] },
+  );
+
+  /** Admin: only the not-yet-paid rows - a receivables ledger, not a full statement. */
+  readonly carteraDelMes = computed<CarteraRow[]>(() =>
+    this.currentMonthByService()
+      .filter((row) => !row.paid)
+      .sort((a, b) => a.apartment.localeCompare(b.apartment)),
+  );
+
+  /** Owner: every row, paid or not - their own statement for the month. */
+  readonly misConceptosDelMes = computed<CarteraRow[]>(() =>
+    this.currentMonthByService()
+      .slice()
+      .sort((a, b) => TRACKED_SERVICES.indexOf(a.service) - TRACKED_SERVICES.indexOf(b.service)),
+  );
 
   readonly carteraVencidaFormatted = computed(() => formatCop(this.carteraVencida()));
   readonly pendienteEsteMesFormatted = computed(() => formatCop(this.pendienteEsteMes()));
