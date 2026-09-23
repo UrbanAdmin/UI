@@ -19,42 +19,50 @@
 
 <div class="filters">
   @if (!isReadOnly) {
+    <div class="field">
+      <label>Servicio</label>
+      <mat-form-field appearance="outline">
+        <mat-select [(ngModel)]="selectedService" (selectionChange)="onPeriodChange()">
+          @for (service of services; track service) {
+            <mat-option [value]="service">{{ service }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+
+  <div class="field">
+    <label>Mes</label>
     <mat-form-field appearance="outline">
-      <mat-label>Servicio</mat-label>
-      <mat-select [(ngModel)]="selectedService" (selectionChange)="onPeriodChange()">
-        @for (service of services; track service) {
-          <mat-option [value]="service">{{ service }}</mat-option>
+      <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
+        @for (name of monthNames; track name; let i = $index) {
+          <mat-option [value]="i + 1">{{ name }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
-  }
+  </div>
 
-  <mat-form-field appearance="outline">
-    <mat-label>Mes</mat-label>
-    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
-      @for (name of monthNames; track name; let i = $index) {
-        <mat-option [value]="i + 1">{{ name }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Año</mat-label>
-    <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
-      @for (year of years; track year) {
-        <mat-option [value]="year">{{ year }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
+  <div class="field">
+    <label>Año</label>
+    <mat-form-field appearance="outline">
+      <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
+        @for (year of years; track year) {
+          <mat-option [value]="year">{{ year }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
 
   @if (!isReadOnly && selectedService !== 'Arriendo') {
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha límite de pago</mat-label>
-      <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
-      <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
-      <mat-datepicker #deadlinePicker></mat-datepicker>
-    </mat-form-field>
-    <button mat-flat-button color="primary" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
+    <div class="field">
+      <label>Fecha límite de pago</label>
+      <mat-form-field appearance="outline">
+        <input matInput [matDatepicker]="deadlinePicker" [ngModel]="deadline$ | async" #deadlineInput="ngModel" />
+        <mat-datepicker-toggle matIconSuffix [for]="deadlinePicker"></mat-datepicker-toggle>
+        <mat-datepicker #deadlinePicker></mat-datepicker>
+      </mat-form-field>
+    </div>
+    <button mat-flat-button color="primary" class="save-deadline" (click)="saveDeadline(deadlineInput.value)" [disabled]="!deadlineInput.value">
       Guardar
     </button>
   }

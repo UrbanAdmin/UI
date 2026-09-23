@@ -12,16 +12,30 @@
   text-transform: uppercase;
   color: var(--color-neutral-600);
 }
+/* One rounded track holding all three service buttons (matches the
+   reference: Agua/Luz/Gas sit inside a shared pill-shaped trough with no
+   gaps between them, not as individually bordered/spaced buttons). */
 .pills {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
   flex-wrap: wrap;
+  padding: 4px;
+  background: var(--color-card);
+  border-radius: var(--radius-pill);
 }
-/* margin-right as a fallback to flex gap - one user's real browser rendered
-   the buttons touching with no visible gap even though gap:8px is present
-   and correct on .pills, which an isolated reproduction of the exact same
-   CSS could not explain or reproduce. Doesn't remove the gap declaration,
-   just adds a second, independent spacing mechanism as insurance. */
+.pills .pill {
+  border: none;
+  background: transparent;
+}
+/* Same specificity as ".pills .pill" above (two classes each) - declared
+   after it so the active fill wins on source order instead of losing to
+   the plain ".pills .pill { background: transparent }" rule, which is what
+   was happening when this only lived in the single-class ".pill--active"
+   selector: the active pill kept its light on-accent text color with no
+   fill behind it, reading as washed-out instead of a solid terracotta pill. */
+.pills .pill--active {
+  background: var(--color-accent);
+  color: var(--color-accent-100);
+}
 .pill {
   box-sizing: border-box;
   border: 1px solid var(--color-divider);
@@ -34,9 +48,6 @@
   font-weight: 600;
   cursor: pointer;
 }
-.pill:not(:last-child) {
-  margin-right: 8px;
-}
 .pill--active {
   border-color: transparent;
   background: var(--color-accent);
@@ -45,8 +56,18 @@
 
 .receipt-card {
   margin-bottom: 16px;
+  padding: 24px;
   background: var(--color-card);
   border-radius: var(--radius-lg);
+}
+/* mat-card-title used directly (not inside mat-card-header) keeps
+   Material's own tight default margin - not enough breathing room before
+   the field row per the reference. */
+.receipt-card ::ng-deep .mat-mdc-card-title {
+  margin: 0 0 20px;
+}
+.receipt-card ::ng-deep .mat-mdc-card-content {
+  padding: 0;
 }
 
 .receipt-row-top {
@@ -73,21 +94,28 @@
 .flat-field {
   width: 100%;
 }
-.flat-field .mat-mdc-text-field-wrapper {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
+/* ::ng-deep is required here, not optional: .mat-mdc-text-field-wrapper and
+   friends live inside MatFormField's own template, under Material's own
+   ngcontent scoping attribute, not this component's. Without ::ng-deep the
+   compiled selector reads .flat-field[_ngcontent-X] .mat-mdc-text-field-wrapper[_ngcontent-X]
+   - requiring an attribute that element can never carry - so the rule
+   silently never matched and every field kept Material's default outlined
+   look regardless of what was written here. */
+.flat-field ::ng-deep .mat-mdc-text-field-wrapper {
+  background: var(--color-surface) !important;
+  border-radius: var(--radius-pill) !important;
 }
-.flat-field .mdc-notched-outline__leading,
-.flat-field .mdc-notched-outline__notch,
-.flat-field .mdc-notched-outline__trailing {
+.flat-field ::ng-deep .mdc-notched-outline__leading,
+.flat-field ::ng-deep .mdc-notched-outline__notch,
+.flat-field ::ng-deep .mdc-notched-outline__trailing {
   border-color: transparent !important;
 }
-.flat-field .mat-mdc-form-field-infix {
+.flat-field ::ng-deep .mat-mdc-form-field-infix {
   padding-top: 12px;
   padding-bottom: 12px;
   min-height: 0;
 }
-.flat-field .mat-mdc-form-field-subscript-wrapper {
+.flat-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none;
 }
 
@@ -96,6 +124,7 @@
   grid-template-columns: 1.3fr 1fr auto;
   gap: 20px;
   align-items: center;
+  margin-top: 24px;
 }
 
 .file-field {

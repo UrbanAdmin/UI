@@ -300,7 +300,7 @@ describe('PaymentsComponent', () => {
     TestBed.resetTestingModule();
     await setupOwner();
 
-    const labels: string[] = Array.from(fixture.nativeElement.querySelectorAll('mat-label')).map(
+    const labels: string[] = Array.from(fixture.nativeElement.querySelectorAll('.field > label')).map(
       (el) => (el as Element).textContent ?? '',
     );
     expect(labels).not.toContain('Servicio');

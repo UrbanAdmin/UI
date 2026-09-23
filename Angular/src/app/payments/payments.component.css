@@ -59,9 +59,51 @@
 .filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   gap: 16px;
   margin-bottom: 20px;
+}
+/* A field's own label sits above it as a plain kicker (matching Lecturas'
+   .field), not Material's floating label inside the border. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+/* Flat, borderless, solid-fill pill fields (same pattern as Lecturas'
+   .flat-field) - ::ng-deep is required because .mat-mdc-text-field-wrapper
+   lives inside MatFormField's own template, under Material's own ngcontent
+   scope, not this component's; without it the rule silently never matches
+   and every field keeps Material's default outlined look. */
+.filters ::ng-deep mat-form-field .mat-mdc-text-field-wrapper {
+  background: var(--color-surface) !important;
+  border-radius: var(--radius-pill) !important;
+}
+.filters ::ng-deep mat-form-field .mdc-notched-outline__leading,
+.filters ::ng-deep mat-form-field .mdc-notched-outline__notch,
+.filters ::ng-deep mat-form-field .mdc-notched-outline__trailing {
+  border-color: transparent !important;
+}
+.filters ::ng-deep mat-form-field .mat-mdc-form-field-infix {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  min-height: 0;
+}
+.filters ::ng-deep mat-form-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+.filters mat-form-field {
+  width: 160px;
+}
+.save-deadline {
+  height: 48px;
 }
 
 .arriendo-hint {
@@ -93,6 +135,33 @@
 
 .amount-field {
   width: 120px;
+}
+.amount-field ::ng-deep .mat-mdc-text-field-wrapper {
+  background: var(--color-card) !important;
+  border-radius: var(--radius-pill) !important;
+}
+.amount-field ::ng-deep .mdc-notched-outline__leading,
+.amount-field ::ng-deep .mdc-notched-outline__notch,
+.amount-field ::ng-deep .mdc-notched-outline__trailing {
+  border-color: transparent !important;
+}
+.amount-field ::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  min-height: 0;
+}
+.amount-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+.amount-field ::ng-deep input {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.mat-column-apartment {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 table {

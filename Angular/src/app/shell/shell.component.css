@@ -4,11 +4,25 @@
 
 .shell-sidenav {
   width: 240px;
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+/* display:flex on .shell-sidenav only arranges mat-sidenav's own single
+   child - Material projects our brand/nav-list/spacer/user content into its
+   own internal .mat-drawer-inner-container wrapper, one level down, under
+   Material's own ngcontent scope (::ng-deep required). ".sidenav-spacer"'s
+   "flex: 1 1 auto" only means something once THIS element - its real flex
+   parent - is the flex column, which is also why the user row wasn't
+   pinned to the bottom before: the spacer had no flex context to grow in.
+   overflow-x hidden here also removes the stray horizontal scrollbar - the
+   inner container's own default overflow, not anything in our content. */
+.shell-sidenav ::ng-deep .mat-drawer-inner-container {
   display: flex;
   flex-direction: column;
-  background: var(--color-surface);
+  height: 100%;
   padding: 20px 14px 16px;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Brand row: app-brand-mark (the real app icon, shared/brand-mark) + Caprasimo
@@ -23,11 +37,21 @@
 .brand-name {
   font-family: var(--font-heading);
   font-size: 18px;
+  color: var(--color-text);
 }
 
 mat-nav-list a {
   border-radius: var(--radius-pill) !important;
   margin-bottom: 3px;
+}
+mat-nav-list a .mat-icon {
+  color: var(--color-text);
+}
+.nav-label {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .active-link {
@@ -35,6 +59,9 @@ mat-nav-list a {
   color: var(--color-accent-100) !important;
 }
 .active-link .mat-icon {
+  color: var(--color-accent-100) !important;
+}
+.active-link .nav-label {
   color: var(--color-accent-100) !important;
 }
 

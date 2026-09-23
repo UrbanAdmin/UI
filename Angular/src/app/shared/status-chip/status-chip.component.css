@@ -1,15 +1,12 @@
-.status-chip-icon {
-  font-size: 16px;
-  height: 16px;
-  width: 16px;
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
 /* mat-chip paints its surface from --mat-chip-elevated-container-color (not a plain
    background-color override - Material's own .mat-mdc-standard-chip rule has higher
    specificity than a single class and would win otherwise). Colors are the Organic ramps
    (research.md); overdue is the palette's only solid fill - there is no red (FR-004, FR-005). */
+mat-chip {
+  --mat-chip-container-shape-radius: var(--radius-pill);
+  --mat-chip-outline-width: 0;
+}
+
 .status-paid {
   --mat-chip-elevated-container-color: var(--color-accent-2-200);
   --mat-chip-label-text-color: var(--color-accent-2-700);
