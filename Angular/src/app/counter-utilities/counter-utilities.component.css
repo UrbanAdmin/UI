@@ -17,7 +17,13 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+/* margin-right as a fallback to flex gap - one user's real browser rendered
+   the buttons touching with no visible gap even though gap:8px is present
+   and correct on .pills, which an isolated reproduction of the exact same
+   CSS could not explain or reproduce. Doesn't remove the gap declaration,
+   just adds a second, independent spacing mechanism as insurance. */
 .pill {
+  box-sizing: border-box;
   border: 1px solid var(--color-divider);
   background: var(--color-card);
   color: var(--color-neutral-700);
@@ -27,6 +33,9 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+}
+.pill:not(:last-child) {
+  margin-right: 8px;
 }
 .pill--active {
   border-color: transparent;
@@ -213,18 +222,29 @@ mat-tab-group {
   gap: 8px;
   flex-wrap: wrap;
 }
+/* !important throughout: Material's own .mdc-tab base rule (border: none,
+   padding: 0 24px, min-width: 90px) and .mat-mdc-tab share equal selector
+   specificity with these overrides, and which one wins depended on bundle
+   order rather than anything predictable - some tabs rendered with no
+   border/background at all, and every resting-state tab inherited
+   Material's own near-black default text color since no color was ever set
+   here for the non-active state. */
 ::ng-deep .mat-mdc-tab {
-  border: 1px solid var(--color-divider);
-  background: var(--color-card);
-  border-radius: var(--radius-pill);
-  padding: 0 18px;
+  border: 1px solid var(--color-divider) !important;
+  background: var(--color-card) !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 0 18px !important;
+  min-width: 0 !important;
+}
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  color: var(--color-neutral-700) !important;
 }
 ::ng-deep .mat-mdc-tab.mdc-tab--active {
-  border-color: transparent;
-  background: var(--color-accent-2-800);
+  border-color: transparent !important;
+  background: var(--color-accent-2-800) !important;
 }
 ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-  color: var(--color-accent-2-100);
+  color: var(--color-accent-2-100) !important;
 }
 /* The pill fill above replaces the ink-bar as the "active" signal entirely -
    without hiding it, Material's default underline still renders beneath the
