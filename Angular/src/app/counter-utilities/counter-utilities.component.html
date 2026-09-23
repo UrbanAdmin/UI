@@ -60,7 +60,7 @@
           <label>Recibo (PDF o foto)</label>
           <div class="file-drop">
             <span class="file-drop-name">{{ receiptFile?.name ?? 'Ningún archivo seleccionado' }}</span>
-            <button type="button" class="pill pill--active" (click)="fileInput.click()">Subir</button>
+            <button type="button" class="pill" (click)="fileInput.click()">Subir</button>
             <input #fileInput type="file" accept="application/pdf,image/*" hidden (change)="onReceiptFileSelected($event)" />
           </div>
           <p class="file-hint">Total leído automáticamente del recibo. Verifícalo antes de guardar.</p>
