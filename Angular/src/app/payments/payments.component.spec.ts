@@ -320,13 +320,14 @@ describe('PaymentsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Servicio');
   });
 
-  it('hides the Pagado toggle for an ApartmentOwner, showing a check/cancel icon instead', async () => {
+  it('drops the Pagado column entirely for an ApartmentOwner (redundant with Estado)', async () => {
     TestBed.resetTestingModule();
     await setupOwner();
 
     expect(component.isReadOnly).toBe(true);
+    expect(component.ownerDisplayedColumns).not.toContain('paid');
     expect(fixture.nativeElement.querySelector('.pay-chip')).toBeFalsy();
-    expect(fixture.nativeElement.querySelector('mat-icon')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).not.toContain('Pagado');
   });
 
   it('shows the Cantidad a pagar amount as read-only text for an ApartmentOwner', async () => {

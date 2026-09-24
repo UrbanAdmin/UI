@@ -1,10 +1,32 @@
 .apartment-card {
   margin-bottom: 16px;
+  padding: 24px;
   background: var(--color-card);
+}
+/* mat-card-title/mat-card-content used directly (not inside mat-card-header)
+   keep Material's own tight default spacing - not enough breathing room per
+   the reference. Padding now lives on .apartment-card itself, so the
+   content block must not double it. */
+.apartment-card ::ng-deep .mat-mdc-card-content {
+  padding: 0;
+}
+/* Title + worst-status badge share one row (the badge is the apartment's
+   single most urgent status - see STATUS_SEVERITY in the component). The
+   row itself carries the gap before the period label instead of the title,
+   so the shorter badge sibling doesn't inherit the title's own margin. */
+.apartment-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.apartment-card-head ::ng-deep .mat-mdc-card-title {
+  margin: 0;
 }
 
 .period-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .period-group:last-child {
@@ -12,7 +34,7 @@
 }
 
 .period-title {
-  margin: 0 0 8px;
+  margin: 0 0 16px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -27,6 +49,24 @@
 table {
   width: 100%;
   min-width: 420px;
+  /* Material's own .mat-mdc-table paints --mat-sys-surface (bridged to
+     --color-bg, the page ground) - a visibly different tone from this
+     table's actual parent, --color-card (the card), which is what created
+     the shaded band behind the header/rows. */
+  background: transparent;
+}
+
+th.mat-mdc-header-cell {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+
+td.mat-mdc-cell, th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
 }
 
 /* Status chip colors now live in app-status-chip's own stylesheet - see

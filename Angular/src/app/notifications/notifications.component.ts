@@ -26,7 +26,20 @@ interface ApartmentGroup {
   apartment: string;
   owner: string;
   periods: PeriodGroup[];
+  worstStatus: NotificationStatus;
 }
+
+// Most urgent first - the badge shown at the top of each apartment card is
+// the single most urgent status among that apartment's active items, so a
+// "Vencido" item elsewhere in the card is never masked by a calmer "Pagado"
+// or "No vence aún" row sitting above it.
+const STATUS_SEVERITY: Record<NotificationStatus, number> = {
+  overdue: 0,
+  'due-today': 1,
+  'due-soon': 2,
+  'not-due': 3,
+  paid: 4,
+};
 
 @Component({
   selector: 'app-notifications',
@@ -79,8 +92,15 @@ export class NotificationsComponent {
     for (const notification of notifications) {
       let apartmentGroup = byApartment.get(notification.apartment);
       if (!apartmentGroup) {
-        apartmentGroup = { apartment: notification.apartment, owner: notification.owner, periods: [] };
+        apartmentGroup = {
+          apartment: notification.apartment,
+          owner: notification.owner,
+          periods: [],
+          worstStatus: notification.status,
+        };
         byApartment.set(notification.apartment, apartmentGroup);
+      } else if (STATUS_SEVERITY[notification.status] < STATUS_SEVERITY[apartmentGroup.worstStatus]) {
+        apartmentGroup.worstStatus = notification.status;
       }
 
       let periodGroup = apartmentGroup.periods.find(

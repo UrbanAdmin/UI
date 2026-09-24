@@ -87,7 +87,7 @@ export class PaymentsComponent {
    *  already), so instead of a Servicio filter they get every servicio's
    *  row on one page - grouped by an extra "Servicio" column. */
   readonly ownerServices: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
-  readonly ownerDisplayedColumns: string[] = ['service', 'dueDate', 'status', 'amount', 'paid'];
+  readonly ownerDisplayedColumns: string[] = ['service', 'dueDate', 'status', 'amount'];
   readonly ownerRows$: Observable<OwnerServiceRow[]>;
 
   private readonly adminRows: Signal<OwnerRow[]>;

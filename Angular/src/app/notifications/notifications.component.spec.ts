@@ -72,4 +72,23 @@ describe('NotificationsComponent', () => {
     const rows = fixture.nativeElement.querySelectorAll('[data-testid="notification-row"]');
     expect(rows.length).toBe(2);
   });
+
+  it('should render one worst-status badge per apartment card', async () => {
+    const groups = await new Promise<unknown[]>((resolve) => component.groups$.subscribe(resolve));
+    fixture.detectChanges();
+    const badges = fixture.nativeElement.querySelectorAll('.apartment-card-head app-status-chip');
+    expect(badges.length).toBe(groups.length);
+  });
+
+  it("should pick the apartment's most urgent status as worstStatus, not just the first item", async () => {
+    const groups = await new Promise<{ worstStatus: string; periods: { items: { status: string }[] }[] }[]>(
+      (resolve) => component.groups$.subscribe(resolve),
+    );
+    for (const group of groups) {
+      const statuses = group.periods.flatMap((p) => p.items.map((i) => i.status));
+      const severity: Record<string, number> = { overdue: 0, 'due-today': 1, 'due-soon': 2, 'not-due': 3, paid: 4 };
+      const expectedWorst = statuses.reduce((worst, s) => (severity[s] < severity[worst] ? s : worst));
+      expect(group.worstStatus).toBe(expectedWorst);
+    }
+  });
 });
