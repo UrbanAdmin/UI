@@ -22,9 +22,11 @@ describe('ShellComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render all 4 nav links', () => {
+  it('should render all 5 nav links', () => {
+    // Home, Lecturas, Gas, Pagos, Notificaciones - the two adminOnly links (Apartamentos, Usuarios)
+    // stay hidden for this test's un-authenticated AuthService (role null, isAdmin() false).
     const links = fixture.nativeElement.querySelectorAll('[data-testid="nav-link"]');
-    expect(links.length).toBe(4);
+    expect(links.length).toBe(5);
   });
 
   it('should render a logout action', () => {

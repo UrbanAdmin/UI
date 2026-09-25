@@ -1,0 +1,169 @@
+.period-picker {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bill-fields {
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.verifiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.verifier {
+  border: 1px solid #dcd3c4;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.verifier .vh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.verifier .vname {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.verifier .vdetail {
+  font-size: 12px;
+  color: #645c50;
+  margin: 6px 0 0;
+}
+
+.chip {
+  display: inline-flex;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chip.pass {
+  background: #eaf3e2;
+  color: #4d7c3a;
+}
+
+.chip.fail {
+  background: #fbe9e6;
+  color: #a83a2e;
+}
+
+.admin-amount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff2eb;
+  border: 1px solid #ffc6a5;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.admin-amount .lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8c491a;
+  text-transform: uppercase;
+}
+
+.admin-amount .val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #8c491a;
+}
+
+.readings-table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+.status {
+  display: block;
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #666);
+}
+
+.cell-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: right;
+}
+
+.row-error {
+  display: block;
+  font-size: 11px;
+  color: #a83a2e;
+  font-weight: 700;
+}
+
+.comments-section {
+  margin-top: 20px;
+}
+
+.comment-line {
+  background: #f5ead8;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.comment-line b {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #82796a;
+}
+
+.comment-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.comment-add input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #dcd3c4;
+}
+
+.footer-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.confirm-message {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a83a2e;
+}
+
+.confirm-message.ok {
+  color: #4d7c3a;
+}

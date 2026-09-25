@@ -41,6 +41,7 @@ export class ShellComponent {
   readonly navLinks: NavLink[] = [
     { path: '/', label: 'Home', icon: 'home' },
     { path: '/counter-utilities', label: 'Lecturas', icon: 'speed' },
+    { path: '/gas-billing', label: 'Gas', icon: 'local_fire_department' },
     { path: '/payments', label: 'Pagos', icon: 'payments' },
     { path: '/notifications', label: 'Notificaciones', icon: 'notifications' },
     { path: '/apartments', label: 'Apartamentos', icon: 'apartment', adminOnly: true },

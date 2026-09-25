@@ -1,0 +1,234 @@
+<app-page-header
+  kicker="Facturación de gas"
+  title="Gas"
+  [hint]="isReadOnly ? 'Tu propio desglose de gas, de solo lectura.' : 'Un cargo variable por consumo más un cargo fijo, por período.'"
+/>
+
+<div class="period-picker">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Mes</mat-label>
+    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChanged()">
+      @for (name of monthNames; track name; let i = $index) {
+        <mat-option [value]="i + 1">{{ name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>Año</mat-label>
+    <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChanged()">
+      @for (year of years; track year) {
+        <mat-option [value]="year">{{ year }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (loadingService.isLoading()) {
+  <app-loading-indicator [loading]="loadingService.isLoading()" />
+} @else if (isReadOnly && !bill) {
+  <app-empty-state icon="local_fire_department" message="Este período aún no tiene una factura de gas confirmada." />
+} @else {
+  @if (!isReadOnly) {
+    <mat-card class="bill-fields">
+      <h3>Datos de la factura</h3>
+      <div class="fields-grid">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Consumo total (m³)</mat-label>
+          <input matInput type="text" [(ngModel)]="billDraft.totalConsumption" (change)="saveBillFields()" data-testid="total-consumption" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Precio unitario</mat-label>
+          <input matInput type="text" [(ngModel)]="billDraft.unitPrice" (change)="saveBillFields()" data-testid="unit-price" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Subtotal consumo gas</mat-label>
+          <input matInput type="text" [(ngModel)]="billDraft.consumoGasSubtotal" (change)="saveBillFields()" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Cargo fijo (FIJO)</mat-label>
+          <input matInput type="text" [(ngModel)]="billDraft.fixedCharge" (change)="saveBillFields()" data-testid="fixed-charge" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Total de la factura</mat-label>
+          <input matInput type="text" [(ngModel)]="billDraft.totalAmount" (change)="saveBillFields()" data-testid="total-amount" />
+        </mat-form-field>
+      </div>
+    </mat-card>
+  }
+
+  @if (bill) {
+    <div class="verifiers">
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Suma de porcentajes</span>
+          <span class="chip" [class.pass]="bill.percentagePasses" [class.fail]="!bill.percentagePasses" data-testid="verifier-percentage-chip">
+            {{ bill.percentagePasses ? 'Cumple' : 'Falla' }}
+          </span>
+        </div>
+        @if (!bill.percentagePasses) {
+          <p class="vdetail" data-testid="verifier-percentage-detail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
+        }
+      </div>
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Apartamentos + administración = factura</span>
+          <span class="chip" [class.pass]="bill.totalPasses" [class.fail]="!bill.totalPasses" data-testid="verifier-total-chip">
+            {{ bill.totalPasses ? 'Cumple' : 'Falla' }}
+          </span>
+        </div>
+        @if (!bill.totalPasses) {
+          <p class="vdetail" data-testid="verifier-total-detail">Diferencia de {{ bill.totalDifference | copCurrency }} respecto al total de la factura.</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (bill && bill.administrationAmount !== '0' && bill.administrationAmount !== null) {
+    <div class="admin-amount" data-testid="admin-amount">
+      <span class="lbl">Monto asumido por administración</span>
+      <span class="val">{{ bill.administrationAmount | copCurrency }}</span>
+    </div>
+  }
+
+  <table mat-table [dataSource]="rows" class="readings-table">
+    <ng-container matColumnDef="apartamento">
+      <th mat-header-cell *matHeaderCellDef>Apartamento</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.apartmentNumber }}
+        <span class="status">{{ row.status }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="nuevoInquilino">
+      <th mat-header-cell *matHeaderCellDef>Nuevo inquilino</th>
+      <td mat-cell *matCellDef="let row">
+        @if (!isReadOnly) {
+          <input
+            type="checkbox"
+            [checked]="row.isNewTenant"
+            (change)="toggleNewTenant(row, $any($event.target).checked)"
+            [attr.data-testid]="'new-tenant-' + row.apartmentId"
+          />
+        } @else if (row.isNewTenant) {
+          <mat-icon titleText="Inquilino nuevo">person_add</mat-icon>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="lecturaAnterior">
+      <th mat-header-cell *matHeaderCellDef>{{ isReadOnly ? 'Lect. anterior' : '' }}</th>
+      <td mat-cell *matCellDef="let row">
+        @if (row.isNewTenant && !isReadOnly) {
+          <input
+            type="text"
+            class="cell-input"
+            placeholder="Lectura inicial"
+            [(ngModel)]="row.initialReading"
+            (change)="saveReading(row)"
+            [attr.data-testid]="'initial-reading-' + row.apartmentId"
+          />
+        } @else {
+          {{ row.reading?.previousReading ?? '—' }}
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="lecturaActual">
+      <th mat-header-cell *matHeaderCellDef>Lect. actual</th>
+      <td mat-cell *matCellDef="let row">
+        @if (isReadOnly) {
+          {{ row.currentReading ?? '—' }}
+        } @else {
+          <input
+            type="text"
+            class="cell-input"
+            [(ngModel)]="row.currentReading"
+            (change)="saveReading(row)"
+            [attr.data-testid]="'current-reading-' + row.apartmentId"
+          />
+        }
+        @if (row.reading?.validationError) {
+          <span class="row-error">{{ row.reading?.validationError === 'MissingReading' ? 'Falta la lectura' : 'Menor que la anterior' }}</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="consumo">
+      <th mat-header-cell *matHeaderCellDef>Consumo</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumption ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="porcentaje">
+      <th mat-header-cell *matHeaderCellDef>%</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumptionPercentage ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="costoVariable">
+      <th mat-header-cell *matHeaderCellDef>Costo variable</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.variableCost | copCurrency }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="cargoFijo">
+      <th mat-header-cell *matHeaderCellDef>Cargo fijo</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.fixedChargeShare | copCurrency }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="total">
+      <th mat-header-cell *matHeaderCellDef>Total</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.finalTotal | copCurrency }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="comentario">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row">
+        @if (!isReadOnly && row.reading) {
+          <button mat-icon-button (click)="addReadingComment(row)" [attr.data-testid]="'comment-' + row.apartmentId" aria-label="Comentario">
+            <mat-icon>chat_bubble_outline</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+
+  @if (bill && (bill.comments.length > 0 || !isReadOnly)) {
+    <div class="comments-section">
+      <h3>Comentarios</h3>
+      @for (comment of bill.comments; track comment.id) {
+        <div class="comment-line">
+          <b>{{ comment.gasApartmentReadingId ? 'Apartamento' : 'Factura' }}</b>
+          {{ comment.text }}
+        </div>
+      }
+      @if (!isReadOnly) {
+        <div class="comment-add">
+          <input type="text" [(ngModel)]="newCommentText" placeholder="Agregar un comentario a la factura…" data-testid="new-comment-input" />
+          <button mat-stroked-button (click)="addBillComment()" data-testid="add-comment-button">Agregar</button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!isReadOnly && bill) {
+    <div class="footer-bar">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="hasBlockingErrors"
+        (click)="confirm()"
+        data-testid="confirm-button"
+      >
+        Confirmar factura
+      </button>
+      @if (hasBlockingErrors) {
+        <span class="confirm-message" data-testid="confirm-hint">
+          No se puede confirmar: revisa {{ blockedApartmentNumbers.join(', ') }}.
+        </span>
+      } @else if (confirmMessage) {
+        <span [class.ok]="confirmSucceeded" class="confirm-message">{{ confirmMessage }}</span>
+      }
+    </div>
+  }
+}
