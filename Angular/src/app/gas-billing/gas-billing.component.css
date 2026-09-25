@@ -1,33 +1,142 @@
+/* Every value here reads from the app's real Organic tokens (src/styles.scss) - no hex of its
+   own - matching the convention already used by counter-utilities.component.css and
+   notifications.component.css. */
+
+.gas-hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-neutral-700);
+}
+
 .period-picker {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
+/* Field label-above + flat pill input, identical to counter-utilities' Recibo card fields
+   (.field / .flat-field) - kept here rather than shared globally since this is the only other
+   consumer so far; if a third screen needs it, promote both to a shared stylesheet. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+.flat-field {
+  width: 100%;
+}
+.flat-field ::ng-deep .mat-mdc-text-field-wrapper {
+  background: var(--color-surface) !important;
+  border-radius: var(--radius-pill) !important;
+}
+.flat-field ::ng-deep .mdc-notched-outline__leading,
+.flat-field ::ng-deep .mdc-notched-outline__notch,
+.flat-field ::ng-deep .mdc-notched-outline__trailing {
+  border-color: transparent !important;
+}
+.flat-field ::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  min-height: 0;
+}
+.flat-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
 .bill-fields {
-  margin-bottom: 16px;
-  padding: 16px;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+}
+.bill-fields h3 {
+  margin: 0 0 16px;
 }
 
 .fields-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-top: 8px;
+  gap: 16px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+}
+
+.readings-table {
+  width: 100%;
+  min-width: 920px;
+  background: transparent;
+}
+.readings-table th.mat-mdc-header-cell {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  white-space: nowrap;
+}
+.readings-table td.mat-mdc-cell,
+.readings-table th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
+}
+
+.status {
+  display: block;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+}
+
+.cell-input {
+  width: 84px;
+  padding: 8px 10px;
+  border: none;
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-align: right;
+  color: var(--color-text);
+}
+.cell-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.cell-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent);
+}
+
+.row-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-accent-700);
+  font-weight: 700;
 }
 
 .verifiers {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .verifier {
-  border: 1px solid #dcd3c4;
-  border-radius: 12px;
-  padding: 12px 14px;
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
 }
 
 .verifier .vh {
@@ -44,126 +153,110 @@
 
 .verifier .vdetail {
   font-size: 12px;
-  color: #645c50;
+  color: var(--color-neutral-700);
   margin: 6px 0 0;
 }
 
 .chip {
   display: inline-flex;
-  padding: 4px 11px;
-  border-radius: 999px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 700;
+  white-space: nowrap;
 }
-
 .chip.pass {
-  background: #eaf3e2;
-  color: #4d7c3a;
+  background: var(--color-accent-2-100);
+  color: var(--color-accent-2-700);
 }
-
 .chip.fail {
-  background: #fbe9e6;
-  color: #a83a2e;
+  background: var(--color-accent-200);
+  color: var(--color-accent-700);
+}
+.chip.pending {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-600);
 }
 
 .admin-amount {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  background: #fff2eb;
-  border: 1px solid #ffc6a5;
-  border-radius: 12px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--color-accent-100);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 20px;
 }
-
 .admin-amount .lbl {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #8c491a;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--color-accent-700);
 }
-
 .admin-amount .val {
-  font-size: 18px;
-  font-weight: 700;
-  color: #8c491a;
-}
-
-.readings-table {
-  width: 100%;
-  overflow-x: auto;
-  display: block;
-}
-
-.status {
-  display: block;
-  font-size: 11px;
-  color: var(--mat-sys-on-surface-variant, #666);
-}
-
-.cell-input {
-  width: 90px;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: right;
-}
-
-.row-error {
-  display: block;
-  font-size: 11px;
-  color: #a83a2e;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--color-accent-700);
 }
 
 .comments-section {
   margin-top: 20px;
 }
-
-.comment-line {
-  background: #f5ead8;
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 6px;
-  font-size: 12.5px;
+.comments-section h3 {
+  margin: 0 0 10px;
 }
 
+.comment-line {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
 .comment-line b {
   display: block;
   font-size: 10px;
   text-transform: uppercase;
-  color: #82796a;
+  letter-spacing: 0.06em;
+  color: var(--color-neutral-600);
 }
 
 .comment-add {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-top: 6px;
 }
-
 .comment-add input {
   flex: 1;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid #dcd3c4;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text);
+}
+.comment-add input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .footer-bar {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-top: 20px;
+  margin-top: 24px;
   flex-wrap: wrap;
 }
 
 .confirm-message {
   font-size: 13px;
   font-weight: 700;
-  color: #a83a2e;
+  color: var(--color-accent-700);
 }
-
 .confirm-message.ok {
-  color: #4d7c3a;
+  color: var(--color-accent-2-700);
 }

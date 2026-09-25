@@ -1,26 +1,26 @@
-<app-page-header
-  kicker="Facturación de gas"
-  title="Gas"
-  [hint]="isReadOnly ? 'Tu propio desglose de gas, de solo lectura.' : 'Un cargo variable por consumo más un cargo fijo, por período.'"
-/>
+<p class="gas-hint">{{ isReadOnly ? 'Tu propio desglose de gas, de solo lectura.' : 'Un cargo variable por consumo más un cargo fijo, por período.' }}</p>
 
 <div class="period-picker">
-  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Mes</mat-label>
-    <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChanged()">
-      @for (name of monthNames; track name; let i = $index) {
-        <mat-option [value]="i + 1">{{ name }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-  <mat-form-field appearance="outline" subscriptSizing="dynamic">
-    <mat-label>Año</mat-label>
-    <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChanged()">
-      @for (year of years; track year) {
-        <mat-option [value]="year">{{ year }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
+  <div class="field">
+    <label>Mes</label>
+    <mat-form-field appearance="outline" class="flat-field">
+      <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChanged()">
+        @for (name of monthNames; track name; let i = $index) {
+          <mat-option [value]="i + 1">{{ name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="field">
+    <label>Año</label>
+    <mat-form-field appearance="outline" class="flat-field">
+      <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChanged()">
+        @for (year of years; track year) {
+          <mat-option [value]="year">{{ year }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
 </div>
 
 @if (loadingService.isLoading()) {
@@ -32,56 +32,76 @@
     <mat-card class="bill-fields">
       <h3>Datos de la factura</h3>
       <div class="fields-grid">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Consumo total (m³)</mat-label>
-          <input matInput type="text" [(ngModel)]="billDraft.totalConsumption" (change)="saveBillFields()" data-testid="total-consumption" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Precio unitario</mat-label>
-          <input matInput type="text" [(ngModel)]="billDraft.unitPrice" (change)="saveBillFields()" data-testid="unit-price" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Subtotal consumo gas</mat-label>
-          <input matInput type="text" [(ngModel)]="billDraft.consumoGasSubtotal" (change)="saveBillFields()" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Cargo fijo (FIJO)</mat-label>
-          <input matInput type="text" [(ngModel)]="billDraft.fixedCharge" (change)="saveBillFields()" data-testid="fixed-charge" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Total de la factura</mat-label>
-          <input matInput type="text" [(ngModel)]="billDraft.totalAmount" (change)="saveBillFields()" data-testid="total-amount" />
-        </mat-form-field>
+        <div class="field">
+          <label>Consumo total (m³)</label>
+          <mat-form-field appearance="outline" class="flat-field">
+            <input matInput type="text" [(ngModel)]="billDraft.totalConsumption" (change)="saveBillFields()" data-testid="total-consumption" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Precio unitario</label>
+          <mat-form-field appearance="outline" class="flat-field">
+            <input matInput type="text" [(ngModel)]="billDraft.unitPrice" (change)="saveBillFields()" data-testid="unit-price" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Subtotal consumo gas</label>
+          <mat-form-field appearance="outline" class="flat-field">
+            <input matInput type="text" [(ngModel)]="billDraft.consumoGasSubtotal" (change)="saveBillFields()" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Cargo fijo (FIJO)</label>
+          <mat-form-field appearance="outline" class="flat-field">
+            <input matInput type="text" [(ngModel)]="billDraft.fixedCharge" (change)="saveBillFields()" data-testid="fixed-charge" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Total de la factura</label>
+          <mat-form-field appearance="outline" class="flat-field">
+            <input matInput type="text" [(ngModel)]="billDraft.totalAmount" (change)="saveBillFields()" data-testid="total-amount" />
+          </mat-form-field>
+        </div>
       </div>
     </mat-card>
   }
 
-  @if (bill) {
-    <div class="verifiers">
-      <div class="verifier">
-        <div class="vh">
-          <span class="vname">Suma de porcentajes</span>
-          <span class="chip" [class.pass]="bill.percentagePasses" [class.fail]="!bill.percentagePasses" data-testid="verifier-percentage-chip">
-            {{ bill.percentagePasses ? 'Cumple' : 'Falla' }}
-          </span>
-        </div>
-        @if (!bill.percentagePasses) {
-          <p class="vdetail" data-testid="verifier-percentage-detail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
-        }
+  <div class="verifiers">
+    <div class="verifier">
+      <div class="vh">
+        <span class="vname">Suma de porcentajes</span>
+        <span
+          class="chip"
+          [class.pass]="bill?.percentagePasses === true"
+          [class.fail]="bill?.percentagePasses === false"
+          [class.pending]="!bill"
+          data-testid="verifier-percentage-chip"
+        >
+          {{ !bill ? 'Sin datos' : (bill.percentagePasses ? 'Cumple' : 'Falla') }}
+        </span>
       </div>
-      <div class="verifier">
-        <div class="vh">
-          <span class="vname">Apartamentos + administración = factura</span>
-          <span class="chip" [class.pass]="bill.totalPasses" [class.fail]="!bill.totalPasses" data-testid="verifier-total-chip">
-            {{ bill.totalPasses ? 'Cumple' : 'Falla' }}
-          </span>
-        </div>
-        @if (!bill.totalPasses) {
-          <p class="vdetail" data-testid="verifier-total-detail">Diferencia de {{ bill.totalDifference | copCurrency }} respecto al total de la factura.</p>
-        }
-      </div>
+      @if (bill && !bill.percentagePasses) {
+        <p class="vdetail" data-testid="verifier-percentage-detail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
+      }
     </div>
-  }
+    <div class="verifier">
+      <div class="vh">
+        <span class="vname">Apartamentos + administración = factura</span>
+        <span
+          class="chip"
+          [class.pass]="bill?.totalPasses === true"
+          [class.fail]="bill?.totalPasses === false"
+          [class.pending]="!bill"
+          data-testid="verifier-total-chip"
+        >
+          {{ !bill ? 'Sin datos' : (bill.totalPasses ? 'Cumple' : 'Falla') }}
+        </span>
+      </div>
+      @if (bill && !bill.totalPasses) {
+        <p class="vdetail" data-testid="verifier-total-detail">Diferencia de {{ bill.totalDifference | copCurrency }} respecto al total de la factura.</p>
+      }
+    </div>
+  </div>
 
   @if (bill && bill.administrationAmount !== '0' && bill.administrationAmount !== null) {
     <div class="admin-amount" data-testid="admin-amount">
@@ -90,6 +110,7 @@
     </div>
   }
 
+  <div class="table-scroll">
   <table mat-table [dataSource]="rows" class="readings-table">
     <ng-container matColumnDef="apartamento">
       <th mat-header-cell *matHeaderCellDef>Apartamento</th>
@@ -105,6 +126,7 @@
         @if (!isReadOnly) {
           <input
             type="checkbox"
+            class="cell-checkbox"
             [checked]="row.isNewTenant"
             (change)="toggleNewTenant(row, $any($event.target).checked)"
             [attr.data-testid]="'new-tenant-' + row.apartmentId"
@@ -192,11 +214,12 @@
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
+  </div>
 
-  @if (bill && (bill.comments.length > 0 || !isReadOnly)) {
+  @if (!isReadOnly || (bill && bill.comments.length > 0)) {
     <div class="comments-section">
       <h3>Comentarios</h3>
-      @for (comment of bill.comments; track comment.id) {
+      @for (comment of (bill?.comments ?? []); track comment.id) {
         <div class="comment-line">
           <b>{{ comment.gasApartmentReadingId ? 'Apartamento' : 'Factura' }}</b>
           {{ comment.text }}
@@ -211,18 +234,18 @@
     </div>
   }
 
-  @if (!isReadOnly && bill) {
+  @if (!isReadOnly) {
     <div class="footer-bar">
       <button
         mat-flat-button
         color="primary"
-        [disabled]="hasBlockingErrors"
+        [disabled]="!bill || hasBlockingErrors"
         (click)="confirm()"
         data-testid="confirm-button"
       >
         Confirmar factura
       </button>
-      @if (hasBlockingErrors) {
+      @if (bill && hasBlockingErrors) {
         <span class="confirm-message" data-testid="confirm-hint">
           No se puede confirmar: revisa {{ blockedApartmentNumbers.join(', ') }}.
         </span>

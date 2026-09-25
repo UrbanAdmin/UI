@@ -152,6 +152,34 @@ describe('GasBillingComponent', () => {
     httpMock.expectOne(`${environment.apiUrl}/GasBills/${DATE_ID}`).flush(bill);
   });
 
+  it('shows the verifiers panel and the comments box even before any bill has been saved yet', async () => {
+    const fixture = await setup(false, null);
+
+    const pctChip: HTMLElement = fixture.nativeElement.querySelector('[data-testid="verifier-percentage-chip"]');
+    const totalChip: HTMLElement = fixture.nativeElement.querySelector('[data-testid="verifier-total-chip"]');
+    expect(pctChip.textContent).toContain('Sin datos');
+    expect(totalChip.textContent).toContain('Sin datos');
+    expect(fixture.nativeElement.querySelector('[data-testid="new-comment-input"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('[data-testid="confirm-button"]').disabled).toBe(true);
+  });
+
+  it('creates the bill first when adding a comment before any bill field has been saved', async () => {
+    const fixture = await setup(false, null);
+    fixture.componentInstance.newCommentText = 'Primer comentario';
+
+    fixture.componentInstance.addBillComment();
+
+    const createBillReq = httpMock.expectOne(`${environment.apiUrl}/GasBills`);
+    expect(createBillReq.request.body).toEqual({ dateId: DATE_ID });
+    createBillReq.flush({ id: 9 });
+
+    const addCommentReq = httpMock.expectOne(`${environment.apiUrl}/GasBills/9/Comments`);
+    expect(addCommentReq.request.body).toEqual({ gasApartmentReadingId: null, text: 'Primer comentario' });
+    addCommentReq.flush({ id: 1 });
+
+    httpMock.expectOne(`${environment.apiUrl}/GasBills/${DATE_ID}`).flush(null, { status: 404, statusText: 'Not Found' });
+  });
+
   it('shows a fail chip with the exact difference when the total verifier fails', async () => {
     const bill: GasBillDto = {
       id: 7, dateId: DATE_ID, totalConsumption: '30', unitPrice: '10', consumoGasSubtotal: null,

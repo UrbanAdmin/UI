@@ -18,7 +18,6 @@ import { LoadingService } from '../loading.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
-import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 import { GasBillingService } from './gas-billing.service';
 import { GasApartmentReadingDto, GasBillDto, GasBillWrite } from './gas-billing.model';
 
@@ -59,7 +58,6 @@ interface GasReadingRow {
     CopCurrencyPipe,
     EmptyStateComponent,
     LoadingIndicatorComponent,
-    PageHeaderComponent,
   ],
 })
 export class GasBillingComponent {
@@ -223,13 +221,24 @@ export class GasBillingComponent {
 
   /** FR-029: a comment on the bill overall (no apartment tied to it). */
   addBillComment(): void {
-    if (!this.bill || !this.newCommentText.trim()) {
+    if (this.dateId === null || !this.newCommentText.trim()) {
       return;
     }
-    this.gasBillingService.addComment(this.bill.id, this.newCommentText, null).subscribe(() => {
-      this.newCommentText = '';
-      this.reload();
-    });
+    const text = this.newCommentText;
+    if (this.bill) {
+      this.gasBillingService.addComment(this.bill.id, text, null).subscribe(() => {
+        this.newCommentText = '';
+        this.reload();
+      });
+    } else {
+      // No bill saved yet - create it first (empty totals) so the comment has somewhere to attach.
+      this.gasBillingService.createBill(this.dateId, {}).subscribe((billId) => {
+        this.gasBillingService.addComment(billId, text, null).subscribe(() => {
+          this.newCommentText = '';
+          this.reload();
+        });
+      });
+    }
   }
 
   /** FR-029: a comment tied to one apartment's line - prompts inline rather than a full dialog,

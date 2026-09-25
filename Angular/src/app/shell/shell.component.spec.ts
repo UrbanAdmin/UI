@@ -22,11 +22,12 @@ describe('ShellComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render all 5 nav links', () => {
-    // Home, Lecturas, Gas, Pagos, Notificaciones - the two adminOnly links (Apartamentos, Usuarios)
+  it('should render all 4 nav links', () => {
+    // Home, Lecturas, Pagos, Notificaciones - the two adminOnly links (Apartamentos, Usuarios)
     // stay hidden for this test's un-authenticated AuthService (role null, isAdmin() false).
+    // Gas billing lives inside Lecturas (its Servicio pill), not a separate nav entry.
     const links = fixture.nativeElement.querySelectorAll('[data-testid="nav-link"]');
-    expect(links.length).toBe(5);
+    expect(links.length).toBe(4);
   });
 
   it('should render a logout action', () => {

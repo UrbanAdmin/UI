@@ -20,6 +20,10 @@
   </div>
 </div>
 
+@if (selectedService === 'Gas') {
+  <app-gas-billing />
+} @else {
+
 @if (!isReadOnly) {
   <mat-card class="receipt-card">
     <mat-card-title>Recibo de {{ selectedService }}</mat-card-title>
@@ -142,4 +146,6 @@
   }
 </mat-tab-group>
   }
+}
+
 }

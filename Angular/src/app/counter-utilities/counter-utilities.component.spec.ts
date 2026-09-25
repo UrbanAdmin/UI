@@ -331,4 +331,20 @@ describe('CounterUtilitiesComponent', () => {
     httpMock.expectNone(`${environment.apiUrl}/Invoice/5/Receipt`);
     expect(component.receiptTotal).toBe('95000');
   });
+
+  it('selecting the Gas pill swaps the Recibo card and apartment tabs for the embedded Gas billing flow', () => {
+    component.selectedService = 'Gas';
+    component.onServiceChanged();
+    fixture.detectChanges();
+
+    // DatesService/ApartmentsService are already cached from setup() (same current-year Dates,
+    // same 6 apartments) - the only new call GasBillingComponent makes is its own bill lookup.
+    const currentDateId = new Date().getMonth() + 1;
+    httpMock.expectOne(`${environment.apiUrl}/GasBills/${currentDateId}`).flush(null, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-gas-billing')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.receipt-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('mat-tab-group')).toBeNull();
+  });
 });

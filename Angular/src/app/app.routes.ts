@@ -8,7 +8,6 @@ import { PaymentsComponent } from './payments/payments.component';
 import { NotificationsComponent } from './notifications/notifications.component';
 import { ManageApartmentsComponent } from './manage-apartments/manage-apartments.component';
 import { ManageUsersComponent } from './manage-users/manage-users.component';
-import { GasBillingComponent } from './gas-billing/gas-billing.component';
 import { ShellComponent } from './shell/shell.component';
 
 export const routes: Routes = [
@@ -19,8 +18,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', component: HomeComponent }, // Homepage
-      { path: 'counter-utilities', component: CounterUtilitiesComponent }, // Counter Utilities page
-      { path: 'gas-billing', component: GasBillingComponent }, // Gas billing page (023-gas-utility-billing)
+      { path: 'counter-utilities', component: CounterUtilitiesComponent }, // Counter Utilities page (Gas billing lives here too, via the Servicio pill - 023-gas-utility-billing)
       { path: 'payments', component: PaymentsComponent }, // Pagos page
       { path: 'notifications', component: NotificationsComponent }, // Notifications page
       { path: 'apartments', component: ManageApartmentsComponent, canActivate: [adminGuard] }, // Manage Apartments page (admin only)

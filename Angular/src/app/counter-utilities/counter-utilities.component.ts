@@ -30,6 +30,7 @@ import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 import { PageHeaderComponent } from '../shared/page-header/page-header.component';
+import { GasBillingComponent } from '../gas-billing/gas-billing.component';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -55,6 +56,7 @@ type ReadingRow = MeterReading & { monthLabel: string };
     EmptyStateComponent,
     LoadingIndicatorComponent,
     PageHeaderComponent,
+    GasBillingComponent,
   ],
 })
 export class CounterUtilitiesComponent {
