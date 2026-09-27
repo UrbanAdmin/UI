@@ -150,7 +150,7 @@
             [attr.data-testid]="'initial-reading-' + row.apartmentId"
           />
         } @else {
-          {{ row.reading?.previousReading ?? '—' }}
+          {{ row.reading?.previousReading | esNumber }}
         }
       </td>
     </ng-container>
@@ -177,12 +177,12 @@
 
     <ng-container matColumnDef="consumo">
       <th mat-header-cell *matHeaderCellDef>Consumo</th>
-      <td mat-cell *matCellDef="let row">{{ row.reading?.consumption ?? '—' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumption | esNumber }}</td>
     </ng-container>
 
     <ng-container matColumnDef="porcentaje">
       <th mat-header-cell *matHeaderCellDef>%</th>
-      <td mat-cell *matCellDef="let row">{{ row.reading?.consumptionPercentage ?? '—' }}</td>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumptionPercentage | esNumber:'percent' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="costoVariable">

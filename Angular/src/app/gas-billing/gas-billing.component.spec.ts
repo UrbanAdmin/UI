@@ -102,6 +102,48 @@ describe('GasBillingComponent', () => {
     expect(row?.reading?.finalTotal).toBe('300');
   });
 
+  it('sends a comma-decimal reading typed in es-CO style to the backend as a plain invariant decimal', async () => {
+    const fixture = await setup(false, null);
+    const row = fixture.componentInstance.rows[0];
+    row.currentReading = '516,425'; // Colombian convention: ',' is the decimal separator
+
+    fixture.componentInstance.saveReading(row);
+
+    const createBillReq = httpMock.expectOne(`${environment.apiUrl}/GasBills`);
+    createBillReq.flush({ id: 7 });
+    const createReadingReq = httpMock.expectOne(`${environment.apiUrl}/GasApartmentReadings`);
+    expect(createReadingReq.request.body).toEqual({
+      gasBillId: 7, apartmentId: 1, isNewTenant: false, initialReading: null, currentReading: '516.425',
+    });
+    createReadingReq.flush({ id: 99 });
+
+    httpMock.expectOne(`${environment.apiUrl}/GasBills/${DATE_ID}`).flush(null, { status: 404, statusText: 'Not Found' });
+  });
+
+  it('renders Consumo and previous-reading values in es-CO thousands/decimal style, and % as a percentage', async () => {
+    const bill: GasBillDto = {
+      id: 7, dateId: DATE_ID, totalConsumption: '12516.425', unitPrice: '10', consumoGasSubtotal: null,
+      fixedCharge: '0', otherConcepts: null, ajusteDecena: null, totalAmount: '300',
+      administrationAmount: '0', percentagePasses: true, percentageDifference: '0',
+      totalPasses: true, totalDifference: '0', confirmed: false, confirmedAt: null,
+      readings: [{
+        id: 99, apartmentId: 1, apartmentNumber: '101', status: 'Arrendado', isNewTenant: false,
+        initialReading: null, previousReading: '12516.425', currentReading: '30', consumption: '12516.425',
+        consumptionPercentage: '0.177777777777', allocatedConsumption: '30', variableCost: '300',
+        fixedChargeShare: '0', finalTotal: '300', validationError: null, photoFileName: null,
+      }],
+      comments: [],
+    };
+    const fixture = await setup(false, bill);
+    fixture.detectChanges();
+
+    const rowCells = fixture.nativeElement.querySelectorAll('table.readings-table tbody tr')[0].querySelectorAll('td');
+    // Columns: apartamento, nuevoInquilino, lecturaAnterior, lecturaActual, consumo, porcentaje, ...
+    expect(rowCells[2].textContent).toContain('12.516,425'); // Lect. anterior
+    expect(rowCells[4].textContent).toContain('12.516,425'); // Consumo
+    expect(rowCells[5].textContent).toContain('17,78%'); // %
+  });
+
   it('calls confirm and reports success', async () => {
     const bill: GasBillDto = {
       id: 7, dateId: DATE_ID, totalConsumption: null, unitPrice: null, consumoGasSubtotal: null,

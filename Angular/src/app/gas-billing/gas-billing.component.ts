@@ -16,6 +16,8 @@ import { AuthService } from '../auth.service';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { LoadingService } from '../loading.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
+import { EsNumberPipe } from '../shared/es-number.pipe';
+import { formatEsDecimal, parseEsDecimal } from '../shared/es-number';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 import { GasBillingService } from './gas-billing.service';
@@ -56,6 +58,7 @@ interface GasReadingRow {
     MatSelectModule,
     MatTableModule,
     CopCurrencyPipe,
+    EsNumberPipe,
     EmptyStateComponent,
     LoadingIndicatorComponent,
   ],
@@ -166,8 +169,10 @@ export class GasBillingComponent {
       status: reading.status,
       reading,
       isNewTenant: reading.isNewTenant,
-      initialReading: reading.initialReading,
-      currentReading: reading.currentReading,
+      // Stored values are plain invariant decimals ("516.425") - shown here in es-CO style
+      // ("516,425") so the editable field round-trips correctly through parseEsDecimal on save.
+      initialReading: formatEsDecimal(reading.initialReading) || null,
+      currentReading: formatEsDecimal(reading.currentReading) || null,
     };
   }
 
@@ -189,10 +194,13 @@ export class GasBillingComponent {
     if (this.dateId === null) {
       return;
     }
+    // The field holds whatever the admin typed in es-CO style (or the display-formatted stored
+    // value, from toRow()) - parseEsDecimal turns "516,425"/"1.520" back into the plain invariant
+    // decimal the backend expects ("516.425"/"1520").
     const write = {
       isNewTenant: row.isNewTenant,
-      initialReading: row.initialReading,
-      currentReading: row.currentReading,
+      initialReading: parseEsDecimal(row.initialReading),
+      currentReading: parseEsDecimal(row.currentReading),
     };
     if (row.reading) {
       this.gasBillingService.updateReading(row.reading.id, write).subscribe(() => this.reload());
@@ -212,7 +220,9 @@ export class GasBillingComponent {
   toggleNewTenant(row: GasReadingRow, checked: boolean): void {
     row.isNewTenant = checked;
     if (checked && row.initialReading === null) {
-      row.initialReading = row.reading?.previousReading ?? null;
+      // previousReading is the raw invariant value from the server - format it the same way
+      // toRow() does, so it displays and round-trips consistently with every other reading field.
+      row.initialReading = formatEsDecimal(row.reading?.previousReading) || null;
     }
     if (row.reading) {
       this.saveReading(row);
