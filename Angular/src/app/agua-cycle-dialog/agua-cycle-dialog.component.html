@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>Periodo de facturación de Agua</h2>
+<mat-dialog-content>
+  @if (currentCycleStartMonth !== null) {
+    <p class="cycle-info">
+      Ciclo actual: empieza en {{ monthNames[currentCycleStartMonth - 1] }}{{ cutoffDay ? ', día ' + cutoffDay : '' }}.
+    </p>
+  } @else {
+    <p class="cycle-info">
+      Agua todavía se factura mes a mes. Configura el ciclo de dos meses para que coincida con la factura real de
+      la empresa de acueducto.
+    </p>
+  }
+
+  <form>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Mes de inicio del ciclo</mat-label>
+      <mat-select [(ngModel)]="startMonth" name="startMonth">
+        @for (name of monthNames; track name; let i = $index) {
+          <mat-option [value]="i + 1">{{ name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Día de corte (opcional)</mat-label>
+      <input matInput type="number" min="1" max="31" [(ngModel)]="cutoffDay" name="cutoffDay" data-testid="cutoff-day" />
+      <mat-hint>Solo de referencia - no cambia a qué mes pertenece una lectura o factura.</mat-hint>
+    </mat-form-field>
+
+    <div class="field-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>A partir de (mes)</mat-label>
+        <mat-select [(ngModel)]="fromMonth" name="fromMonth">
+          @for (name of monthNames; track name; let i = $index) {
+            <mat-option [value]="i + 1">{{ name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Año</mat-label>
+        <mat-select [(ngModel)]="fromYear" name="fromYear">
+          @for (year of years; track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (isPast) {
+      <div class="error" data-testid="past-date-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>La fecha efectiva no puede ser anterior al mes actual: cambiaría periodos ya registrados.</span>
+      </div>
+    } @else if (errorMessage(); as error) {
+      <div class="error" data-testid="save-error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+    }
+  </form>
+
+  <p class="note">Los periodos ya registrados nunca cambian, aunque edites este ciclo después.</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="isPast || saving" data-testid="save-cycle">
+    Guardar
+  </button>
+</mat-dialog-actions>

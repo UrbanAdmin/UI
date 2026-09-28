@@ -8,6 +8,7 @@ import { CounterUtilityDto, CounterUtilityWrite } from './counter-utility.model'
 import { UtilitiesService } from '../shared/utilities.service';
 import { DatesService } from '../shared/dates.service';
 import { InvoicesService } from './invoices.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable({ providedIn: 'root' })
 export class ReadingsService {
@@ -15,6 +16,7 @@ export class ReadingsService {
   private readonly utilitiesService = inject(UtilitiesService);
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
+  private readonly notificationsService = inject(NotificationsService);
 
   // The Lecturas tab group renders every apartment x service combination
   // eagerly (18 of them), each calling getReadings - without caching this,
@@ -31,28 +33,40 @@ export class ReadingsService {
     return this.counterUtilitiesCache$;
   }
 
+  // One row per billing period, not per calendar month - for a service with
+  // no UtilityBillingCycle (Luz, Gas, and Agua before this feature's cycle is
+  // set) that's still all 12 calendar months, since GetUtilityBillingPeriods
+  // returns one period per month by default (research.md Decision 1/3). Only
+  // the period's ANCHOR month ever has a CounterUtility row; the second month
+  // of a real (bimonthly) period is never queried.
   getReadings(apartmentId: number, service: ServiceName, year: number): Observable<MeterReading[]> {
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
-    return forkJoin([
-      this.utilitiesService.getOrCreateUtility(service),
-      forkJoin(months.map((month) => this.datesService.getOrCreateDate(month, year))),
-      this.fetchCounterUtilities(),
-    ]).pipe(
-      map(([utility, dates, counterUtilities]) =>
-        months.map((month, index) => {
-          const date = dates[index];
-          const match = counterUtilities.find(
-            (cu) => cu.apartmentId === apartmentId && cu.utilityId === utility.id && cu.dateId === date.id,
-          );
-          return {
-            month,
-            year,
-            counter: match?.counter ?? null,
-            evidenceFileName: match?.photoFileName ?? null,
-            fee: match?.fee ?? null,
-          };
-        }),
+    return this.utilitiesService.getOrCreateUtility(service).pipe(
+      switchMap((utility) =>
+        this.notificationsService.getBillingPeriods(utility.id, year).pipe(
+          switchMap((periods) =>
+            forkJoin([
+              forkJoin(periods.map((p) => this.datesService.getOrCreateDate(p.anchorMonth, p.anchorYear))),
+              this.fetchCounterUtilities(),
+            ]).pipe(
+              map(([dates, counterUtilities]) =>
+                periods.map((period, index) => {
+                  const date = dates[index];
+                  const match = counterUtilities.find(
+                    (cu) => cu.apartmentId === apartmentId && cu.utilityId === utility.id && cu.dateId === date.id,
+                  );
+                  return {
+                    month: period.anchorMonth,
+                    year: period.anchorYear,
+                    counter: match?.counter ?? null,
+                    evidenceFileName: match?.photoFileName ?? null,
+                    fee: match?.fee ?? null,
+                    periodLabel: period.secondMonth != null ? period.label : undefined,
+                  };
+                }),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

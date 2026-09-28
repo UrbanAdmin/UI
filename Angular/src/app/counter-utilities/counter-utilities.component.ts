@@ -18,8 +18,9 @@ import { Apartment } from '../shared/apartment.model';
 import { ApartmentsService } from '../shared/apartments.service';
 import { DatesService } from '../shared/dates.service';
 import { UtilitiesService } from '../shared/utilities.service';
-import { ServiceName } from '../notifications/notification.model';
+import { BillingPeriod, ServiceName } from '../notifications/notification.model';
 import { MONTH_NAMES, monthName } from '../notifications/month-names';
+import { NotificationsService } from '../notifications/notifications.service';
 import { ReadingsService } from '../readings/readings.service';
 import { InvoicesService } from '../readings/invoices.service';
 import { MeterReading } from '../readings/reading.model';
@@ -31,6 +32,7 @@ import { EmptyStateComponent } from '../shared/empty-state/empty-state.component
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 import { PageHeaderComponent } from '../shared/page-header/page-header.component';
 import { GasBillingComponent } from '../gas-billing/gas-billing.component';
+import { AguaCycleDialogComponent } from '../agua-cycle-dialog/agua-cycle-dialog.component';
 
 type ReadingRow = MeterReading & { monthLabel: string };
 
@@ -63,6 +65,7 @@ export class CounterUtilitiesComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly authService = inject(AuthService);
   private readonly utilitiesService = inject(UtilitiesService);
+  private readonly notificationsService = inject(NotificationsService);
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly ngZone = inject(NgZone);
@@ -85,6 +88,13 @@ export class CounterUtilitiesComponent {
   selectedService: ServiceName = 'Agua';
   selectedReceiptMonth: number = new Date().getMonth() + 1;
   selectedReceiptYear: number = new Date().getFullYear();
+  // 022-bimonthly-agua-billing: for Agua, the Mes/Año pair above is driven by
+  // picking one of these computed billing periods instead of a raw month -
+  // selectedReceiptMonth/Year still hold the chosen period's ANCHOR month,
+  // since every existing endpoint (Invoices, readings) already keys off that
+  // anchor (research.md Decision 4) and needs no change here.
+  aguaPeriods: BillingPeriod[] = [];
+  selectedAguaPeriodKey: string | null = null;
   receiptTotal: string | null = null;
   receiptFile: File | null = null;
   receiptOcrLoading = false;
@@ -115,8 +125,68 @@ export class CounterUtilitiesComponent {
   ) {
     this.years = Array.from({ length: 7 }, (_, i) => this.selectedReceiptYear - 1 + i);
     if (!this.isReadOnly) {
+      this.refreshReceiptPeriod();
+    }
+  }
+
+  /** Loads whatever the current Servicio needs to show a period selector:
+   *  Agua's computed billing periods, or (for every other service) just the
+   *  existing Total del recibo for the already-selected Mes/Año. */
+  private refreshReceiptPeriod(): void {
+    if (this.selectedService === 'Agua') {
+      this.loadAguaPeriods();
+    } else {
       this.loadExistingReceiptTotal();
     }
+  }
+
+  periodKey(period: BillingPeriod): string {
+    return `${period.anchorMonth}-${period.anchorYear}`;
+  }
+
+  onAguaPeriodChanged(): void {
+    const period = this.aguaPeriods.find((p) => this.periodKey(p) === this.selectedAguaPeriodKey);
+    if (!period) {
+      return;
+    }
+    this.selectedReceiptMonth = period.anchorMonth;
+    this.selectedReceiptYear = period.anchorYear;
+    this.loadExistingReceiptTotal();
+  }
+
+  /** Fetches Agua's computed billing periods (current + previous year, same
+   *  span getRows$ already covers) and defaults the selection to whichever
+   *  period contains "today" - found by POSITION in the combined,
+   *  chronologically-ordered list, not a fixed month index, since a period
+   *  can be two calendar months wide (mirrors getRows$'s own lookup). */
+  private loadAguaPeriods(): void {
+    this.utilitiesService.getOrCreateUtility('Agua').subscribe((utility) => {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      forkJoin([
+        this.notificationsService.getBillingPeriods(utility.id, currentYear - 1),
+        this.notificationsService.getBillingPeriods(utility.id, currentYear),
+      ]).subscribe(([previousYearPeriods, currentYearPeriods]) => {
+        this.aguaPeriods = [...previousYearPeriods, ...currentYearPeriods];
+
+        let currentIndex = -1;
+        for (let i = 0; i < this.aguaPeriods.length; i++) {
+          const p = this.aguaPeriods[i];
+          if (p.anchorYear < currentYear || (p.anchorYear === currentYear && p.anchorMonth <= currentMonth)) {
+            currentIndex = i;
+          }
+        }
+        const selected = this.aguaPeriods[currentIndex] ?? this.aguaPeriods[this.aguaPeriods.length - 1] ?? null;
+        if (selected) {
+          this.selectedAguaPeriodKey = this.periodKey(selected);
+          this.selectedReceiptMonth = selected.anchorMonth;
+          this.selectedReceiptYear = selected.anchorYear;
+        }
+        this.loadExistingReceiptTotal();
+      });
+    });
   }
 
   // Only the previous and current calendar month are shown - a full year of
@@ -130,20 +200,37 @@ export class CounterUtilitiesComponent {
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
       const current$ = this.readingsService.getReadings(apartment.id, service, currentYear);
-      const previous$ =
-        previousYear === currentYear ? current$ : this.readingsService.getReadings(apartment.id, service, previousYear);
+      const previousYear$ = this.readingsService.getReadings(apartment.id, service, currentYear - 1);
 
-      rows$ = forkJoin([previous$, current$]).pipe(
-        map(([previousYearRows, currentYearRows]) =>
-          [previousYearRows[previousMonth - 1], currentYearRows[currentMonth - 1]].map((reading) => ({
+      rows$ = forkJoin([previousYear$, current$]).pipe(
+        map(([previousYearRows, currentYearRows]) => {
+          // getReadings returns one row per billing period in chronological
+          // order - for Agua with a cycle, a period can be 2 calendar months
+          // wide, so "previous period" isn't reliably "last calendar month"
+          // and can't be found by a fixed month-index anymore (FR-004). Find
+          // the latest period whose anchor is at or before today by
+          // POSITION in the combined, already-ordered list instead, and take
+          // it plus the one right before it.
+          const combined = [...previousYearRows, ...currentYearRows];
+          let currentIndex = -1;
+          for (let i = 0; i < combined.length; i++) {
+            const r = combined[i];
+            if (r.year < currentYear || (r.year === currentYear && r.month <= currentMonth)) {
+              currentIndex = i;
+            }
+          }
+          if (currentIndex === -1) {
+            currentIndex = 0;
+          }
+
+          const selected = currentIndex > 0 ? [combined[currentIndex - 1], combined[currentIndex]] : [combined[currentIndex]];
+          return selected.filter((reading): reading is (typeof combined)[number] => !!reading).map((reading) => ({
             ...reading,
-            monthLabel: `${monthName(reading.month)} ${reading.year}`,
-          })),
-        ),
+            monthLabel: reading.periodLabel ?? `${monthName(reading.month)} ${reading.year}`,
+          }));
+        }),
         shareReplay(1),
       );
       this.rowsCache.set(key, rows$);
@@ -153,7 +240,7 @@ export class CounterUtilitiesComponent {
 
   onServiceChanged(): void {
     if (!this.isReadOnly) {
-      this.loadExistingReceiptTotal();
+      this.refreshReceiptPeriod();
     }
   }
 
@@ -199,6 +286,29 @@ export class CounterUtilitiesComponent {
 
   onReceiptPeriodChanged(): void {
     this.loadExistingReceiptTotal();
+  }
+
+  /** 022-bimonthly-agua-billing (T017): the admin-only cycle-start setting,
+   *  opened from a text link below the Servicio pills - see
+   *  Mockups/agua-billing-cycle-setting. */
+  openAguaCycleDialog(): void {
+    this.utilitiesService.getOrCreateUtility('Agua').subscribe((utility) => {
+      this.dialog
+        .open(AguaCycleDialogComponent, { width: '420px', maxHeight: '90vh', data: { utilityId: utility.id } })
+        .afterClosed()
+        .subscribe((saved) => {
+          if (saved) {
+            // A new cycle reshapes which months are anchors - every cached
+            // row (and the notifications service's own billing-periods
+            // cache, already cleared by setBillingCycle) must be refetched,
+            // including the Recibo card's own period dropdown.
+            this.ngZone.run(() => {
+              this.rowsCache.clear();
+              this.loadAguaPeriods();
+            });
+          }
+        });
+    });
   }
 
   /** Pre-fills "Total del recibo" with whatever is already saved for the

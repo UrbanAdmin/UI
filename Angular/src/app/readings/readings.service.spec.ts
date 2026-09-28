@@ -10,15 +10,33 @@ const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
 const DATES_URL = `${environment.apiUrl}/Dates`;
 const COUNTER_UTILITIES_URL = `${environment.apiUrl}/CounterUtilities`;
 const INVOICES_URL = `${environment.apiUrl}/Invoices`;
+const BILLING_PERIODS_URL = `${environment.apiUrl}/Utilities/1/BillingPeriods`;
+
+const MONTH_NAMES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
 
 const FULL_YEAR_DATES = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
-  month: [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-  ][i],
+  month: MONTH_NAMES_ES[i],
   year: '2026',
 }));
+
+// A utility with no UtilityBillingCycle gets one plain calendar-month period
+// per month from GetUtilityBillingPeriods (today's default behavior) - the
+// same 12-row shape getReadings produced before this feature existed.
+const DEFAULT_MONTHLY_PERIODS = Array.from({ length: 12 }, (_, i) => ({
+  anchorMonth: i + 1,
+  anchorYear: 2026,
+  secondMonth: null,
+  secondYear: null,
+  label: `${MONTH_NAMES_ES[i]} 2026`,
+}));
+
+function flushDefaultBillingPeriods(httpMock: HttpTestingController): void {
+  httpMock.expectOne((r) => r.url === BILLING_PERIODS_URL).flush({ utilityId: 1, periods: DEFAULT_MONTHLY_PERIODS });
+}
 
 describe('ReadingsService', () => {
   let service: ReadingsService;
@@ -42,6 +60,7 @@ describe('ReadingsService', () => {
     service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
 
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    flushDefaultBillingPeriods(httpMock);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
     const counterUtilities: CounterUtilityDto[] = [
       { id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 1, counter: '1520', difference: '15', fee: '12500', photoFileName: 'medidor.jpg' },
@@ -58,6 +77,30 @@ describe('ReadingsService', () => {
     expect(result?.find((r) => r.month === 1)?.counter).toBeNull();
     expect(result?.find((r) => r.month === 1)?.fee).toBeNull();
     expect(result?.find((r) => r.month === 1)?.evidenceFileName).toBeNull();
+  });
+
+  it('getReadings returns only anchor-month periods for a utility with an active billing cycle, labeled with both months', () => {
+    let result: { month: number; year: number; periodLabel?: string }[] | undefined;
+
+    service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    httpMock.expectOne((r) => r.url === BILLING_PERIODS_URL).flush({
+      utilityId: 1,
+      periods: [
+        { anchorMonth: 9, anchorYear: 2026, secondMonth: 10, secondYear: 2026, label: 'Septiembre–Octubre 2026' },
+        { anchorMonth: 11, anchorYear: 2026, secondMonth: 12, secondYear: 2026, label: 'Noviembre–Diciembre 2026' },
+      ],
+    });
+    httpMock.expectOne(DATES_URL).flush([
+      { id: 9, month: 'Septiembre', year: '2026' },
+      { id: 11, month: 'Noviembre', year: '2026' },
+    ]);
+    httpMock.expectOne(COUNTER_UTILITIES_URL).flush([]);
+
+    expect(result?.length).toBe(2);
+    expect(result?.map((r) => r.month)).toEqual([9, 11]);
+    expect(result?.find((r) => r.month === 9)?.periodLabel).toBe('Septiembre–Octubre 2026');
   });
 
   it('recordReading creates a new CounterUtility with underscore-keyed body when none exists, resolving the new id after a refetch', () => {
@@ -177,6 +220,7 @@ describe('ReadingsService', () => {
   it('clearCache forces the next getReadings call to refetch CounterUtilities instead of replaying stale data', () => {
     service.getReadings(1, 'Agua', 2026).subscribe();
     httpMock.expectOne(UTILITIES_URL).flush([{ id: 1, name: 'Agua' }]);
+    flushDefaultBillingPeriods(httpMock);
     httpMock.expectOne(DATES_URL).flush(FULL_YEAR_DATES);
     httpMock.expectOne(COUNTER_UTILITIES_URL).flush([]);
 
@@ -185,8 +229,9 @@ describe('ReadingsService', () => {
     let result: { month: number; counter: string | null }[] | undefined;
     service.getReadings(1, 'Agua', 2026).subscribe((rows) => (result = rows));
 
-    // Utilities/Dates are unaffected by clearCache (only counterUtilitiesCache$
-    // is invalidated) - already cached from the first getReadings call above.
+    // Utilities/Dates/BillingPeriods are unaffected by clearCache (only
+    // counterUtilitiesCache$ is invalidated) - already cached from the first
+    // getReadings call above.
     httpMock
       .expectOne(COUNTER_UTILITIES_URL)
       .flush([{ id: 1, apartmentId: 1, utilityId: 1, dateId: 3, invoiceId: 1, counter: '1520', difference: '15', fee: '12500' }]);

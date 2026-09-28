@@ -54,6 +54,32 @@
   color: var(--color-accent-100);
 }
 
+/* 022-bimonthly-agua-billing: opens the cycle-start dialog - a text link,
+   not a button, since this is an occasional setting, not a primary action
+   (Mockups/agua-billing-cycle-setting). */
+.cycle-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0 0 16px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.cycle-link:hover {
+  text-decoration: underline;
+}
+.cycle-link mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
 .receipt-card {
   margin-bottom: 16px;
   padding: 24px;

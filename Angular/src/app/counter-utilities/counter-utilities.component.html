@@ -20,6 +20,13 @@
   </div>
 </div>
 
+@if (selectedService === 'Agua' && !isReadOnly) {
+  <button type="button" class="cycle-link" data-testid="agua-cycle-link" (click)="openAguaCycleDialog()">
+    <mat-icon>schedule</mat-icon>
+    Configurar periodo de facturación
+  </button>
+}
+
 @if (selectedService === 'Gas') {
   <app-gas-billing />
 } @else {
@@ -29,27 +36,40 @@
     <mat-card-title>Recibo de {{ selectedService }}</mat-card-title>
     <mat-card-content>
       <div class="receipt-row-top">
-        <div class="field">
-          <label>Mes</label>
-          <mat-form-field appearance="outline" class="flat-field">
-            <mat-select [(ngModel)]="selectedReceiptMonth" (ngModelChange)="onReceiptPeriodChanged()">
-              @for (name of monthNames; track name; let i = $index) {
-                <mat-option [value]="i + 1">{{ name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
+        @if (selectedService === 'Agua') {
+          <div class="field">
+            <label>Periodo</label>
+            <mat-form-field appearance="outline" class="flat-field">
+              <mat-select [(ngModel)]="selectedAguaPeriodKey" (ngModelChange)="onAguaPeriodChanged()">
+                @for (period of aguaPeriods; track periodKey(period)) {
+                  <mat-option [value]="periodKey(period)">{{ period.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        } @else {
+          <div class="field">
+            <label>Mes</label>
+            <mat-form-field appearance="outline" class="flat-field">
+              <mat-select [(ngModel)]="selectedReceiptMonth" (ngModelChange)="onReceiptPeriodChanged()">
+                @for (name of monthNames; track name; let i = $index) {
+                  <mat-option [value]="i + 1">{{ name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
 
-        <div class="field">
-          <label>Año</label>
-          <mat-form-field appearance="outline" class="flat-field">
-            <mat-select [(ngModel)]="selectedReceiptYear" (ngModelChange)="onReceiptPeriodChanged()">
-              @for (year of years; track year) {
-                <mat-option [value]="year">{{ year }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
+          <div class="field">
+            <label>Año</label>
+            <mat-form-field appearance="outline" class="flat-field">
+              <mat-select [(ngModel)]="selectedReceiptYear" (ngModelChange)="onReceiptPeriodChanged()">
+                @for (year of years; track year) {
+                  <mat-option [value]="year">{{ year }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        }
 
         <div class="field">
           <label>Total del recibo</label>
