@@ -4,7 +4,9 @@
  * and parses everything in (see GasBillCalculator, DifferenceCalculator). Money already has its
  * own equivalent pair (cop-currency.ts's formatCop/parseCop) for whole-peso amounts with no
  * decimals; this is the general-purpose counterpart for values that can have a fractional part
- * (meter readings, consumption, percentages).
+ * (meter readings, consumption, percentages). Confirmed against real usage: "1,32" means 1.32 and
+ * "516,425" means 516.425 - comma is unconditionally the decimal point, regardless of how many
+ * digits follow it.
  */
 
 /** Converts free-form es-CO user input (e.g. "516,425" meaning 516.425, or "1.520" meaning 1520,

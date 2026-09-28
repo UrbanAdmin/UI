@@ -3,15 +3,15 @@
    notifications.component.css. */
 
 .gas-hint {
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   font-size: 13px;
   color: var(--color-neutral-700);
 }
 
 .period-picker {
   display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
@@ -21,7 +21,7 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .field > label {
   font-size: 11px;
@@ -34,7 +34,8 @@
   width: 100%;
 }
 .flat-field ::ng-deep .mat-mdc-text-field-wrapper {
-  background: var(--color-surface) !important;
+  background: var(--color-bg) !important;
+  border: 1px solid var(--color-divider) !important;
   border-radius: var(--radius-pill) !important;
 }
 .flat-field ::ng-deep .mdc-notched-outline__leading,
@@ -42,34 +43,58 @@
 .flat-field ::ng-deep .mdc-notched-outline__trailing {
   border-color: transparent !important;
 }
+/* Modifier for the "Datos de la factura" fields only (not the period Mes/Año
+   selects, which stay a full pill) - the mockup uses a moderately rounded
+   rectangle (12px) for these, not a stadium shape. */
+.rect-field ::ng-deep .mat-mdc-text-field-wrapper {
+  border-radius: 12px !important;
+}
 .flat-field ::ng-deep .mat-mdc-form-field-infix {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px;
   min-height: 0;
 }
 .flat-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none;
 }
 
+/* Plain section, not a mat-card - the goal design sits flush on the page
+   background with no boxed/shadowed card look for this block. */
 .bill-fields {
-  margin-bottom: 20px;
-  padding: 24px;
-  background: var(--color-card);
-  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
 }
 .bill-fields h3 {
-  margin: 0 0 16px;
+  margin: 0 0 4px;
+}
+.bill-fields-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-neutral-700);
 }
 
 .fields-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
+  gap: 10px;
 }
 
+.field-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+}
+
+.table-heading {
+  margin: 0 0 8px;
+}
+
+/* The table sits on its own lighter surface, distinct from the page's
+   background - without this the body rows blended into the page and the
+   header band (below) was the only visible structure. */
 .table-scroll {
   overflow-x: auto;
   border-radius: var(--radius-md);
+  background: var(--color-card);
 }
 
 .readings-table {
@@ -78,6 +103,9 @@
   background: transparent;
 }
 .readings-table th.mat-mdc-header-cell {
+  background: var(--color-surface);
+  padding-top: 8px;
+  padding-bottom: 8px;
   font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
@@ -86,36 +114,102 @@
   color: var(--color-neutral-600);
   white-space: nowrap;
 }
+.readings-table td.mat-mdc-cell {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
 .readings-table td.mat-mdc-cell,
 .readings-table th.mat-mdc-header-cell {
   border-bottom-color: var(--color-divider);
 }
+/* Whole row tinted, not just the field's own error text below it - matches
+   the approved mockup's highlighted-row treatment for a blocked reading. */
+.readings-table tr.row-invalid td.mat-mdc-cell {
+  background: var(--color-accent-100);
+}
 
+.apt-number {
+  display: block;
+  font-weight: 700;
+}
 .status {
   display: block;
   font-size: 11px;
   color: var(--color-neutral-600);
 }
 
-.cell-input {
+.cell-input,
+.cell-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
   width: 84px;
-  padding: 8px 10px;
-  border: none;
-  background: var(--color-surface);
-  border-radius: var(--radius-pill);
+  min-height: 1em;
+  padding: 6px 8px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  border-radius: 8px;
   font-family: var(--font-body);
   font-size: 13px;
   text-align: right;
   color: var(--color-text);
+  box-sizing: border-box;
 }
 .cell-input:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
 }
+/* The read-only previous/initial reading looks disabled (dashed border,
+   neutral fill) rather than sharing the editable fields' solid look. */
+.cell-pill--muted {
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-200);
+  border-style: dashed;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+}
+/* A plain checkbox input styled to look like a rounded, filled checkbox
+   (appearance: none + a drawn checkmark) instead of the browser's native
+   look, to match the app's rounded/filled design language. */
 .cell-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-accent);
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1.5px solid var(--color-divider);
+  border-radius: 6px;
+  background: var(--color-surface);
+  cursor: pointer;
+  position: relative;
+}
+.cell-checkbox:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+.cell-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-accent-100);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.cell-checkbox:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .row-error {
@@ -126,16 +220,30 @@
   font-weight: 700;
 }
 
+/* A filled tinted circle behind the icon, not a bare outline icon - matches
+   the approved mockup's comment button treatment. */
+.comment-button {
+  background-color: var(--color-accent-100) !important;
+}
+.comment-button .mat-icon {
+  color: var(--color-accent-700);
+}
+
+.verifiers-heading {
+  margin: 0 0 8px;
+}
+
 .verifiers {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .verifier {
   background: var(--color-card);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
   padding: 14px 16px;
 }
 
@@ -180,14 +288,13 @@
 
 .admin-amount {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
   background: var(--color-accent-100);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  border: 1px solid var(--color-accent-200);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 14px;
 }
 .admin-amount .lbl {
   font-size: 11px;
@@ -198,22 +305,27 @@
 }
 .admin-amount .val {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 28px;
   color: var(--color-accent-700);
+}
+.admin-amount-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-neutral-700);
 }
 
 .comments-section {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 .comments-section h3 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .comment-line {
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
-  margin-bottom: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
   font-size: 12.5px;
 }
 .comment-line b {
@@ -247,8 +359,8 @@
 .footer-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-top: 24px;
+  gap: 12px;
+  margin-top: 16px;
   flex-wrap: wrap;
 }
 
