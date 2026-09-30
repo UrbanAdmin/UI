@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,6 +29,13 @@ function emptyBillDraft(): Required<WaterBillWrite> {
   };
 }
 
+/** The server serializes DateTime as full ISO-8601 ("2026-09-20T00:00:00"), but a native
+ *  <input type="date"> silently blanks itself unless given exactly "YYYY-MM-DD" - every date-bound
+ *  field in this component goes through this before reaching an ngModel-bound date input. */
+function toDateInputValue(iso: string | null): string | null {
+  return iso ? iso.slice(0, 10) : null;
+}
+
 const ZONA_COMUN_LABEL = 'Zona Común';
 
 interface WaterReadingRow {
@@ -55,6 +62,7 @@ interface WaterReadingRow {
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [
     CommonModule,
+    DatePipe,
     FormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -131,8 +139,12 @@ export class WaterBillingComponent {
 
   private loadPeriods(): void {
     this.waterBillingService.listPeriods().subscribe((list) => {
-      this.periods = list.periods;
-      this.nextSuggestedStartDate = list.nextSuggestedStartDate;
+      this.periods = list.periods.map((p) => ({
+        ...p,
+        startDate: toDateInputValue(p.startDate)!,
+        endDate: toDateInputValue(p.endDate)!,
+      }));
+      this.nextSuggestedStartDate = toDateInputValue(list.nextSuggestedStartDate);
     });
   }
 
@@ -153,7 +165,7 @@ export class WaterBillingComponent {
 
   toggleNewPeriodForm(): void {
     this.showNewPeriodForm = !this.showNewPeriodForm;
-    this.newPeriodStart = this.nextSuggestedStartDate;
+    this.newPeriodStart = toDateInputValue(this.nextSuggestedStartDate);
     this.newPeriodEnd = null;
     this.newPeriodError = null;
   }
@@ -214,8 +226,8 @@ export class WaterBillingComponent {
               endDate: bill.endDate,
             }
           : emptyBillDraft();
-        this.periodStartDraft = bill?.startDate ?? null;
-        this.periodEndDraft = bill?.endDate ?? null;
+        this.periodStartDraft = toDateInputValue(bill?.startDate ?? null);
+        this.periodEndDraft = toDateInputValue(bill?.endDate ?? null);
         this.rows = this.buildRows(bill, apartments);
       },
     );
@@ -257,7 +269,7 @@ export class WaterBillingComponent {
       // ("516,425") so the editable field round-trips correctly through parseEsDecimal on save.
       previousReading: formatEsDecimal(reading.previousReading) || null,
       currentReading: formatEsDecimal(reading.currentReading) || null,
-      readingDate: reading.readingDate,
+      readingDate: toDateInputValue(reading.readingDate),
     };
   }
 
@@ -287,9 +299,13 @@ export class WaterBillingComponent {
     const currentReading = parseEsDecimal(row.currentReading);
     const readingDate = row.readingDate;
     if (row.reading) {
-      // PreviousReading is never re-sent on update - once a reading exists it's server-resolved
-      // (research.md §9); only CurrentReading/ReadingDate are ever edited after creation.
-      this.waterBillingService.updateReading(row.reading.id, { currentReading, readingDate }).subscribe(() => this.reload());
+      // PreviousReading is server-resolved (research.md §9) once a prior period has set it - but on
+      // this meter's very first period, the row can already exist (e.g. CurrentReading saved first)
+      // with PreviousReading still unset; it stays editable and re-sent until then (FR-006).
+      const write = row.reading.previousReading === null
+        ? { previousReading: parseEsDecimal(row.previousReading), currentReading, readingDate }
+        : { currentReading, readingDate };
+      this.waterBillingService.updateReading(row.reading.id, write).subscribe(() => this.reload());
       return;
     }
     const write = { previousReading: parseEsDecimal(row.previousReading), currentReading, readingDate };

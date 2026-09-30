@@ -77,7 +77,7 @@ describe('WaterBillingComponent', () => {
     expect(fixture.componentInstance.view).toBe('list');
     expect(fixture.nativeElement.querySelector('[data-testid="open-period-7"]')).toBeTruthy();
     const rowTexts = fixture.nativeElement.textContent;
-    expect(rowTexts).toContain('2026-09-10');
+    expect(rowTexts).toContain('10/09/2026'); // dd/MM/yyyy - readable for the end user, not raw ISO
     expect(rowTexts).toContain('Sin confirmar');
     expect(rowTexts).toContain('Confirmado');
   });
@@ -310,6 +310,65 @@ describe('WaterBillingComponent', () => {
 
     // saveReading() triggers reload() - flush the follow-up GET so it doesn't leak into afterEach's verify().
     httpMock.expectOne(`${environment.apiUrl}/WaterBills/7`).flush(billFrom({}));
+  });
+
+  it('truncates a server DateTime ("2026-09-20T00:00:00") to a bare date so the native date input actually shows it', async () => {
+    const bill = billFrom({
+      readings: [{
+        id: 1, apartmentId: 1, label: '101', status: 'Arrendado',
+        previousReading: '500', currentReading: '530', readingDate: '2026-09-20T00:00:00', consumption: '30', consumptionPercentage: '0.3',
+        aqueductValue: '180000', sewerValue: '90000', fixedChargeShare: '0', nonRentedCostShare: '0',
+        commonAreaCostShare: '0', finalAmount: '270000', validationError: null, photoFileName: null,
+      }],
+    });
+    const fixture = await setup(false, [PERIOD]);
+    open(fixture, 7, bill);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const row = fixture.componentInstance.rows.find((r) => r.apartmentId === 1)!;
+    expect(row.readingDate).toBe('2026-09-20'); // not the raw "2026-09-20T00:00:00" from the server
+    const dateInput: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="reading-date-1"]');
+    expect(dateInput.value).toBe('2026-09-20');
+  });
+
+  it('truncates the period header dates the same way, from a server DateTime', async () => {
+    const bill = billFrom({ startDate: '2026-09-10T00:00:00', endDate: '2026-10-07T00:00:00' });
+    const fixture = await setup(false, [PERIOD]);
+    open(fixture, 7, bill);
+
+    expect(fixture.componentInstance.periodStartDraft).toBe('2026-09-10');
+    expect(fixture.componentInstance.periodEndDraft).toBe('2026-10-07');
+  });
+
+  it('keeps Lect. anterior editable and savable when a reading row already exists but its previousReading is still null', async () => {
+    // A meter's first period can end up with CurrentReading saved before PreviousReading - the
+    // admin must still be able to fill it in, not get permanently locked out of the field (FR-006).
+    const bill = billFrom({
+      readings: [{
+        id: 1, apartmentId: 1, label: '101', status: 'Arrendado',
+        previousReading: null, currentReading: '167.84', readingDate: null, consumption: null, consumptionPercentage: null,
+        aqueductValue: null, sewerValue: null, fixedChargeShare: '0', nonRentedCostShare: '0',
+        commonAreaCostShare: '0', finalAmount: null, validationError: 'MissingReading', photoFileName: null,
+      }],
+    });
+    const fixture = await setup(false, [PERIOD]);
+    open(fixture, 7, bill);
+
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[data-testid="previous-reading-1"]');
+    expect(input).toBeTruthy(); // editable, not the read-only muted pill
+
+    const row = fixture.componentInstance.rows.find((r) => r.apartmentId === 1)!;
+    row.previousReading = '140';
+    fixture.componentInstance.saveReading(row);
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/WaterMeterReadings/1`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ previousReading: '140', currentReading: '167.84', readingDate: null });
+    req.flush(null);
+
+    httpMock.expectOne(`${environment.apiUrl}/WaterBills/7`).flush(bill);
   });
 
   it('shows "Fecha fuera del periodo" and blocks Confirm when a reading date falls outside the period', async () => {

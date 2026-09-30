@@ -17,8 +17,8 @@
         <tbody>
           @for (period of periods; track period.id) {
             <tr [attr.data-testid]="'period-row-' + period.id">
-              <td>{{ period.startDate }}</td>
-              <td>{{ period.endDate }}</td>
+              <td>{{ period.startDate | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ period.endDate | date: 'dd/MM/yyyy' }}</td>
               <td>
                 <span class="period-status" [class.confirmed]="period.confirmed" [class.open]="!period.confirmed">
                   {{ period.confirmed ? 'Confirmado' : 'Sin confirmar' }}
@@ -176,11 +176,12 @@
       <ng-container matColumnDef="lecturaAnterior">
         <th mat-header-cell *matHeaderCellDef>Lect. anterior</th>
         <td mat-cell *matCellDef="let row">
-          @if (!row.reading && !isReadOnly) {
+          @if (!isReadOnly && (!row.reading || row.reading.previousReading === null)) {
             <input
               type="text"
               class="cell-input"
               [(ngModel)]="row.previousReading"
+              (change)="saveReading(row)"
               [attr.data-testid]="'previous-reading-' + (row.apartmentId ?? 'zc')"
             />
           } @else {
