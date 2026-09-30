@@ -329,6 +329,27 @@ describe('GasBillingComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="total-amount"]')).toBeNull();
   });
 
+  it('hides Verificadores and Monto asumido por administración for an apartment owner - admin-only reconciliation tools', async () => {
+    const bill: GasBillDto = {
+      id: 7, dateId: DATE_ID, totalConsumption: '30', unitPrice: '10', consumoGasSubtotal: null,
+      fixedCharge: '0', otherConcepts: null, ajusteDecena: null, totalAmount: '300',
+      administrationAmount: '440', percentagePasses: true, percentageDifference: '0',
+      totalPasses: true, totalDifference: '0', confirmed: true, confirmedAt: '2027-01-05T00:00:00Z',
+      readings: [{
+        id: 99, apartmentId: 1, apartmentNumber: '101', status: 'Arrendado', isNewTenant: false,
+        initialReading: null, previousReading: '0', currentReading: '30', consumption: '30',
+        consumptionPercentage: '1', allocatedConsumption: '30', variableCost: '300',
+        fixedChargeShare: '0', finalTotal: '300', validationError: null, photoFileName: null,
+      }],
+      comments: [],
+    };
+    const fixture = await setup(true, bill);
+
+    expect(fixture.nativeElement.querySelector('.verifiers-heading')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="verifier-percentage-chip"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="admin-amount"]')).toBeNull();
+  });
+
   it('lets the admin add a bill-level comment, and it persists after a reload', async () => {
     const bill: GasBillDto = {
       id: 7, dateId: DATE_ID, totalConsumption: null, unitPrice: null, consumoGasSubtotal: null,

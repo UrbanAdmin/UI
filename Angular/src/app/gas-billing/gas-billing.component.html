@@ -186,54 +186,56 @@
   </table>
   </div>
 
-  <h3 class="verifiers-heading">Verificadores</h3>
-  <div class="verifiers">
-    <div class="verifier">
-      <div class="vh">
-        <span class="vname">Suma de porcentajes</span>
-        <span
-          class="chip"
-          [class.pass]="bill?.percentagePasses === true"
-          [class.fail]="bill?.percentagePasses === false"
-          [class.pending]="!bill"
-          data-testid="verifier-percentage-chip"
-        >
-          {{ !bill ? 'Sin datos' : (bill.percentagePasses ? 'Cumple' : 'Falla') }}
-        </span>
+  @if (!isReadOnly) {
+    <h3 class="verifiers-heading">Verificadores</h3>
+    <div class="verifiers">
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Suma de porcentajes</span>
+          <span
+            class="chip"
+            [class.pass]="bill?.percentagePasses === true"
+            [class.fail]="bill?.percentagePasses === false"
+            [class.pending]="!bill"
+            data-testid="verifier-percentage-chip"
+          >
+            {{ !bill ? 'Sin datos' : (bill.percentagePasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.percentagePasses) {
+          <p class="vdetail" data-testid="verifier-percentage-detail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
+        } @else if (bill) {
+          <p class="vdetail">La suma de porcentajes está dentro del margen esperado.</p>
+        }
       </div>
-      @if (bill && !bill.percentagePasses) {
-        <p class="vdetail" data-testid="verifier-percentage-detail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
-      } @else if (bill) {
-        <p class="vdetail">La suma de porcentajes está dentro del margen esperado.</p>
-      }
-    </div>
-    <div class="verifier">
-      <div class="vh">
-        <span class="vname">Apartamentos + administración = factura</span>
-        <span
-          class="chip"
-          [class.pass]="bill?.totalPasses === true"
-          [class.fail]="bill?.totalPasses === false"
-          [class.pending]="!bill"
-          data-testid="verifier-total-chip"
-        >
-          {{ !bill ? 'Sin datos' : (bill.totalPasses ? 'Cumple' : 'Falla') }}
-        </span>
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Apartamentos + administración = factura</span>
+          <span
+            class="chip"
+            [class.pass]="bill?.totalPasses === true"
+            [class.fail]="bill?.totalPasses === false"
+            [class.pending]="!bill"
+            data-testid="verifier-total-chip"
+          >
+            {{ !bill ? 'Sin datos' : (bill.totalPasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.totalPasses) {
+          <p class="vdetail" data-testid="verifier-total-detail">Diferencia de {{ bill.totalDifference | copCurrency }} respecto al total de la factura.</p>
+        } @else if (bill) {
+          <p class="vdetail">Apartamentos + administración coinciden exactamente con el total de la factura.</p>
+        }
       </div>
-      @if (bill && !bill.totalPasses) {
-        <p class="vdetail" data-testid="verifier-total-detail">Diferencia de {{ bill.totalDifference | copCurrency }} respecto al total de la factura.</p>
-      } @else if (bill) {
-        <p class="vdetail">Apartamentos + administración coinciden exactamente con el total de la factura.</p>
-      }
     </div>
-  </div>
 
-  @if (bill && bill.administrationAmount !== '0' && bill.administrationAmount !== null) {
-    <div class="admin-amount" data-testid="admin-amount">
-      <span class="lbl">Monto asumido por administración</span>
-      <span class="val">{{ bill.administrationAmount | copCurrency }}</span>
-      <p class="admin-amount-hint">Diferencia entre el total de la factura y la suma de los apartamentos — nunca se reparte, siempre queda visible y trazable a esta factura.</p>
-    </div>
+    @if (bill && bill.administrationAmount !== '0' && bill.administrationAmount !== null) {
+      <div class="admin-amount" data-testid="admin-amount">
+        <span class="lbl">Monto asumido por administración</span>
+        <span class="val">{{ bill.administrationAmount | copCurrency }}</span>
+        <p class="admin-amount-hint">Diferencia entre el total de la factura y la suma de los apartamentos — nunca se reparte, siempre queda visible y trazable a esta factura.</p>
+      </div>
+    }
   }
 
   @if (!isReadOnly || (bill && bill.comments.length > 0)) {
