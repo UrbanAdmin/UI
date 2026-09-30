@@ -5,7 +5,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { ApartmentsService } from './shared/apartments.service';
 import { UsersService } from './shared/users.service';
-import { NotificationsService } from './notifications/notifications.service';
+import { BillingPeriodsService } from './billing-periods/billing-periods.service';
+import { DeadlinesService } from './deadlines/deadlines.service';
+import { OwnerPaymentsService } from './owner-payments/owner-payments.service';
 import { ReadingsService } from './readings/readings.service';
 import { InvoicesService } from './readings/invoices.service';
 import { DatesService } from './shared/dates.service';
@@ -35,7 +37,9 @@ describe('AuthService', () => {
     return [
       { provide: ApartmentsService, useValue: mock() },
       { provide: UsersService, useValue: mock() },
-      { provide: NotificationsService, useValue: mock() },
+      { provide: BillingPeriodsService, useValue: mock() },
+      { provide: DeadlinesService, useValue: mock() },
+      { provide: OwnerPaymentsService, useValue: mock() },
       { provide: ReadingsService, useValue: mock() },
       { provide: InvoicesService, useValue: mock() },
       { provide: DatesService, useValue: mock() },

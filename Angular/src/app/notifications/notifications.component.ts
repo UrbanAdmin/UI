@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { Observable, map, shareReplay } from 'rxjs';
-import { NotificationsService } from './notifications.service';
+import { ActiveNotificationsService } from './active-notifications.service';
 import { NotificationStatus, ServicePayment } from './notification.model';
 import { monthName } from './month-names';
 import { LoadingService } from '../loading.service';
@@ -63,10 +63,10 @@ export class NotificationsComponent {
   readonly groups$: Observable<ApartmentGroup[]>;
   private readonly groups: Signal<ApartmentGroup[]>;
 
-  constructor(private notificationsService: NotificationsService) {
+  constructor(private activeNotificationsService: ActiveNotificationsService) {
     // shareReplay(1): both the template's `async` pipe and the hint's
     // count/apartment signals below subscribe to this.
-    this.groups$ = this.notificationsService
+    this.groups$ = this.activeNotificationsService
       .getActiveNotifications()
       .pipe(
         map((notifications) => this.groupByApartmentAndPeriod(notifications)),

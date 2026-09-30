@@ -13,8 +13,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { BehaviorSubject, Observable, forkJoin, switchMap, map, of, shareReplay } from 'rxjs';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
+import { DeadlinesService } from '../deadlines/deadlines.service';
+import { OwnerPaymentsService } from '../owner-payments/owner-payments.service';
+import { NotificationStatus } from '../notifications/notification.model';
+import { OwnerPayment } from '../owner-payments/owner-payment.model';
+import { ServiceName } from '../shared/service-name';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
@@ -94,7 +97,8 @@ export class PaymentsComponent {
   private readonly ownerRowsSnapshot: Signal<OwnerServiceRow[]>;
 
   constructor(
-    private notificationsService: NotificationsService,
+    private deadlinesService: DeadlinesService,
+    private ownerPaymentsService: OwnerPaymentsService,
     private authService: AuthService,
   ) {
     this.isReadOnly = this.authService.isApartmentOwner();
@@ -113,7 +117,7 @@ export class PaymentsComponent {
       switchMap((p) =>
         p.service === 'Arriendo'
           ? of(null)
-          : this.notificationsService.getDeadline(p.service, p.month, p.year).pipe(map((d) => d?.dueDate ?? null)),
+          : this.deadlinesService.getDeadline(p.service, p.month, p.year).pipe(map((d) => d?.dueDate ?? null)),
       ),
     );
 
@@ -121,7 +125,7 @@ export class PaymentsComponent {
     // signal below (for the "N pagados de M" stat) subscribe to this - without
     // it, each subscriber would re-trigger the whole HTTP chain separately.
     this.rows$ = this.period$.pipe(
-      switchMap((p) => this.notificationsService.getOwnerPayments(p.service, p.month, p.year)),
+      switchMap((p) => this.ownerPaymentsService.getOwnerPayments(p.service, p.month, p.year)),
       shareReplay(1),
     );
 
@@ -131,7 +135,7 @@ export class PaymentsComponent {
       switchMap(({ month, year }) =>
         forkJoin(
           this.ownerServices.map((service) =>
-            this.notificationsService
+            this.ownerPaymentsService
               .getOwnerPayments(service, month, year)
               .pipe(map((rows) => rows.map((row) => ({ ...row, service })))),
           ),
@@ -179,13 +183,13 @@ export class PaymentsComponent {
   }
 
   saveDeadline(newDate: Date): void {
-    this.notificationsService
+    this.deadlinesService
       .setDeadline(this.selectedService, this.selectedMonth, this.selectedYear, newDate)
       .subscribe(() => this.onPeriodChange());
   }
 
   togglePaid(row: OwnerRow, paid: boolean): void {
-    this.notificationsService
+    this.ownerPaymentsService
       .setPaid(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, paid)
       .subscribe(() => this.onPeriodChange());
   }
@@ -195,7 +199,7 @@ export class PaymentsComponent {
   }
 
   onAmountChange(row: OwnerRow, amount: string): void {
-    this.notificationsService
+    this.ownerPaymentsService
       .setAmount(row.apartmentId, this.selectedService, this.selectedMonth, this.selectedYear, amount)
       .subscribe(() => this.onPeriodChange());
   }

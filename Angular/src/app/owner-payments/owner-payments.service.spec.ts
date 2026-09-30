@@ -1,0 +1,159 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+
+import { OwnerPaymentsService } from './owner-payments.service';
+import { environment } from '../../environments/environment';
+
+const UTILITIES_URL = `${environment.apiUrl}/Utilities`;
+const DATES_URL = `${environment.apiUrl}/Dates`;
+const APARTMENTS_URL = `${environment.apiUrl}/Apartments`;
+const DEADLINES_URL = `${environment.apiUrl}/Deadlines`;
+const PAYMENT_STATUSES_URL = `${environment.apiUrl}/PaymentStatuses`;
+
+const MOCK_APARTMENTS = [
+  { id: 1, name: '101', owner: 'TBD' },
+  { id: 2, name: '201', owner: 'Bryan' },
+  { id: 3, name: '202', owner: 'Yesenia' },
+  { id: 4, name: '301', owner: 'Oscar' },
+  { id: 5, name: '302', owner: 'Olga' },
+  { id: 6, name: '401', owner: 'Daniel' },
+];
+
+describe('OwnerPaymentsService', () => {
+  let service: OwnerPaymentsService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(OwnerPaymentsService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('getOwnerPayments returns one row per apartment, defaulting to unpaid/not-due with no deadline set', () => {
+    let result: { paid: boolean; status: string }[] | undefined;
+    service.getOwnerPayments('Gas', 6, 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 3, name: 'Gas' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 10, month: 'Junio', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
+
+    expect(result?.length).toBe(6);
+    expect(result?.every((r) => r.paid === false)).toBe(true);
+    expect(result?.every((r) => r.status === 'not-due')).toBe(true);
+  });
+
+  it('setPaid POSTs an underscore-keyed body when no PaymentStatus row exists yet', () => {
+    service.setPaid(2, 'Luz', 9, 2026, true).subscribe();
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 2, name: 'Luz' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 5, month: 'Septiembre', year: '2026' }]);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 2, Utility_Id: 2, Date_Id: 5, Paid: true, Amount: null });
+    postReq.flush({ id: 0 });
+  });
+
+  it('setPaid preserves an existing row\'s Amount when only toggling Paid', () => {
+    service.setPaid(2, 'Luz', 9, 2026, true).subscribe();
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 2, name: 'Luz' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 5, month: 'Septiembre', year: '2026' }]);
+    httpMock
+      .expectOne(PAYMENT_STATUSES_URL)
+      .flush([{ id: 7, apartmentId: 2, utilityId: 2, dateId: 5, paid: false, amount: '500000' }]);
+
+    const putReq = httpMock.expectOne(`${environment.apiUrl}/PaymentStatus/7`);
+    expect(putReq.request.method).toBe('PUT');
+    expect(putReq.request.body).toEqual({ Apartment_Id: 2, Utility_Id: 2, Date_Id: 5, Paid: true, Amount: '500000' });
+    putReq.flush({ id: 7 });
+  });
+
+  it('setAmount POSTs an underscore-keyed body when no PaymentStatus row exists yet', () => {
+    service.setAmount(4, 'Arriendo', 3, 2026, '500000').subscribe();
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 4, name: 'Arriendo' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 12, month: 'Marzo', year: '2026' }]);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    const postReq = httpMock.expectOne(PAYMENT_STATUSES_URL);
+    expect(postReq.request.method).toBe('POST');
+    expect(postReq.request.body).toEqual({ Apartment_Id: 4, Utility_Id: 4, Date_Id: 12, Paid: false, Amount: '500000' });
+    postReq.flush({ id: 0 });
+  });
+
+  it('setAmount preserves an existing row\'s Paid state when only changing Amount', () => {
+    service.setAmount(4, 'Arriendo', 3, 2026, '600000').subscribe();
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 4, name: 'Arriendo' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 12, month: 'Marzo', year: '2026' }]);
+    httpMock
+      .expectOne(PAYMENT_STATUSES_URL)
+      .flush([{ id: 8, apartmentId: 4, utilityId: 4, dateId: 12, paid: true, amount: '500000' }]);
+
+    const putReq = httpMock.expectOne(`${environment.apiUrl}/PaymentStatus/8`);
+    expect(putReq.request.method).toBe('PUT');
+    expect(putReq.request.body).toEqual({ Apartment_Id: 4, Utility_Id: 4, Date_Id: 12, Paid: true, Amount: '600000' });
+    putReq.flush({ id: 8 });
+  });
+
+  it('getOwnerPayments carries each row\'s Amount from the matching PaymentStatus, null when none exists', () => {
+    let result: { apartmentId: number; amount: string | null }[] | undefined;
+    service.getOwnerPayments('Gas', 6, 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 3, name: 'Gas' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 10, month: 'Junio', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(MOCK_APARTMENTS);
+    httpMock
+      .expectOne(PAYMENT_STATUSES_URL)
+      .flush([{ id: 1, apartmentId: 1, utilityId: 3, dateId: 10, paid: false, amount: '120000' }]);
+    httpMock.expectOne(DEADLINES_URL).flush([]);
+
+    expect(result?.find((r) => r.apartmentId === 1)?.amount).toBe('120000');
+    expect(result?.find((r) => r.apartmentId === 2)?.amount).toBeNull();
+  });
+
+  it('getOwnerPayments for Arriendo derives each row\'s own due date from its contract start date, skipping Deadlines', () => {
+    const apartmentsWithContracts = [
+      { id: 1, name: '101', owner: 'TBD', contractStartDate: '2026-01-10T00:00:00' },
+      { id: 2, name: '201', owner: 'Bryan', contractStartDate: '2026-01-31T00:00:00' },
+      { id: 3, name: '202', owner: 'Yesenia', contractStartDate: null },
+    ];
+    let result: { apartmentId: number; dueDate: Date }[] | undefined;
+
+    service.getOwnerPayments('Arriendo', 2, 2026).subscribe((rows) => (result = rows));
+
+    httpMock.expectOne(UTILITIES_URL).flush([{ id: 4, name: 'Arriendo' }]);
+    httpMock.expectOne(DATES_URL).flush([{ id: 11, month: 'Febrero', year: '2026' }]);
+    httpMock.expectOne(APARTMENTS_URL).flush(apartmentsWithContracts);
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    // Deadlines is never consulted for Arriendo - only Utilities/Dates/Apartments/PaymentStatuses fire.
+    httpMock.expectNone(DEADLINES_URL);
+
+    expect(result?.length).toBe(3);
+    expect(result?.find((r) => r.apartmentId === 1)!.dueDate).toEqual(new Date(2026, 1, 10));
+    // Contract day 31 clamped to February's 28 days (2026 is not a leap year).
+    expect(result?.find((r) => r.apartmentId === 2)!.dueDate).toEqual(new Date(2026, 1, 28));
+  });
+
+  it('clearCache forces the next PaymentStatuses read to refetch instead of replaying stale data', () => {
+    service.getAllPaymentStatuses().subscribe();
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+
+    service.clearCache();
+
+    service.getAllPaymentStatuses().subscribe();
+    httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
+  });
+});

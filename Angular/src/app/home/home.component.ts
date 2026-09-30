@@ -6,8 +6,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { forkJoin, map, of } from 'rxjs';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationStatus, OwnerPayment, ServiceName } from '../notifications/notification.model';
+import { ActiveNotificationsService } from '../notifications/active-notifications.service';
+import { OwnerPaymentsService } from '../owner-payments/owner-payments.service';
+import { NotificationStatus } from '../notifications/notification.model';
+import { OwnerPayment } from '../owner-payments/owner-payment.model';
+import { ServiceName } from '../shared/service-name';
 import { AuthService } from '../auth.service';
 import { ApartmentsService } from '../shared/apartments.service';
 import { UsersService } from '../shared/users.service';
@@ -45,7 +48,8 @@ interface QuickAccessCard {
   styleUrl: './home.component.css',
 })
 export class HomeComponent {
-  private readonly notificationsService = inject(NotificationsService);
+  private readonly activeNotificationsService = inject(ActiveNotificationsService);
+  private readonly ownerPaymentsService = inject(OwnerPaymentsService);
   private readonly authService = inject(AuthService);
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly usersService = inject(UsersService);
@@ -78,11 +82,11 @@ export class HomeComponent {
   ];
 
   // Single source for the hero card and the quick-access badge - "active"
-  // means not paid and not-yet-due (see NotificationsService.getActiveNotifications),
+  // means not paid and not-yet-due (see ActiveNotificationsService.getActiveNotifications),
   // i.e. exactly what the Notificaciones screen itself lists. For an
   // ApartmentOwner it already comes back scoped to just their apartment
   // (server-side), same call as Admin.
-  private readonly activeNotifications = toSignal(this.notificationsService.getActiveNotifications(), {
+  private readonly activeNotifications = toSignal(this.activeNotificationsService.getActiveNotifications(), {
     initialValue: [],
   });
 
@@ -165,7 +169,7 @@ export class HomeComponent {
     forkJoin(
       TRACKED_SERVICES.map((service) => {
         const now = new Date();
-        return this.notificationsService.getOwnerPayments(service, now.getMonth() + 1, now.getFullYear());
+        return this.ownerPaymentsService.getOwnerPayments(service, now.getMonth() + 1, now.getFullYear());
       }),
     ).pipe(map((groups): CarteraRow[] => groups.flat())),
     { initialValue: [] as CarteraRow[] },

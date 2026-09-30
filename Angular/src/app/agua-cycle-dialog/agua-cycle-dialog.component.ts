@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
-import { NotificationsService } from '../notifications/notifications.service';
+import { BillingPeriodsService } from '../billing-periods/billing-periods.service';
 import { DatesService } from '../shared/dates.service';
 import { MONTH_NAMES } from '../notifications/month-names';
 
@@ -44,7 +44,7 @@ export class AguaCycleDialogComponent {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: AguaCycleDialogData,
     private dialogRef: MatDialogRef<AguaCycleDialogComponent>,
-    private notificationsService: NotificationsService,
+    private billingPeriodsService: BillingPeriodsService,
     private datesService: DatesService,
   ) {
     const now = new Date();
@@ -53,7 +53,7 @@ export class AguaCycleDialogComponent {
     this.startMonth = this.fromMonth;
     this.years = [now.getFullYear(), now.getFullYear() + 1];
 
-    this.notificationsService.getBillingCycle(this.data.utilityId).subscribe((cycle) => {
+    this.billingPeriodsService.getBillingCycle(this.data.utilityId).subscribe((cycle) => {
       if (cycle) {
         this.currentCycleStartMonth = cycle.startMonth;
         this.startMonth = cycle.startMonth;
@@ -83,10 +83,10 @@ export class AguaCycleDialogComponent {
     this.errorMessage.set(null);
     // The Backend takes an already-resolved Date_Id, not a raw month/year
     // pair - find-or-create against /Dates first, the same pattern already
-    // used for Deadlines/PaymentStatuses (notification.model.ts).
+    // used for Deadlines/PaymentStatuses.
     this.datesService.getOrCreateDate(this.fromMonth, this.fromYear).subscribe({
       next: (date) => {
-        this.notificationsService
+        this.billingPeriodsService
           .setBillingCycle(this.data.utilityId, {
             periodLengthMonths: 2,
             startMonth: this.startMonth,

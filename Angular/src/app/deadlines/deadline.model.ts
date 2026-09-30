@@ -1,3 +1,13 @@
+import { ServiceName } from '../shared/service-name';
+
+/** A single deadline shared by every apartment for one service in one month/year. */
+export interface ServiceDeadline {
+  service: ServiceName;
+  month: number; // 1-12
+  year: number;
+  dueDate: Date;
+}
+
 export interface DeadlineDto {
   id: number;
   utilityId: number;

@@ -2,13 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, map, switchMap, tap, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ServiceName } from '../notifications/notification.model';
+import { ServiceName } from '../shared/service-name';
 import { MeterReading } from './reading.model';
 import { CounterUtilityDto, CounterUtilityWrite } from './counter-utility.model';
 import { UtilitiesService } from '../shared/utilities.service';
 import { DatesService } from '../shared/dates.service';
 import { InvoicesService } from './invoices.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BillingPeriodsService } from '../billing-periods/billing-periods.service';
 
 @Injectable({ providedIn: 'root' })
 export class ReadingsService {
@@ -16,7 +16,7 @@ export class ReadingsService {
   private readonly utilitiesService = inject(UtilitiesService);
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
-  private readonly notificationsService = inject(NotificationsService);
+  private readonly billingPeriodsService = inject(BillingPeriodsService);
 
   // The Lecturas tab group renders every apartment x service combination
   // eagerly (18 of them), each calling getReadings - without caching this,
@@ -42,7 +42,7 @@ export class ReadingsService {
   getReadings(apartmentId: number, service: ServiceName, year: number): Observable<MeterReading[]> {
     return this.utilitiesService.getOrCreateUtility(service).pipe(
       switchMap((utility) =>
-        this.notificationsService.getBillingPeriods(utility.id, year).pipe(
+        this.billingPeriodsService.getBillingPeriods(utility.id, year).pipe(
           switchMap((periods) =>
             forkJoin([
               forkJoin(periods.map((p) => this.datesService.getOrCreateDate(p.anchorMonth, p.anchorYear))),

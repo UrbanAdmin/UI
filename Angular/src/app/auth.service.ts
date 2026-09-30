@@ -4,7 +4,9 @@ import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../environments/environment';
 import { ApartmentsService } from './shared/apartments.service';
 import { UsersService } from './shared/users.service';
-import { NotificationsService } from './notifications/notifications.service';
+import { BillingPeriodsService } from './billing-periods/billing-periods.service';
+import { DeadlinesService } from './deadlines/deadlines.service';
+import { OwnerPaymentsService } from './owner-payments/owner-payments.service';
 import { ReadingsService } from './readings/readings.service';
 import { InvoicesService } from './readings/invoices.service';
 import { DatesService } from './shared/dates.service';
@@ -43,7 +45,9 @@ export class AuthService {
   private readonly cacheClearingServices = [
     inject(ApartmentsService),
     inject(UsersService),
-    inject(NotificationsService),
+    inject(BillingPeriodsService),
+    inject(DeadlinesService),
+    inject(OwnerPaymentsService),
     inject(ReadingsService),
     inject(InvoicesService),
     inject(DatesService),

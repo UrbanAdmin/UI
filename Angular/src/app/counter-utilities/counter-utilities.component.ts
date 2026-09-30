@@ -18,9 +18,10 @@ import { Apartment } from '../shared/apartment.model';
 import { ApartmentsService } from '../shared/apartments.service';
 import { DatesService } from '../shared/dates.service';
 import { UtilitiesService } from '../shared/utilities.service';
-import { BillingPeriod, ServiceName } from '../notifications/notification.model';
+import { BillingPeriod } from '../billing-periods/billing-period.model';
+import { ServiceName } from '../shared/service-name';
 import { MONTH_NAMES, monthName } from '../notifications/month-names';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BillingPeriodsService } from '../billing-periods/billing-periods.service';
 import { ReadingsService } from '../readings/readings.service';
 import { InvoicesService } from '../readings/invoices.service';
 import { MeterReading } from '../readings/reading.model';
@@ -65,7 +66,7 @@ export class CounterUtilitiesComponent {
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly authService = inject(AuthService);
   private readonly utilitiesService = inject(UtilitiesService);
-  private readonly notificationsService = inject(NotificationsService);
+  private readonly billingPeriodsService = inject(BillingPeriodsService);
   private readonly datesService = inject(DatesService);
   private readonly invoicesService = inject(InvoicesService);
   private readonly ngZone = inject(NgZone);
@@ -166,8 +167,8 @@ export class CounterUtilitiesComponent {
       const currentYear = now.getFullYear();
 
       forkJoin([
-        this.notificationsService.getBillingPeriods(utility.id, currentYear - 1),
-        this.notificationsService.getBillingPeriods(utility.id, currentYear),
+        this.billingPeriodsService.getBillingPeriods(utility.id, currentYear - 1),
+        this.billingPeriodsService.getBillingPeriods(utility.id, currentYear),
       ]).subscribe(([previousYearPeriods, currentYearPeriods]) => {
         this.aguaPeriods = [...previousYearPeriods, ...currentYearPeriods];
 
@@ -299,9 +300,9 @@ export class CounterUtilitiesComponent {
         .subscribe((saved) => {
           if (saved) {
             // A new cycle reshapes which months are anchors - every cached
-            // row (and the notifications service's own billing-periods
-            // cache, already cleared by setBillingCycle) must be refetched,
-            // including the Recibo card's own period dropdown.
+            // row (and BillingPeriodsService's own cache, already cleared by
+            // setBillingCycle) must be refetched, including the Recibo
+            // card's own period dropdown.
             this.ngZone.run(() => {
               this.rowsCache.clear();
               this.loadAguaPeriods();

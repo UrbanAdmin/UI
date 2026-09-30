@@ -10,7 +10,7 @@ import { AguaCycleDialogComponent } from '../agua-cycle-dialog/agua-cycle-dialog
 import { ApartmentDto } from '../shared/apartment.model';
 import { AuthService } from '../auth.service';
 import { ReadingsService } from '../readings/readings.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BillingPeriodsService } from '../billing-periods/billing-periods.service';
 import { environment } from '../../environments/environment';
 
 const CONTRACT_FIELDS = { contractStartDate: null, hasContract: false, contractFileName: null, status: 'Arrendado' as const };
@@ -335,10 +335,10 @@ describe('CounterUtilitiesComponent', () => {
     component.getRows$({ id: 1, number: '101', owner: 'TBD', ...CONTRACT_FIELDS }, 'Agua').subscribe();
 
     // The dialog is mocked here (its own save→POST flow is covered by
-    // AguaCycleDialogComponent's and NotificationsService's own specs) -
+    // AguaCycleDialogComponent's and BillingPeriodsService's own specs) -
     // clearCache() simulates the billing-periods cache invalidation the
     // real setBillingCycle() call would already have done before closing.
-    TestBed.inject(NotificationsService).clearCache();
+    TestBed.inject(BillingPeriodsService).clearCache();
     dialogOpen.mockReturnValue({ afterClosed: () => of(true) });
     component.openAguaCycleDialog();
 

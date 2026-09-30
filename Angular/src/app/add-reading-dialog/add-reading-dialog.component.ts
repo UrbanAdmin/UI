@@ -9,7 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { ReadingsService } from '../readings/readings.service';
 import { MONTH_NAMES } from '../notifications/month-names';
-import { ServiceName } from '../notifications/notification.model';
+import { ServiceName } from '../shared/service-name';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
 
 export interface AddReadingDialogData {
