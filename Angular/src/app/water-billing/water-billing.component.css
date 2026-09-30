@@ -1,0 +1,483 @@
+/* Every value here reads from the app's real Organic tokens (src/styles.scss) - no hex of its
+   own - matching gas-billing.component.css's convention. */
+
+.water-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-neutral-700);
+}
+
+/* period list (FR-047) */
+.list-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-neutral-700);
+}
+.periods-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--color-card);
+}
+.periods-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-divider);
+}
+.periods-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-divider);
+  font-variant-numeric: tabular-nums;
+}
+.periods-table tr:last-child td {
+  border-bottom: 0;
+}
+.period-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+}
+.period-status.confirmed {
+  background: var(--color-accent-2-100);
+  color: var(--color-accent-2-700);
+}
+.period-status.open {
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+}
+.new-period-button {
+  margin-top: 16px;
+}
+.new-period-form {
+  margin-top: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-accent-200);
+  background: var(--color-accent-100);
+  padding: 16px 18px;
+}
+.new-period-form .field {
+  display: inline-flex;
+  margin-right: 14px;
+}
+.new-period-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.form-hint {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--color-accent-700);
+}
+.period-error {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+
+/* period header on the detail view (FR-044, FR-048) */
+.back-to-periods {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.period-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+}
+.period-header input[type='date'] {
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.period-header input[type='date']:disabled {
+  background: var(--color-neutral-200);
+  border-style: dashed;
+  color: var(--color-neutral-600);
+}
+.period-header .lock-note {
+  font-size: 11.5px;
+  color: var(--color-neutral-600);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field > label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+.flat-field {
+  width: 100%;
+}
+.flat-field ::ng-deep .mat-mdc-text-field-wrapper {
+  background: var(--color-bg) !important;
+  border: 1px solid var(--color-divider) !important;
+  border-radius: var(--radius-pill) !important;
+}
+.flat-field ::ng-deep .mdc-notched-outline__leading,
+.flat-field ::ng-deep .mdc-notched-outline__notch,
+.flat-field ::ng-deep .mdc-notched-outline__trailing {
+  border-color: transparent !important;
+}
+.rect-field ::ng-deep .mat-mdc-text-field-wrapper {
+  border-radius: 12px !important;
+}
+.flat-field ::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 0;
+}
+.flat-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.bill-fields {
+  margin-bottom: 14px;
+}
+.bill-fields h3 {
+  margin: 0 0 4px;
+}
+.bill-fields-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-neutral-700);
+}
+
+/* Groups the eight bill figures into Valores generales / Acueducto / Alcantarillado -
+   the mockup's own grouping (Discovery/Specifications/Implementation_Water.txt §3). */
+.field-group-label {
+  margin: 14px 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-2-700);
+}
+.field-group-label:first-of-type {
+  margin-top: 0;
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+}
+
+.mismatch-card {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--color-accent-100);
+  border: 1px solid var(--color-accent-200);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+.mismatch-card .mh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--color-accent-700);
+}
+.mismatch-card .mh .mat-icon {
+  color: var(--color-accent-700);
+}
+.mismatch-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-neutral-700);
+}
+
+.table-heading {
+  margin: 20px 0 8px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+}
+
+.readings-table {
+  width: 100%;
+  min-width: 1300px;
+  background: transparent;
+}
+.readings-table th.mat-mdc-header-cell {
+  background: var(--color-surface);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  white-space: nowrap;
+}
+.readings-table td.mat-mdc-cell {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.readings-table td.mat-mdc-cell,
+.readings-table th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
+}
+.readings-table tr.row-invalid td.mat-mdc-cell {
+  background: var(--color-accent-100);
+}
+
+.apt-number {
+  display: block;
+  font-weight: 700;
+}
+.status {
+  display: block;
+  font-size: 11px;
+  color: var(--color-neutral-600);
+}
+
+.zero-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--color-neutral-600);
+  white-space: normal;
+  max-width: 110px;
+}
+
+.cell-input,
+.cell-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 76px;
+  min-height: 1em;
+  padding: 6px 8px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-align: right;
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+.cell-input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.cell-input--date {
+  width: 118px;
+  text-align: left;
+}
+.cell-pill--muted {
+  color: var(--color-neutral-700);
+  background: var(--color-neutral-200);
+  border-style: dashed;
+}
+
+.row-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-accent-700);
+  font-weight: 700;
+}
+
+.comment-button {
+  background-color: var(--color-accent-100) !important;
+}
+.comment-button .mat-icon {
+  color: var(--color-accent-700);
+}
+
+.verifiers-heading {
+  margin: 0 0 8px;
+}
+
+.verifiers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.verifier {
+  background: var(--color-card);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+.verifier .vh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.verifier .vname {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.verifier .vdetail {
+  font-size: 11.5px;
+  color: var(--color-neutral-700);
+  margin: 6px 0 0;
+}
+
+.chip {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.chip.pass {
+  background: var(--color-accent-2-100);
+  color: var(--color-accent-2-700);
+}
+.chip.fail {
+  background: var(--color-accent-200);
+  color: var(--color-accent-700);
+}
+.chip.pending {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+}
+
+.redistribution {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.redist-card {
+  background: var(--color-accent-100);
+  border: 1px solid var(--color-accent-200);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+.redist-card .lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+}
+.redist-card .val {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--color-accent-700);
+  margin-top: 2px;
+}
+.redist-card .note {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--color-neutral-700);
+}
+
+.comments-section {
+  margin-top: 14px;
+}
+.comments-section h3 {
+  margin: 0 0 8px;
+}
+
+.comment-line {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+.comment-line b {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-neutral-600);
+}
+
+.comment-add {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+.comment-add input {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text);
+}
+.comment-add input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.footer-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.confirm-message {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.confirm-message.ok {
+  color: var(--color-accent-2-700);
+}
+.confirm-message.critical {
+  color: var(--color-accent-700);
+}
