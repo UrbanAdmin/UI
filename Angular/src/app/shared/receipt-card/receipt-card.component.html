@@ -1,0 +1,42 @@
+<mat-card class="receipt-card">
+  <mat-card-title>Recibo de {{ service() }}</mat-card-title>
+  <mat-card-content>
+    <div class="receipt-row-top">
+      <div class="field">
+        <label>Total del recibo</label>
+        <mat-form-field appearance="outline" class="flat-field">
+          <input matInput type="text" inputmode="numeric" [copCurrencyInput]="receiptTotal" (copCurrencyInputChange)="receiptTotal = $event" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="receipt-row-bottom">
+      <div class="file-field">
+        <label>Recibo (PDF o foto)</label>
+        <div class="file-drop">
+          <span class="file-drop-name">{{ receiptFile?.name ?? 'Ningún archivo seleccionado' }}</span>
+          <button type="button" class="pill" (click)="fileInput.click()">Subir</button>
+          <input #fileInput type="file" accept="application/pdf,image/*" hidden (change)="onReceiptFileSelected($event)" />
+        </div>
+        <p class="file-hint">Total leído automáticamente del recibo. Verifícalo antes de guardar.</p>
+        <app-loading-indicator [loading]="receiptOcrLoading" label="Leyendo el recibo…" />
+        @if (receiptOcrError(); as ocrError) {
+          <div class="error">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ ocrError }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="consumo-panel">
+        <p class="consumo-kicker">Consumo total (100%)</p>
+        <p class="consumo-value">{{ consumoTotalFormatted }}</p>
+        <p class="consumo-hint">Base del porcentaje que define la cantidad a pagar de cada apartamento.</p>
+      </div>
+
+      <button mat-raised-button color="primary" class="save-total" (click)="saveReceiptTotal()" [disabled]="!receiptTotal">
+        Guardar total
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>

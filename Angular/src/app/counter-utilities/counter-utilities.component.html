@@ -12,7 +12,7 @@
         type="button"
         class="pill"
         [class.pill--active]="selectedService === service"
-        (click)="selectedService = service; onServiceChanged()"
+        (click)="selectedService = service"
       >
         {{ service }}
       </button>
@@ -20,152 +20,37 @@
   </div>
 </div>
 
-@if (selectedService === 'Agua' && !isReadOnly) {
-  <button type="button" class="cycle-link" data-testid="agua-cycle-link" (click)="openAguaCycleDialog()">
-    <mat-icon>schedule</mat-icon>
-    Configurar periodo de facturación
-  </button>
-}
-
 @if (selectedService === 'Gas') {
   <app-gas-billing />
+} @else if (selectedService === 'Agua') {
+  <app-agua-billing />
 } @else {
-
-@if (!isReadOnly) {
-  <mat-card class="receipt-card">
-    <mat-card-title>Recibo de {{ selectedService }}</mat-card-title>
-    <mat-card-content>
-      <div class="receipt-row-top">
-        @if (selectedService === 'Agua') {
-          <div class="field">
-            <label>Periodo</label>
-            <mat-form-field appearance="outline" class="flat-field">
-              <mat-select [(ngModel)]="selectedAguaPeriodKey" (ngModelChange)="onAguaPeriodChanged()">
-                @for (period of aguaPeriods; track periodKey(period)) {
-                  <mat-option [value]="periodKey(period)">{{ period.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-        } @else {
-          <div class="field">
-            <label>Mes</label>
-            <mat-form-field appearance="outline" class="flat-field">
-              <mat-select [(ngModel)]="selectedReceiptMonth" (ngModelChange)="onReceiptPeriodChanged()">
-                @for (name of monthNames; track name; let i = $index) {
-                  <mat-option [value]="i + 1">{{ name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-
-          <div class="field">
-            <label>Año</label>
-            <mat-form-field appearance="outline" class="flat-field">
-              <mat-select [(ngModel)]="selectedReceiptYear" (ngModelChange)="onReceiptPeriodChanged()">
-                @for (year of years; track year) {
-                  <mat-option [value]="year">{{ year }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-        }
-
-        <div class="field">
-          <label>Total del recibo</label>
-          <mat-form-field appearance="outline" class="flat-field">
-            <input matInput type="text" inputmode="numeric" [copCurrencyInput]="receiptTotal" (copCurrencyInputChange)="receiptTotal = $event" />
-          </mat-form-field>
-        </div>
+  @if (!isReadOnly) {
+    <div class="period-picker">
+      <div class="field">
+        <label>Mes</label>
+        <mat-form-field appearance="outline" class="flat-field">
+          <mat-select [(ngModel)]="selectedReceiptMonth">
+            @for (name of monthNames; track name; let i = $index) {
+              <mat-option [value]="i + 1">{{ name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
-
-      <div class="receipt-row-bottom">
-        <div class="file-field">
-          <label>Recibo (PDF o foto)</label>
-          <div class="file-drop">
-            <span class="file-drop-name">{{ receiptFile?.name ?? 'Ningún archivo seleccionado' }}</span>
-            <button type="button" class="pill" (click)="fileInput.click()">Subir</button>
-            <input #fileInput type="file" accept="application/pdf,image/*" hidden (change)="onReceiptFileSelected($event)" />
-          </div>
-          <p class="file-hint">Total leído automáticamente del recibo. Verifícalo antes de guardar.</p>
-          <app-loading-indicator [loading]="receiptOcrLoading" label="Leyendo el recibo…" />
-          @if (receiptOcrError(); as ocrError) {
-            <div class="error">
-              <mat-icon>error_outline</mat-icon>
-              <span>{{ ocrError }}</span>
-            </div>
-          }
-        </div>
-
-        <div class="consumo-panel">
-          <p class="consumo-kicker">Consumo total (100%)</p>
-          <p class="consumo-value">{{ consumoTotalFormatted }}</p>
-          <p class="consumo-hint">Base del porcentaje que define la cantidad a pagar de cada apartamento.</p>
-        </div>
-
-        <button mat-raised-button color="primary" class="save-total" (click)="saveReceiptTotal()" [disabled]="!receiptTotal">
-          Guardar total
-        </button>
+      <div class="field">
+        <label>Año</label>
+        <mat-form-field appearance="outline" class="flat-field">
+          <mat-select [(ngModel)]="selectedReceiptYear">
+            @for (year of years; track year) {
+              <mat-option [value]="year">{{ year }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </div>
-    </mat-card-content>
-  </mat-card>
-}
+    </div>
 
-@if (loadingService.isLoading()) {
-  <app-loading-indicator [loading]="true" />
-} @else if (apartments$ | async; as apartments) {
-  @if (apartments.length === 0) {
-    <app-empty-state icon="home_work" message="Todavía no hay apartamentos registrados." />
-  } @else {
-<mat-tab-group>
-  @for (apartment of apartments; track apartment.number) {
-    <mat-tab [label]="'Apto ' + apartment.number">
-      <div class="tab-content">
-        <div class="table-container">
-          <table mat-table [dataSource]="(getRows$(apartment, selectedService) | async) ?? []">
-            <ng-container matColumnDef="mes">
-              <th mat-header-cell *matHeaderCellDef>Mes</th>
-              <td mat-cell *matCellDef="let row">{{ row.monthLabel }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="lectura">
-              <th mat-header-cell *matHeaderCellDef>Lectura</th>
-              <td mat-cell *matCellDef="let row">{{ row.counter ?? '—' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="evidencia">
-              <th mat-header-cell *matHeaderCellDef>Evidencia</th>
-              <td mat-cell *matCellDef="let row">{{ row.evidenceFileName ?? '—' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="cantidadAPagar">
-              <th mat-header-cell *matHeaderCellDef>Cantidad a pagar</th>
-              <td mat-cell *matCellDef="let row">{{ row.fee ? (row.fee | copCurrency) : '—' }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="acciones">
-              <th mat-header-cell *matHeaderCellDef>Acciones</th>
-              <td mat-cell *matCellDef="let row" class="actions-cell">
-                @if (row.counter) {
-                  <button class="text-link" (click)="openAddReadingDialog(apartment, selectedService, row)">Editar</button>
-                }
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
-        </div>
-        @if (!isReadOnly) {
-          <div class="button-container-inline">
-            <button mat-raised-button color="primary" (click)="openAddReadingDialog(apartment, selectedService)">Agregar Lectura</button>
-          </div>
-        }
-      </div>
-    </mat-tab>
+    <app-receipt-card [service]="selectedService" [month]="selectedReceiptMonth" [year]="selectedReceiptYear" />
   }
-</mat-tab-group>
-  }
-}
 
+  <app-reading-table [service]="selectedService" [isReadOnly]="isReadOnly" />
 }

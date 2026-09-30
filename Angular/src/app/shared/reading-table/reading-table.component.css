@@ -1,0 +1,129 @@
+mat-tab-group {
+  position: relative;
+}
+
+/* Each apartment is its own discrete bordered pill (matching the Servicio
+   pills' .pill styling), not tabs inside one shared strip container - the
+   reference shows individual buttons with gaps between them, not a single
+   pill-shaped bar. */
+::ng-deep .mat-mdc-tab-header {
+  border-bottom: none;
+}
+::ng-deep .mat-mdc-tab-labels {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* !important throughout: Material's own .mdc-tab base rule (border: none,
+   padding: 0 24px, min-width: 90px) and .mat-mdc-tab share equal selector
+   specificity with these overrides, and which one wins depended on bundle
+   order rather than anything predictable - some tabs rendered with no
+   border/background at all, and every resting-state tab inherited
+   Material's own near-black default text color since no color was ever set
+   here for the non-active state. */
+/* flex: 0 0 auto is required alongside min-width: 0 - Material's own
+   .mdc-tab defaults to flex: 1 1 auto, which is invisible with several
+   similar-width tabs but stretches a LONE tab (the owner's single
+   apartment) to fill the entire header, producing a full-width bar instead
+   of a pill sized to its own text. */
+::ng-deep .mat-mdc-tab {
+  flex: 0 0 auto !important;
+  border: 1px solid var(--color-divider) !important;
+  background: var(--color-card) !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 0 18px !important;
+  min-width: 0 !important;
+}
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  color: var(--color-neutral-700) !important;
+}
+::ng-deep .mat-mdc-tab.mdc-tab--active {
+  border-color: transparent !important;
+  background: var(--color-accent-2-800) !important;
+}
+::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--color-accent-2-100) !important;
+}
+/* The pill fill above replaces the ink-bar as the "active" signal entirely -
+   without hiding it, Material's default underline still renders beneath the
+   filled pill as a stray line. */
+::ng-deep .mat-mdc-tab-header .mdc-tab-indicator {
+  display: none;
+}
+
+.tab-content {
+  position: relative;
+  min-height: 500px;
+  padding-bottom: 80px;
+}
+
+.table-container {
+  margin: 20px 0 0;
+}
+
+.table-container table {
+  width: 100%;
+}
+
+.table-container th.mat-mdc-header-cell {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+
+.table-container td.mat-mdc-cell, .table-container th.mat-mdc-header-cell {
+  border-bottom-color: var(--color-divider);
+}
+
+.table-container tr.mat-mdc-row:hover td.mat-mdc-cell {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.actions-cell {
+  text-align: right;
+}
+.text-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent-700);
+}
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.button-container-inline {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  flex-wrap: wrap;
+}
+
+.button-container-inline button {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 600px) {
+  .button-container-inline {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .button-container-inline button {
+    width: 100%;
+  }
+
+  /* Evidence file name is the least-essential column here - dropping it
+     leaves Mes/Lectura/Cantidad a pagar, the "primary values" spec
+     Acceptance Scenario 3.2 calls out, fitting without horizontal
+     scroll (FR-005/SC-003). */
+  .mat-column-evidencia {
+    display: none;
+  }
+}
