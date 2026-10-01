@@ -217,7 +217,7 @@ describe('WaterBillingComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Alcantarillado');
   });
 
-  it('hides bill-info fields, verifiers, and redistribution cards for an ApartmentOwner', async () => {
+  it('hides bill-info fields, verifiers, redistribution cards, and the table for an ApartmentOwner', async () => {
     const bill = billFrom({
       confirmed: true, confirmedAt: '2026-10-08T00:00:00Z',
       readings: [{
@@ -236,14 +236,84 @@ describe('WaterBillingComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="total-value"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="verifier-percentage-chip"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="non-rented-cost"]')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Valor Acueducto');
-    expect(fixture.componentInstance.displayedColumns).toEqual(['apartamento', 'lecturaAnterior', 'lecturaActual', 'consumo', 'porcentaje', 'total']);
+    expect(fixture.nativeElement.querySelector('table.readings-table')).toBeNull();
     // No edit controls at all (FR-034) - not the reading input, not the comment button, not Confirm.
     expect(fixture.nativeElement.querySelector('[data-testid="current-reading-1"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="comment-1"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="confirm-button"]')).toBeNull();
     // The server already excludes the Zona Común row entirely for an owner - never reachable here.
     expect(fixture.nativeElement.textContent).not.toContain('Zona Común');
+  });
+
+  // ---- 028-tenant-readings-statement (re-scoped onto WaterBillingComponent's detail view) ----
+
+  it('renders app-tenant-statement in ready state, with every real cost share as its own breakdown line', async () => {
+    const bill = billFrom({
+      confirmed: true, confirmedAt: '2026-10-08T00:00:00Z',
+      readings: [{
+        id: 1, apartmentId: 1, label: '101', status: 'Arrendado',
+        previousReading: '500', currentReading: '530', readingDate: '2026-09-20', consumption: '30', consumptionPercentage: '0.3',
+        aqueductValue: '180000', sewerValue: '90000', fixedChargeShare: '50000',
+        nonRentedCostShare: '11667', commonAreaCostShare: '20000', finalAmount: '351700',
+        validationError: null, photoFileName: null,
+      }],
+    });
+    const fixture = await setup(true, [{ ...PERIOD, confirmed: true }]);
+    open(fixture, 7, bill);
+
+    const statement = fixture.nativeElement.querySelector('app-tenant-statement');
+    expect(statement).toBeTruthy();
+    expect(statement.textContent).toContain('Apto 101 · TBD · Arrendado');
+    expect(fixture.componentInstance.tenantStatement.state).toBe('ready');
+    expect(fixture.componentInstance.tenantStatement.breakdown).toEqual([
+      { label: 'Valor Acueducto', value: '180000' },
+      { label: 'Valor Alcantarillado', value: '90000' },
+      { label: 'Cargo fijo', value: '50000' },
+      { label: 'Costo no arrendados', value: '11667' },
+      { label: 'Costo zona común', value: '20000' },
+    ]);
+    expect(fixture.componentInstance.tenantStatement.total).toBe('351700');
+  });
+
+  it('omits the no-arrendados/zona-común lines when they are zero', async () => {
+    const bill = billFrom({
+      confirmed: true, confirmedAt: '2026-10-08T00:00:00Z',
+      readings: [{
+        id: 1, apartmentId: 1, label: '101', status: 'Arrendado',
+        previousReading: '500', currentReading: '530', readingDate: '2026-09-20', consumption: '30', consumptionPercentage: '0.3',
+        aqueductValue: '180000', sewerValue: '90000', fixedChargeShare: '50000',
+        nonRentedCostShare: '0', commonAreaCostShare: '0', finalAmount: '320000',
+        validationError: null, photoFileName: null,
+      }],
+    });
+    const fixture = await setup(true, [{ ...PERIOD, confirmed: true }]);
+    open(fixture, 7, bill);
+
+    expect(fixture.componentInstance.tenantStatement.breakdown).toEqual([
+      { label: 'Valor Acueducto', value: '180000' },
+      { label: 'Valor Alcantarillado', value: '90000' },
+      { label: 'Cargo fijo', value: '50000' },
+    ]);
+  });
+
+  it('shows a plain read-only period label (no disabled date inputs) with a Solo lectura tag, for an ApartmentOwner', async () => {
+    const fixture = await setup(true, [{ ...PERIOD, confirmed: true }]);
+    open(fixture, 7, billFrom({ confirmed: true }));
+
+    expect(fixture.nativeElement.querySelector('[data-testid="period-start-input"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="period-end-input"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="readonly-tag"]')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('10 de septiembre de 2026');
+    expect(fixture.nativeElement.textContent).toContain('7 de octubre de 2026');
+  });
+
+  it('shows the empty state when the bill exists but has no reading for this apartment yet', async () => {
+    const fixture = await setup(true, [{ ...PERIOD, confirmed: true }]);
+    open(fixture, 7, billFrom({ confirmed: true, readings: [] }));
+
+    expect(fixture.componentInstance.rows.length).toBe(0);
+    expect(fixture.nativeElement.querySelector('app-tenant-statement')).toBeTruthy();
+    expect(fixture.componentInstance.tenantStatement.state).toBe('empty');
   });
 
   it('shows the mismatch warning only when meterVsBillPasses is false', async () => {

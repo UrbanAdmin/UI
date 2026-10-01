@@ -13,6 +13,13 @@
   gap: 12px;
   margin-bottom: 14px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* .readonly-tag itself is global (styles.scss) - just position it within this row. */
+.period-picker .readonly-tag {
+  align-self: flex-end;
+  margin-bottom: 2px;
 }
 
 /* Field label-above + flat pill input, identical to counter-utilities' Recibo card fields

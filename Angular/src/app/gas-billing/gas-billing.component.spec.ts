@@ -379,4 +379,64 @@ describe('GasBillingComponent', () => {
     expect(fixture.nativeElement.querySelector('app-empty-state')).toBeTruthy();
     expect(fixture.componentInstance.rows.length).toBe(0);
   });
+
+  // ---- 028-tenant-readings-statement (re-scoped onto GasBillingComponent directly - see spec.md) ----
+
+  it('shows the empty state (via app-tenant-statement) when the bill exists but has no reading for this apartment yet', async () => {
+    const bill: GasBillDto = {
+      id: 7, dateId: DATE_ID, totalConsumption: null, unitPrice: null, consumoGasSubtotal: null,
+      fixedCharge: null, otherConcepts: null, ajusteDecena: null, totalAmount: null,
+      administrationAmount: null, percentagePasses: true, percentageDifference: '0',
+      totalPasses: true, totalDifference: '0', confirmed: false, confirmedAt: null,
+      readings: [], comments: [],
+    };
+    const fixture = await setup(true, bill);
+
+    expect(fixture.componentInstance.rows.length).toBe(0);
+    expect(fixture.componentInstance.tenantStatement.state).toBe('empty');
+    expect(fixture.nativeElement.querySelector('app-tenant-statement')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('table.readings-table')).toBeNull();
+  });
+
+  it('renders app-tenant-statement (not the table) for an apartment owner, in ready state', async () => {
+    const bill: GasBillDto = {
+      id: 7, dateId: DATE_ID, totalConsumption: '30', unitPrice: '10', consumoGasSubtotal: null,
+      fixedCharge: '0', otherConcepts: null, ajusteDecena: null, totalAmount: '300',
+      administrationAmount: '0', percentagePasses: true, percentageDifference: '0',
+      totalPasses: true, totalDifference: '0', confirmed: true, confirmedAt: '2027-01-05T00:00:00Z',
+      readings: [{
+        id: 99, apartmentId: 1, apartmentNumber: '101', status: 'Arrendado', isNewTenant: false,
+        initialReading: null, previousReading: '0', currentReading: '30', consumption: '30',
+        consumptionPercentage: '1', allocatedConsumption: '30', variableCost: '300',
+        fixedChargeShare: '0', finalTotal: '300', validationError: null, photoFileName: null,
+      }],
+      comments: [],
+    };
+    const fixture = await setup(true, bill);
+
+    expect(fixture.nativeElement.querySelector('table.readings-table')).toBeNull();
+    const statement = fixture.nativeElement.querySelector('app-tenant-statement');
+    expect(statement).toBeTruthy();
+    expect(statement.textContent).toContain('Apto 101 · TBD · Arrendado');
+    expect(fixture.componentInstance.tenantStatement.state).toBe('ready');
+    expect(fixture.componentInstance.tenantStatement.breakdown).toEqual([
+      { label: 'Costo variable', value: '300' },
+      { label: 'Cargo fijo', value: '0' },
+    ]);
+    expect(fixture.componentInstance.tenantStatement.total).toBe('300');
+  });
+
+  it('shows the "Solo lectura" tag for an apartment owner, replacing the old hint sentence', async () => {
+    const fixture = await setup(true, null);
+
+    expect(fixture.nativeElement.textContent).not.toContain('Tu propio desglose de gas');
+    expect(fixture.nativeElement.querySelector('[data-testid="readonly-tag"]')).toBeTruthy();
+  });
+
+  it('keeps the admin hint and shows no "Solo lectura" tag for an admin', async () => {
+    const fixture = await setup(false, null);
+
+    expect(fixture.nativeElement.textContent).toContain('Un cargo variable por consumo más un cargo fijo, por período.');
+    expect(fixture.nativeElement.querySelector('[data-testid="readonly-tag"]')).toBeNull();
+  });
 });

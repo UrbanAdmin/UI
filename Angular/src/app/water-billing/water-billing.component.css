@@ -129,6 +129,10 @@
   color: var(--color-neutral-600);
 }
 
+/* 028-tenant-readings-statement: the tenant's period-header has no inputs at all (FR-007) - just
+   a plain label (inherits .period-header's own text styling) and a neutral cue (.readonly-tag,
+   global in styles.scss), replacing the admin's disabled date inputs + lock-note. */
+
 .field {
   display: flex;
   flex-direction: column;

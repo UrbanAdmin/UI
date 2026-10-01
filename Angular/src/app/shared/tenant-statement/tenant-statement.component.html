@@ -1,0 +1,48 @@
+@let s = statement();
+
+@if (s.state === 'empty') {
+  <app-empty-state icon="receipt_long" [message]="s.emptyMessage ?? ''" />
+} @else {
+  <div class="panel">
+    @if (s.state === 'ready') {
+      <div class="total-block">
+        <span class="total-label">Total a pagar</span>
+        <span class="total-figure" data-testid="statement-total">{{ s.total | copCurrency }}</span>
+      </div>
+      <ul class="breakdown">
+        @for (line of s.breakdown ?? []; track line.label) {
+          <li>
+            <span class="bk-label">{{ line.label }}</span>
+            <span class="bk-value">{{ line.value | copCurrency }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="pending-note">Pendiente del recibo</p>
+    }
+    <p class="apartment-line">{{ s.apartmentLine }}</p>
+  </div>
+
+  <div class="cards">
+    <div class="card meter-card">
+      <h4>Lectura del medidor</h4>
+      <div class="readings-row">
+        <span class="reading">{{ s.previousReading | esNumber }}</span>
+        <mat-icon class="arrow">arrow_forward</mat-icon>
+        <span class="reading">{{ s.currentReading | esNumber }}</span>
+      </div>
+      <span class="consumo-chip" data-testid="statement-consumo">{{ s.consumption | esNumber }} {{ s.unit }}</span>
+    </div>
+
+    @if (s.state === 'ready') {
+      <div class="card share-card">
+        <h4>Tu parte del edificio</h4>
+        <span class="share-figure" data-testid="statement-percentage">{{ s.percentage | esNumber: 'percent' }}</span>
+        <div class="bar-track">
+          <div class="bar-fill" data-testid="statement-bar" [style.width.%]="barWidth()"></div>
+        </div>
+        <p class="share-note">El costo variable sigue este porcentaje; el cargo fijo se divide en partes iguales.</p>
+      </div>
+    }
+  </div>
+}

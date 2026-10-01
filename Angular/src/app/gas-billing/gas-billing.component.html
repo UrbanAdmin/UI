@@ -1,4 +1,6 @@
-<p class="gas-hint">{{ isReadOnly ? 'Tu propio desglose de gas, de solo lectura.' : 'Un cargo variable por consumo más un cargo fijo, por período.' }}</p>
+@if (!isReadOnly) {
+  <p class="gas-hint">Un cargo variable por consumo más un cargo fijo, por período.</p>
+}
 
 <div class="period-picker">
   <div class="field">
@@ -21,12 +23,13 @@
       </mat-select>
     </mat-form-field>
   </div>
+  @if (isReadOnly) {
+    <span class="readonly-tag" data-testid="readonly-tag">Solo lectura</span>
+  }
 </div>
 
 @if (loadingService.isLoading()) {
   <app-loading-indicator [loading]="loadingService.isLoading()" />
-} @else if (isReadOnly && !bill) {
-  <app-empty-state icon="local_fire_department" message="Este período aún no tiene una factura de gas confirmada." />
 } @else {
   @if (!isReadOnly) {
     <section class="bill-fields">
@@ -76,6 +79,7 @@
     </section>
   }
 
+  @if (!isReadOnly) {
   <h3 class="table-heading">Lecturas por apartamento</h3>
   <div class="table-scroll">
   <table mat-table [dataSource]="rows" class="readings-table">
@@ -185,6 +189,9 @@
     <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.row-invalid]="row.reading?.validationError"></tr>
   </table>
   </div>
+  } @else {
+    <app-tenant-statement [statement]="tenantStatement" />
+  }
 
   @if (!isReadOnly) {
     <h3 class="verifiers-heading">Verificadores</h3>

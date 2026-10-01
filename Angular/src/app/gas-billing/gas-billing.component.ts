@@ -17,8 +17,9 @@ import { LoadingService } from '../loading.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { EsNumberPipe } from '../shared/es-number.pipe';
 import { formatEsDecimal, parseEsDecimal } from '../shared/es-number';
-import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { TenantStatementComponent } from '../shared/tenant-statement/tenant-statement.component';
+import { TenantStatement } from '../shared/tenant-statement/tenant-statement.model';
 import { GasBillingService } from './gas-billing.service';
 import { GasApartmentReadingDto, GasBillDto, GasBillWrite } from './gas-billing.model';
 
@@ -57,8 +58,8 @@ interface GasReadingRow {
     MatTableModule,
     CopCurrencyPipe,
     EsNumberPipe,
-    EmptyStateComponent,
     LoadingIndicatorComponent,
+    TenantStatementComponent,
   ],
 })
 export class GasBillingComponent {
@@ -85,9 +86,61 @@ export class GasBillingComponent {
   // GasBill row itself exists (FR-031a) - synced from `bill` on every reload.
   billDraft: Required<GasBillWrite> = emptyBillDraft();
   rows: GasReadingRow[] = [];
+  // Only consulted by tenantStatement (028) - the admin table reads straight off `apartments`
+  // passed into buildRows() instead, so this stays private rather than widening its scope.
+  private apartments: Apartment[] = [];
   confirmMessage: string | null = null;
   confirmSucceeded = false;
   newCommentText = '';
+
+  /** 028-tenant-readings-statement: the tenant's own row, mapped to the shared statement view
+   *  model. The server already scopes `rows` to at most one entry for an ApartmentOwner
+   *  (FR-028b), and hides an unconfirmed bill from them entirely (FR-028c) - so by the time a
+   *  reading reaches here, its totals are always complete; `pending-receipt` is defensive. */
+  get tenantStatement(): TenantStatement {
+    const periodLabel = `${this.monthNames[this.selectedMonth - 1]} ${this.selectedYear}`;
+    const reading = this.rows[0]?.reading ?? null;
+    if (!reading) {
+      return {
+        state: 'empty',
+        periodLabel,
+        apartmentLine: '',
+        unit: 'm³',
+        emptyMessage: `Aún no hay lectura de Gas para ${periodLabel}.`,
+      };
+    }
+
+    const apartment = this.apartments.find((a) => a.id === reading.apartmentId);
+    const apartmentLine = `Apto ${reading.apartmentNumber} · ${apartment?.owner ?? ''} · ${reading.status}`;
+
+    if (reading.finalTotal === null) {
+      return {
+        state: 'pending-receipt',
+        periodLabel,
+        apartmentLine,
+        unit: 'm³',
+        previousReading: reading.previousReading ?? undefined,
+        currentReading: reading.currentReading ?? undefined,
+        consumption: reading.consumption ?? undefined,
+      };
+    }
+
+    return {
+      state: 'ready',
+      periodLabel,
+      apartmentLine,
+      unit: 'm³',
+      previousReading: reading.previousReading ?? undefined,
+      currentReading: reading.currentReading ?? undefined,
+      consumption: reading.consumption ?? undefined,
+      percentage: reading.consumptionPercentage ?? undefined,
+      breakdown: [
+        { label: 'Costo variable', value: reading.variableCost ?? '0' },
+        { label: 'Cargo fijo', value: reading.fixedChargeShare ?? '0' },
+      ],
+      total: reading.finalTotal,
+    };
+  }
 
   /** FR-031: Confirm stays disabled while any row has a validation error - named individually so
    *  the admin knows exactly which apartment(s) need attention before trying to confirm at all. */
@@ -123,6 +176,7 @@ export class GasBillingComponent {
     forkJoin([this.gasBillingService.getBill(this.dateId), this.apartmentsService.getApartments()]).subscribe(
       ([bill, apartments]) => {
         this.bill = bill;
+        this.apartments = apartments;
         this.billDraft = bill
           ? {
               totalConsumption: bill.totalConsumption,

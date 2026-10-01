@@ -1,4 +1,6 @@
-<p class="water-hint">{{ isReadOnly ? 'Tu propio desglose de agua, de solo lectura.' : 'Acueducto y Alcantarillado, cada uno con su cargo fijo y variable, por período.' }}</p>
+@if (!isReadOnly) {
+  <p class="water-hint">Acueducto y Alcantarillado, cada uno con su cargo fijo y variable, por período.</p>
+}
 
 @if (loadingService.isLoading()) {
   <app-loading-indicator [loading]="loadingService.isLoading()" />
@@ -66,25 +68,25 @@
   <button type="button" class="back-to-periods" (click)="backToPeriods()" data-testid="back-to-periods">← Volver a periodos</button>
 
   <div class="period-header">
-    <div class="field">
-      <label>Fecha inicio</label>
-      <input type="date" [(ngModel)]="periodStartDraft" (change)="savePeriodDates()" [disabled]="isReadOnly || !!bill?.confirmed" data-testid="period-start-input" />
-    </div>
-    <div class="field">
-      <label>Fecha fin</label>
-      <input type="date" [(ngModel)]="periodEndDraft" (change)="savePeriodDates()" [disabled]="isReadOnly || !!bill?.confirmed" data-testid="period-end-input" />
-    </div>
     @if (!isReadOnly) {
+      <div class="field">
+        <label>Fecha inicio</label>
+        <input type="date" [(ngModel)]="periodStartDraft" (change)="savePeriodDates()" [disabled]="!!bill?.confirmed" data-testid="period-start-input" />
+      </div>
+      <div class="field">
+        <label>Fecha fin</label>
+        <input type="date" [(ngModel)]="periodEndDraft" (change)="savePeriodDates()" [disabled]="!!bill?.confirmed" data-testid="period-end-input" />
+      </div>
       <span class="lock-note">{{ bill?.confirmed ? '🔒 Las fechas quedaron fijas al confirmar la factura.' : '✎ Editable mientras la factura no esté confirmada.' }}</span>
-    }
-    @if (periodDateError) {
-      <span class="period-error" data-testid="period-date-error">{{ periodDateError }}</span>
+      @if (periodDateError) {
+        <span class="period-error" data-testid="period-date-error">{{ periodDateError }}</span>
+      }
+    } @else {
+      <span class="period-label">{{ periodStartDraft | dateWords }} - {{ periodEndDraft | dateWords }}</span>
+      <span class="readonly-tag" data-testid="readonly-tag">Solo lectura</span>
     }
   </div>
 
-  @if (isReadOnly && !bill) {
-    <app-empty-state icon="water_drop" message="Este período aún no tiene una factura de agua confirmada." />
-  } @else {
     @if (!isReadOnly) {
       <section class="bill-fields">
         <h3>Datos de la factura</h3>
@@ -160,6 +162,7 @@
       </section>
     }
 
+    @if (!isReadOnly) {
     <h3 class="table-heading">Lecturas por medidor</h3>
     <div class="table-scroll">
     <table mat-table [dataSource]="rows" class="readings-table">
@@ -288,6 +291,9 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.row-invalid]="row.reading?.validationError"></tr>
     </table>
     </div>
+    } @else {
+      <app-tenant-statement [statement]="tenantStatement" />
+    }
 
     @if (!isReadOnly) {
       <h3 class="verifiers-heading">Verificadores</h3>
@@ -415,6 +421,5 @@
         }
       </div>
     }
-  }
 
 }

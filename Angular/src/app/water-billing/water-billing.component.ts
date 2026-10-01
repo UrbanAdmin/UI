@@ -18,6 +18,9 @@ import { DateWordsPipe } from '../shared/date-words.pipe';
 import { formatEsDecimal, parseEsDecimal } from '../shared/es-number';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
+import { TenantStatementComponent } from '../shared/tenant-statement/tenant-statement.component';
+import { TenantStatement, TenantStatementBreakdownLine } from '../shared/tenant-statement/tenant-statement.model';
+import { formatDateInWords } from '../notifications/month-names';
 import { WaterBillingService } from './water-billing.service';
 import { WaterBillPeriodDto, WaterMeterReadingDto, WaterBillDto, WaterBillWrite } from './water-billing.model';
 
@@ -74,6 +77,7 @@ interface WaterReadingRow {
     DateWordsPipe,
     EmptyStateComponent,
     LoadingIndicatorComponent,
+    TenantStatementComponent,
   ],
 })
 export class WaterBillingComponent {
@@ -83,10 +87,12 @@ export class WaterBillingComponent {
   protected readonly loadingService = inject(LoadingService);
 
   readonly isReadOnly = this.authService.isApartmentOwner();
-  readonly displayedColumns = this.isReadOnly
-    ? ['apartamento', 'lecturaAnterior', 'lecturaActual', 'consumo', 'porcentaje', 'total']
-    : ['apartamento', 'lecturaAnterior', 'lecturaActual', 'fechaLectura', 'consumo', 'porcentaje', 'valorAcueducto',
-        'valorAlcantarillado', 'cargoFijo', 'costoNoArrendados', 'costoZonaComun', 'total', 'comentario'];
+  // 028-tenant-readings-statement: the table is admin-only now (a tenant gets
+  // app-tenant-statement instead), so this no longer needs a role branch.
+  readonly displayedColumns = [
+    'apartamento', 'lecturaAnterior', 'lecturaActual', 'fechaLectura', 'consumo', 'porcentaje', 'valorAcueducto',
+    'valorAlcantarillado', 'cargoFijo', 'costoNoArrendados', 'costoZonaComun', 'total', 'comentario',
+  ];
 
   /** FR-047: the period list is the entry point - 'detail' is the existing guided-flow content for
    *  whichever period is open. */
@@ -110,9 +116,74 @@ export class WaterBillingComponent {
   periodDateError: string | null = null;
 
   rows: WaterReadingRow[] = [];
+  // Only consulted by tenantStatement (028) - the admin table reads straight off `apartments`
+  // passed into buildRows() instead, so this stays private rather than widening its scope.
+  private apartments: Apartment[] = [];
   confirmMessage: string | null = null;
   confirmSucceeded = false;
   newCommentText = '';
+
+  /** 028-tenant-readings-statement: the tenant's own row, mapped to the shared statement view
+   *  model. The server already scopes `rows` to at most one entry for an ApartmentOwner
+   *  (FR-034), and hides an unconfirmed bill from them entirely (FR-035) - so by the time a
+   *  reading reaches here, its totals are always complete; `pending-receipt` is defensive. */
+  get tenantStatement(): TenantStatement {
+    const periodLabel = this.bill
+      ? `${formatDateInWords(this.bill.startDate)} - ${formatDateInWords(this.bill.endDate)}`
+      : '';
+    const reading = this.rows[0]?.reading ?? null;
+    if (!reading) {
+      return {
+        state: 'empty',
+        periodLabel,
+        apartmentLine: '',
+        unit: 'm³',
+        emptyMessage: periodLabel
+          ? `Aún no hay lectura de Agua para ${periodLabel}.`
+          : 'Aún no hay lectura de Agua para este período.',
+      };
+    }
+
+    const apartment = this.apartments.find((a) => a.id === reading.apartmentId);
+    const apartmentLine = `Apto ${reading.label} · ${apartment?.owner ?? ''} · ${reading.status}`;
+
+    if (reading.finalAmount === null) {
+      return {
+        state: 'pending-receipt',
+        periodLabel,
+        apartmentLine,
+        unit: 'm³',
+        previousReading: reading.previousReading ?? undefined,
+        currentReading: reading.currentReading ?? undefined,
+        consumption: reading.consumption ?? undefined,
+      };
+    }
+
+    const breakdown: TenantStatementBreakdownLine[] = [
+      { label: 'Valor Acueducto', value: reading.aqueductValue ?? '0' },
+      { label: 'Valor Alcantarillado', value: reading.sewerValue ?? '0' },
+      { label: 'Cargo fijo', value: reading.fixedChargeShare ?? '0' },
+    ];
+    if (reading.nonRentedCostShare && Number(reading.nonRentedCostShare) !== 0) {
+      breakdown.push({ label: 'Costo no arrendados', value: reading.nonRentedCostShare });
+    }
+    if (reading.commonAreaCostShare && Number(reading.commonAreaCostShare) !== 0) {
+      breakdown.push({ label: 'Costo zona común', value: reading.commonAreaCostShare });
+    }
+
+    return {
+      state: 'ready',
+      periodLabel,
+      apartmentLine,
+      unit: 'm³',
+      previousReading: reading.previousReading ?? undefined,
+      currentReading: reading.currentReading ?? undefined,
+      consumption: reading.consumption ?? undefined,
+      percentage: reading.consumptionPercentage ?? undefined,
+      breakdown,
+      total: reading.finalAmount,
+    };
+  }
 
   /** FR-038: Confirm stays disabled while any row has a validation error - named individually so
    *  the admin knows exactly which meter(s) need attention. */
@@ -213,6 +284,7 @@ export class WaterBillingComponent {
     forkJoin([this.waterBillingService.getBill(this.selectedBillId), this.apartmentsService.getApartments()]).subscribe(
       ([bill, apartments]) => {
         this.bill = bill;
+        this.apartments = apartments;
         this.billDraft = bill
           ? {
               totalValue: bill.totalValue,

@@ -180,3 +180,16 @@ a:hover { color: var(--color-accent-600); text-decoration: underline; }
   text-transform: uppercase;
   color: var(--color-neutral-600);
 }
+
+/* 028-tenant-readings-statement: one neutral cue for "nothing here is editable," replacing a
+   disabled-looking field or an explanatory sentence (research.md's "one read-only cue" decision).
+   Shared globally (not per-component) since Gas and Agua both use it identically. */
+.readonly-tag {
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
