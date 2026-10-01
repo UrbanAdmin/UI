@@ -17,8 +17,8 @@
         <tbody>
           @for (period of periods; track period.id) {
             <tr [attr.data-testid]="'period-row-' + period.id">
-              <td>{{ period.startDate | date: 'dd/MM/yyyy' }}</td>
-              <td>{{ period.endDate | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ period.startDate | dateWords }}</td>
+              <td>{{ period.endDate | dateWords }}</td>
               <td>
                 <span class="period-status" [class.confirmed]="period.confirmed" [class.open]="!period.confirmed">
                   {{ period.confirmed ? 'Confirmado' : 'Sin confirmar' }}

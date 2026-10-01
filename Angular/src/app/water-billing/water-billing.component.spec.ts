@@ -77,7 +77,7 @@ describe('WaterBillingComponent', () => {
     expect(fixture.componentInstance.view).toBe('list');
     expect(fixture.nativeElement.querySelector('[data-testid="open-period-7"]')).toBeTruthy();
     const rowTexts = fixture.nativeElement.textContent;
-    expect(rowTexts).toContain('10/09/2026'); // dd/MM/yyyy - readable for the end user, not raw ISO
+    expect(rowTexts).toContain('7 de octubre de 2026'); // words, not raw ISO or dd/MM/yyyy
     expect(rowTexts).toContain('Sin confirmar');
     expect(rowTexts).toContain('Confirmado');
   });

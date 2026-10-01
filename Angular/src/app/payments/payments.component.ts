@@ -24,6 +24,7 @@ import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { CopCurrencyInputDirective } from '../shared/cop-currency-input.directive';
+import { DateWordsPipe } from '../shared/date-words.pipe';
 import { formatCop } from '../shared/cop-currency';
 import { LoadingService } from '../loading.service';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
@@ -66,6 +67,7 @@ interface MonthYear {
     MatTableModule,
     CopCurrencyPipe,
     CopCurrencyInputDirective,
+    DateWordsPipe,
     EmptyStateComponent,
     LoadingIndicatorComponent,
     StatusChipComponent,

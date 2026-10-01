@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { AuthService } from '../auth.service';
 import { LoadingService } from '../loading.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { EsNumberPipe } from '../shared/es-number.pipe';
+import { DateWordsPipe } from '../shared/date-words.pipe';
 import { formatEsDecimal, parseEsDecimal } from '../shared/es-number';
 import { EmptyStateComponent } from '../shared/empty-state/empty-state.component';
 import { LoadingIndicatorComponent } from '../shared/loading-indicator/loading-indicator.component';
@@ -62,7 +63,6 @@ interface WaterReadingRow {
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [
     CommonModule,
-    DatePipe,
     FormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -71,6 +71,7 @@ interface WaterReadingRow {
     MatTableModule,
     CopCurrencyPipe,
     EsNumberPipe,
+    DateWordsPipe,
     EmptyStateComponent,
     LoadingIndicatorComponent,
   ],

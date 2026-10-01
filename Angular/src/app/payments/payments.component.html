@@ -32,7 +32,7 @@
         >
           @for (period of (aguaPeriods$ | async); track period.id) {
             <mat-option [value]="period.id">
-              {{ period.startDate | date: 'dd/MM/yyyy' }} - {{ period.endDate | date: 'dd/MM/yyyy' }}
+              {{ period.startDate | dateWords }} - {{ period.endDate | dateWords }}
               · {{ period.confirmed ? 'Confirmado' : 'Sin confirmar' }}
             </mat-option>
           }
