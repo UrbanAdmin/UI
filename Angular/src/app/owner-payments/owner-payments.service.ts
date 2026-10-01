@@ -4,7 +4,7 @@ import { Observable, forkJoin, map, switchMap, tap, shareReplay } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { getNotificationStatus } from '../notifications/notification-status';
 import { NotificationStatus } from '../notifications/notification.model';
-import { OwnerPayment, PaymentStatusDto, PaymentStatusWrite } from './owner-payment.model';
+import { OwnerPayment, PaymentStatusDto, PaymentStatusWrite, sentinelDueDate } from './owner-payment.model';
 import { ServiceName } from '../shared/service-name';
 import { ApartmentsService } from '../shared/apartments.service';
 import { UtilitiesService } from '../shared/utilities.service';
@@ -62,7 +62,7 @@ export class OwnerPaymentsService {
           );
           const paid = existing?.paid ?? false;
           const amount = existing?.amount ?? null;
-          const dueDate = deadline?.dueDate ?? new Date(9999, 11, 31);
+          const dueDate = deadline?.dueDate ?? sentinelDueDate();
           const status = deadline
             ? getNotificationStatus(
                 {

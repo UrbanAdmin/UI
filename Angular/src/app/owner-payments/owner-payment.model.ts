@@ -1,5 +1,23 @@
 import { ServiceName } from '../shared/service-name';
 
+/** Shared "no real due date yet" sentinel year - no Deadline configured
+ *  (Agua/Luz/Gas) or no contract start date (Arriendo) fall back to a row
+ *  dated this far out, so a row can still render with a 'not-due' status
+ *  without widening every signature (see owner-payments.service.ts and
+ *  rent-due-date.ts). */
+const NO_DUE_DATE_SENTINEL_YEAR = 9999;
+
+export function sentinelDueDate(): Date {
+  return new Date(NO_DUE_DATE_SENTINEL_YEAR, 11, 31);
+}
+
+/** False for a row whose due date is the sentinel above - i.e. nothing has
+ *  actually been billed yet for that apartment/service/month, as opposed to
+ *  a real charge that simply isn't due yet. */
+export function hasRealDueDate(dueDate: Date): boolean {
+  return dueDate.getFullYear() < NO_DUE_DATE_SENTINEL_YEAR;
+}
+
 /** One apartment's paid/unpaid status for a service in one month/year. */
 export interface OwnerPayment {
   apartmentId: number;

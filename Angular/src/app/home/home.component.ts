@@ -19,6 +19,7 @@ import { PageHeaderComponent } from '../shared/page-header/page-header.component
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { formatCop } from '../shared/cop-currency';
+import { hasRealDueDate } from '../owner-payments/owner-payment.model';
 
 const TRACKED_SERVICES: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
 
@@ -175,10 +176,14 @@ export class HomeComponent {
     { initialValue: [] as CarteraRow[] },
   );
 
-  /** Admin: only the not-yet-paid rows - a receivables ledger, not a full statement. */
+  /** Admin: only the not-yet-paid rows with a real charge - a receivables
+   *  ledger of what's actually owed, not every tracked service synthesized
+   *  for every apartment regardless of whether it's been billed yet (a row
+   *  with no Deadline/contract-start-date is excluded the same way it's
+   *  already excluded from Cartera/Notificaciones elsewhere in the app). */
   readonly carteraDelMes = computed<CarteraRow[]>(() =>
     this.currentMonthByService()
-      .filter((row) => !row.paid)
+      .filter((row) => !row.paid && hasRealDueDate(row.dueDate))
       .sort((a, b) => a.apartment.localeCompare(b.apartment)),
   );
 

@@ -1,3 +1,5 @@
+import { sentinelDueDate } from './owner-payment.model';
+
 /**
  * Each apartment's rent is due on the same day-of-month as its contract
  * started, clamped to the target month's actual length (e.g. a contract
@@ -8,7 +10,7 @@
  */
 export function rentDueDate(contractStartDate: Date | null, month: number, year: number): Date {
   if (!contractStartDate) {
-    return new Date(9999, 11, 31);
+    return sentinelDueDate();
   }
 
   const daysInMonth = new Date(year, month, 0).getDate();

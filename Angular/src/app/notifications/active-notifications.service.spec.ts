@@ -37,13 +37,15 @@ describe('ActiveNotificationsService', () => {
     httpMock.verify();
   });
 
-  it('getActiveNotifications includes an overdue Arriendo row for the current month when unpaid', () => {
+  it('getActiveNotifications includes an active Arriendo row for the current month when unpaid', () => {
     const today = new Date();
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
-    // Contract due on the 1st: overdue for every "today" past the 1st of the month.
+    // Contract due on the 1st: overdue for every "today" past the 1st of the month -
+    // and correctly 'due-today', not 'overdue', on the 1st itself.
     const overdueContract = new Date(2020, 0, 1).toISOString();
     const apartmentsWithContract = [{ id: 1, name: '101', owner: 'TBD', contractStartDate: overdueContract }];
+    const expectedStatus = today.getDate() === 1 ? 'due-today' : 'overdue';
     let result: { service: string; status: string }[] | undefined;
 
     service.getActiveNotifications().subscribe((n) => (result = n));
@@ -56,7 +58,7 @@ describe('ActiveNotificationsService', () => {
       .flush([{ id: 20, month: monthName(currentMonth), year: String(currentYear) }]);
     httpMock.expectOne(PAYMENT_STATUSES_URL).flush([]);
 
-    expect(result?.some((n) => n.service === 'Arriendo' && n.status === 'overdue')).toBe(true);
+    expect(result?.some((n) => n.service === 'Arriendo' && n.status === expectedStatus)).toBe(true);
   });
 
   it('getActiveNotifications resolves each Deadline back to a service/month/year and keeps only unpaid/due rows', () => {
