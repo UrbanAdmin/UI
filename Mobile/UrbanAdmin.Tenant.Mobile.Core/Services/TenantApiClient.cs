@@ -63,6 +63,31 @@ public class TenantApiClient(HttpClient httpClient) : ITenantApiClient
     public async Task<PerfilModel> GetPerfilAsync(string token) =>
         await GetOneAsync<PerfilModel>(token, "/tenant/perfil") ?? new PerfilModel();
 
+    public async Task<LecturasModel> GetLecturasAsync(string token, string servicio, int? month = null, int? year = null, long? periodId = null)
+    {
+        var query = new List<string> { $"servicio={Uri.EscapeDataString(servicio)}" };
+        if (month is not null)
+        {
+            query.Add($"month={month}");
+        }
+        if (year is not null)
+        {
+            query.Add($"year={year}");
+        }
+        if (periodId is not null)
+        {
+            query.Add($"periodId={periodId}");
+        }
+
+        return await GetOneAsync<LecturasModel>(token, $"/tenant/lecturas?{string.Join('&', query)}") ?? new LecturasModel();
+    }
+
+    public async Task<List<LecturasPeriodoModel>> GetLecturasPeriodosAsync(string token)
+    {
+        var list = await GetOneAsync<LecturasPeriodoListModel>(token, "/WaterBills");
+        return list?.Periods ?? [];
+    }
+
     private async Task<T?> GetOneAsync<T>(string token, string path)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, path);

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  029-tenant-mobile-lecturas: built to the approved mockup
+  (Mockups/tenant-mobile-lecturas/index.html): service pills, Gas's Mes/Año vs. Agua's real period
+  picker (a native Picker here, in place of the mockup's expandable list - same functional outcome:
+  the tenant picks from a list of real periods, newest-first, each showing its confirmed state),
+  the dark summary hero, the meter-reading card and the share card. Read-only by design: no
+  Entry/Button/Save control of any kind for any figure - only the two pickers and the header's
+  logout/pills gestures.
+-->
+<ContentPage
+    x:Class="UrbanAdmin.Tenant.Mobile.Lecturas.LecturasPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:UrbanAdmin.Tenant.Mobile.Controls"
+    Shell.NavBarIsVisible="False"
+    Title="Lecturas">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="22,0,22,28" Spacing="0">
+            <controls:TenantHeader x:Name="Header" Title="Lecturas" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,0,0,14">
+                <Button x:Name="AguaPillButton" Grid.Column="0" Text="Agua" Style="{StaticResource ButtonSecondary}" Clicked="OnAguaTapped" />
+                <Button x:Name="GasPillButton" Grid.Column="1" Text="Gas" Style="{StaticResource ButtonSecondary}" Clicked="OnGasTapped" />
+            </Grid>
+
+            <!-- Gas: plain Mes/Año, same calendar-month billing as today's other services. -->
+            <Grid x:Name="GasPickersGrid" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,0,0,8">
+                <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                    <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnMonthChanged" />
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
+                    <Picker x:Name="YearPicker" Title="Año" SelectedIndexChanged="OnYearChanged" />
+                </Border>
+            </Grid>
+
+            <!-- Agua: a real billing period (day-precise, often bimonthly) - FR-007. -->
+            <Border
+                x:Name="PeriodoBorder"
+                Style="{StaticResource FieldBorder}"
+                StrokeShape="RoundRectangle 999"
+                Padding="20,2"
+                Margin="0,0,0,8"
+                IsVisible="False">
+                <Picker x:Name="PeriodoPicker" Title="Periodo" SelectedIndexChanged="OnPeriodoChanged" />
+            </Border>
+
+            <Label Text="Solo lectura" Style="{StaticResource Muted}" Margin="0,0,0,14" />
+
+            <ActivityIndicator x:Name="BusyIndicator" IsRunning="False" IsVisible="False" Margin="0,60,0,0" />
+
+            <VerticalStackLayout x:Name="ErrorPanel" IsVisible="False" Spacing="12" Margin="0,4,0,0">
+                <Border
+                    Padding="18,16"
+                    Stroke="Transparent"
+                    StrokeShape="RoundRectangle 22"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PendingBg}, Dark={StaticResource PendingBgDark}}">
+                    <Label
+                        x:Name="ErrorLabel"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource Pending}, Dark={StaticResource PendingDark}}" />
+                </Border>
+                <Button Text="Reintentar" HorizontalOptions="Center" Clicked="OnRetryClicked" />
+            </VerticalStackLayout>
+
+            <VerticalStackLayout x:Name="EmptyPanel" IsVisible="False" Margin="0,40,0,0">
+                <Border
+                    Padding="18,20"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                    StrokeDashArray="4,4"
+                    StrokeShape="RoundRectangle 22">
+                    <Label x:Name="EmptyLabel" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout x:Name="ContentPanel" IsVisible="False" Spacing="12">
+                <!-- Dark summary card: the total and its real breakdown lines. -->
+                <Border Style="{StaticResource HeroBorder}" Padding="24,22,24,20">
+                    <Grid>
+                        <Ellipse
+                            WidthRequest="170"
+                            HeightRequest="170"
+                            HorizontalOptions="End"
+                            VerticalOptions="End"
+                            TranslationX="60"
+                            TranslationY="90"
+                            Fill="{StaticResource White}"
+                            Opacity="0.07" />
+                        <VerticalStackLayout Spacing="0">
+                            <Label Text="Total a pagar" Style="{StaticResource Kicker}" TextColor="{StaticResource Accent2}" />
+                            <Label
+                                x:Name="TotalLabel"
+                                FontFamily="CaprasimoRegular"
+                                FontSize="38"
+                                TextColor="{StaticResource SuccessBg}"
+                                Margin="0,10,0,14" />
+                            <VerticalStackLayout x:Name="BreakdownList" Spacing="0" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Meter-reading card: anterior -> actual, consumo chip. -->
+                <Border Padding="18,16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Lectura del medidor" Style="{StaticResource Kicker}" />
+                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
+                            <Label x:Name="PreviousReadingLabel" Grid.Column="0" FontFamily="CaprasimoRegular" FontSize="19" />
+                            <Label Grid.Column="1" Text="→" FontSize="18" TextColor="{StaticResource Primary}" />
+                            <Label x:Name="CurrentReadingLabel" Grid.Column="2" FontFamily="CaprasimoRegular" FontSize="19" />
+                        </Grid>
+                        <Border Style="{StaticResource ChipBorder}" BackgroundColor="{StaticResource SuccessBg}" HorizontalOptions="Start">
+                            <Label x:Name="ConsumoLabel" Style="{StaticResource ChipLabel}" TextColor="{StaticResource Success}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Share card: % of the building's consumption, as a number and a bar. -->
+                <Border Padding="18,16">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Tu parte del edificio" Style="{StaticResource Kicker}" />
+                        <Label x:Name="ShareLabel" FontFamily="CaprasimoRegular" FontSize="22" TextColor="{StaticResource Primary}" />
+                        <Border
+                            Padding="0"
+                            Stroke="Transparent"
+                            StrokeShape="RoundRectangle 999"
+                            HeightRequest="9"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
+                            <Grid x:Name="ShareBarTrack" ColumnDefinitions="0*,100*" ColumnSpacing="0">
+                                <BoxView Grid.Column="0" BackgroundColor="{StaticResource Primary}" />
+                                <BoxView Grid.Column="1" BackgroundColor="Transparent" />
+                            </Grid>
+                        </Border>
+                        <Label
+                            Text="El costo variable sigue este porcentaje; el cargo fijo se divide en partes iguales."
+                            Style="{StaticResource Muted}"
+                            FontSize="13" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

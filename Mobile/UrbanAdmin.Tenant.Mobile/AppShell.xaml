@@ -6,6 +6,7 @@
     xmlns:auth="clr-namespace:UrbanAdmin.Tenant.Mobile.Auth"
     xmlns:notificaciones="clr-namespace:UrbanAdmin.Tenant.Mobile.Notificaciones"
     xmlns:pagos="clr-namespace:UrbanAdmin.Tenant.Mobile.Pagos"
+    xmlns:lecturas="clr-namespace:UrbanAdmin.Tenant.Mobile.Lecturas"
     xmlns:admin="clr-namespace:UrbanAdmin.Tenant.Mobile.Admin"
     xmlns:account="clr-namespace:UrbanAdmin.Tenant.Mobile.Account"
     xmlns:cartera="clr-namespace:UrbanAdmin.Tenant.Mobile.Cartera"
@@ -21,13 +22,20 @@
          (specs/008-mobile-admin-views/research.md §6 - single TabBar, not a flyout redesign). -->
     <TabBar>
         <!-- 013-tenant-pagos-alertas-redesign: tenant tab order is Pagos, Alertas (the former
-             Notificaciones tab, route unchanged), Cuenta. -->
+             Notificaciones tab, route unchanged), Cuenta. 029-tenant-mobile-lecturas adds
+             Lecturas right after Pagos (read what you'll pay for, then see the payment). -->
         <ShellContent
             x:Name="PagosTab"
             Title="Pagos"
             Icon="icon_card.svg"
             Route="Pagos"
             ContentTemplate="{DataTemplate pagos:PagosPage}" />
+        <ShellContent
+            x:Name="LecturasTab"
+            Title="Lecturas"
+            Icon="icon_gauge.svg"
+            Route="Lecturas"
+            ContentTemplate="{DataTemplate lecturas:LecturasPage}" />
         <ShellContent
             x:Name="NotificacionesTab"
             Title="Alertas"

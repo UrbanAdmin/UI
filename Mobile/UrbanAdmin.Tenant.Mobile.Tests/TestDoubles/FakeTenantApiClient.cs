@@ -78,4 +78,22 @@ public class FakeTenantApiClient : ITenantApiClient
         GetPerfilCallCount++;
         return ThrowOnPerfil ? throw new HttpRequestException("boom") : ThrowOnGet ? throw new HttpRequestException("boom", null, ThrowStatusCode) : Task.FromResult(Perfil);
     }
+
+    public LecturasModel Lecturas { get; set; } = new();
+    public List<LecturasPeriodoModel> LecturasPeriodos { get; set; } = [];
+    public (string Servicio, int? Month, int? Year, long? PeriodId)? LastGetLecturasArgs { get; private set; }
+
+    public Task<LecturasModel> GetLecturasAsync(string token, string servicio, int? month = null, int? year = null, long? periodId = null)
+    {
+        if (ThrowOnGet)
+        {
+            throw new HttpRequestException("boom", null, ThrowStatusCode);
+        }
+
+        LastGetLecturasArgs = (servicio, month, year, periodId);
+        return Task.FromResult(Lecturas);
+    }
+
+    public Task<List<LecturasPeriodoModel>> GetLecturasPeriodosAsync(string token) =>
+        ThrowOnGet ? throw new HttpRequestException("boom", null, ThrowStatusCode) : Task.FromResult(LecturasPeriodos);
 }

@@ -26,4 +26,13 @@ public interface ITenantApiClient
 
     // The apartment number and owner name shown in the header of the tenant screens.
     Task<PerfilModel> GetPerfilAsync(string token);
+
+    // 029-tenant-mobile-lecturas: the tenant's own Gas/Agua readings statement, already shaped
+    // server-side (never computed/summed here - FR-004). Gas uses month/year (periodId null);
+    // Agua uses periodId, the WaterBill's own id (month/year null).
+    Task<LecturasModel> GetLecturasAsync(string token, string servicio, int? month = null, int? year = null, long? periodId = null);
+
+    // Agua's period picker - reuses the existing GET /WaterBills directly (already tenant-safe
+    // and minimal; see research.md for why this isn't a new /tenant/* route).
+    Task<List<LecturasPeriodoModel>> GetLecturasPeriodosAsync(string token);
 }

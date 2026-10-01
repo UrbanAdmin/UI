@@ -46,6 +46,7 @@ public partial class AppShell : Shell
 
 		NotificacionesTab.IsVisible = !isAdmin;
 		PagosTab.IsVisible = !isAdmin;
+		LecturasTab.IsVisible = !isAdmin;
 
 		AdminPagosTab.IsVisible = isAdmin;
 		ApartmentsTab.IsVisible = isAdmin;
