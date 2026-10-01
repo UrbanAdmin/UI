@@ -9,7 +9,7 @@
     <div class="field">
       <label>Servicio</label>
       <mat-form-field appearance="outline">
-        <mat-select [(ngModel)]="selectedService" (selectionChange)="onPeriodChange()">
+        <mat-select [(ngModel)]="selectedService" (selectionChange)="onServicioChange()">
           @for (service of services; track service) {
             <mat-option [value]="service">{{ service }}</mat-option>
           }
@@ -18,27 +18,50 @@
     </div>
   }
 
-  <div class="field">
-    <label>Mes</label>
-    <mat-form-field appearance="outline">
-      <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
-        @for (name of monthNames; track name; let i = $index) {
-          <mat-option [value]="i + 1">{{ name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  </div>
+  @if (!isReadOnly && selectedService === 'Agua') {
+    <!-- Mockup Mockups/pagos-agua-periodo/: Agua is billed on its own day-precise period
+         (024), often spanning two calendar months, so it gets a real Periodo picker instead
+         of Mes/Año - Luz/Gas/Arriendo below are untouched. -->
+    <div class="field">
+      <label>Periodo</label>
+      <mat-form-field appearance="outline" class="periodo-field">
+        <mat-select
+          [(ngModel)]="selectedPeriodId"
+          (selectionChange)="onAguaPeriodChange($event.value)"
+          (openedChange)="$event && refreshAguaPeriods()"
+        >
+          @for (period of (aguaPeriods$ | async); track period.id) {
+            <mat-option [value]="period.id">
+              {{ period.startDate | date: 'dd/MM/yyyy' }} - {{ period.endDate | date: 'dd/MM/yyyy' }}
+              · {{ period.confirmed ? 'Confirmado' : 'Sin confirmar' }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  } @else {
+    <div class="field">
+      <label>Mes</label>
+      <mat-form-field appearance="outline">
+        <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChange()">
+          @for (name of monthNames; track name; let i = $index) {
+            <mat-option [value]="i + 1">{{ name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-  <div class="field">
-    <label>Año</label>
-    <mat-form-field appearance="outline">
-      <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
-        @for (year of years; track year) {
-          <mat-option [value]="year">{{ year }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  </div>
+    <div class="field">
+      <label>Año</label>
+      <mat-form-field appearance="outline">
+        <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChange()">
+          @for (year of years; track year) {
+            <mat-option [value]="year">{{ year }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
 
   @if (!isReadOnly && selectedService !== 'Arriendo') {
     <div class="field">
@@ -69,11 +92,21 @@
 }
 
 @if (!isReadOnly) {
+  @let noAguaPeriodsYet = selectedService === 'Agua' && (aguaPeriods$ | async)?.length === 0;
+
   @if (selectedService === 'Arriendo') {
-    <p class="arriendo-hint">El vencimiento del arriendo depende de la fecha de inicio de contrato de cada apartamento.</p>
+    <p class="service-hint">El vencimiento del arriendo depende de la fecha de inicio de contrato de cada apartamento.</p>
+  }
+  @if (noAguaPeriodsYet) {
+    <p class="service-hint" data-testid="agua-no-periods-hint">
+      Todavía no hay ningún periodo de Lecturas para Agua. En cuanto se cree el primer periodo en
+      Lecturas → Agua, aparecerá aquí para elegir.
+    </p>
   }
 
-  @if (loadingService.isLoading()) {
+  @if (noAguaPeriodsYet) {
+    <!-- Nothing to show payments for yet - the hint above already explains why. -->
+  } @else if (loadingService.isLoading()) {
     <app-loading-indicator [loading]="true" />
   } @else if (rows$ | async; as rows) {
     @if (rows.length === 0) {

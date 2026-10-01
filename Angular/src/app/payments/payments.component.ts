@@ -18,6 +18,8 @@ import { OwnerPaymentsService } from '../owner-payments/owner-payments.service';
 import { NotificationStatus } from '../notifications/notification.model';
 import { OwnerPayment } from '../owner-payments/owner-payment.model';
 import { ServiceName } from '../shared/service-name';
+import { WaterBillingService } from '../water-billing/water-billing.service';
+import { WaterBillDto, WaterBillPeriodDto } from '../water-billing/water-billing.model';
 import { MONTH_NAMES } from '../notifications/month-names';
 import { AuthService } from '../auth.service';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
@@ -36,6 +38,10 @@ interface Period {
   service: ServiceName;
   month: number;
   year: number;
+  /** Agua only - the real Lecturas WaterBill id behind this month/year, so rows$ can fall back to
+   *  that bill's live (possibly not-yet-confirmed) per-apartment Total a pagar wherever Pagos has
+   *  nothing of its own synced yet (027-align-pagos-facturas only syncs at confirm time). */
+  periodId: number | null;
 }
 
 interface MonthYear {
@@ -80,10 +86,19 @@ export class PaymentsComponent {
   selectedMonth: number;
   selectedYear: number;
 
+  /** Agua only (mockup `Mockups/pagos-agua-periodo/`): which real Lecturas period is picked,
+   *  replacing Mes/Año for this one service - selectedMonth/selectedYear stay the internal plumbing
+   *  rows$/deadline$ already key off, resolved from the chosen period's StartDate (027's own anchor
+   *  rule), never typed by the admin directly while on Agua. */
+  selectedPeriodId: number | null = null;
+  private aguaPeriodsSnapshot: WaterBillPeriodDto[] = [];
+
   private readonly period$: BehaviorSubject<Period>;
   private readonly ownerPeriod$: BehaviorSubject<MonthYear>;
+  private readonly aguaPeriodsRefresh$: BehaviorSubject<void>;
   readonly deadline$: Observable<Date | null>;
   readonly rows$: Observable<OwnerRow[]>;
+  readonly aguaPeriods$: Observable<WaterBillPeriodDto[]>;
   readonly isReadOnly: boolean;
 
   /** An arrendatario only ever sees their own apartment (server-scoped
@@ -100,6 +115,7 @@ export class PaymentsComponent {
     private deadlinesService: DeadlinesService,
     private ownerPaymentsService: OwnerPaymentsService,
     private authService: AuthService,
+    private waterBillingService: WaterBillingService,
   ) {
     this.isReadOnly = this.authService.isApartmentOwner();
     const now = new Date();
@@ -111,6 +127,7 @@ export class PaymentsComponent {
       service: this.selectedService,
       month: this.selectedMonth,
       year: this.selectedYear,
+      periodId: this.selectedPeriodId,
     });
 
     this.deadline$ = this.period$.pipe(
@@ -124,10 +141,57 @@ export class PaymentsComponent {
     // shareReplay(1): both the template's `async` pipe and the adminRows
     // signal below (for the "N pagados de M" stat) subscribe to this - without
     // it, each subscriber would re-trigger the whole HTTP chain separately.
+    // Agua rows with no PaymentStatus-synced amount yet (027 only syncs at confirm time) fall
+    // back to the selected WaterBill's own live, already-computed Total a pagar per apartment -
+    // the exact same number Lecturas already shows before the admin ever clicks Confirmar.
     this.rows$ = this.period$.pipe(
-      switchMap((p) => this.ownerPaymentsService.getOwnerPayments(p.service, p.month, p.year)),
+      switchMap((p) =>
+        forkJoin([
+          this.ownerPaymentsService.getOwnerPayments(p.service, p.month, p.year),
+          p.periodId === null ? of(null) : this.waterBillingService.getBill(p.periodId),
+        ]),
+      ),
+      map(([rows, bill]) => this.withLiveAguaAmounts(rows, bill)),
       shareReplay(1),
     );
+
+    // Pagos is month-keyed, but Agua's real billing period (Lecturas) is its own day-precise
+    // start/end date (024), often spanning two calendar months - a bare Mes/Año picker made the
+    // admin guess which month actually has data (027-align-pagos-facturas's own sync anchors to
+    // StartDate's month, research.md §4). Mockup `Mockups/pagos-agua-periodo/`: Agua's Mes/Año
+    // pair is replaced by a Periodo picker listing real periods; selecting one resolves
+    // selectedMonth/selectedYear internally and reuses the exact same rows$/deadline$ plumbing
+    // every other service already has - Luz/Gas/Arriendo are untouched.
+    this.aguaPeriodsRefresh$ = new BehaviorSubject<void>(undefined);
+    this.aguaPeriods$ = this.aguaPeriodsRefresh$.pipe(
+      switchMap(() =>
+        this.isReadOnly || this.selectedService !== 'Agua'
+          ? of([] as WaterBillPeriodDto[])
+          : this.waterBillingService
+              .listPeriods()
+              .pipe(map((list) => [...list.periods].sort((a, b) => (a.startDate < b.startDate ? 1 : -1)))),
+      ),
+      shareReplay(1),
+    );
+    // Auto-pick a period whenever the list (re)loads and the current choice no longer applies:
+    // the one starting in the already-selected month/year, else the newest. Switching Servicio TO
+    // Agua (onServicioChange) clears selectedPeriodId first so this always re-picks on that
+    // transition, not just on a genuinely empty/stale list.
+    this.aguaPeriods$.subscribe((periods) => {
+      this.aguaPeriodsSnapshot = periods;
+      if (this.selectedService !== 'Agua') {
+        return;
+      }
+      if (periods.length === 0) {
+        this.selectedPeriodId = null;
+        return;
+      }
+      if (periods.some((p) => p.id === this.selectedPeriodId)) {
+        return; // still a valid choice - just refreshed labels (e.g. newly confirmed), keep it
+      }
+      const match = periods.find((p) => this.periodStartsIn(p, this.selectedMonth, this.selectedYear));
+      this.applyAguaPeriod((match ?? periods[0]).id);
+    });
 
     this.ownerPeriod$ = new BehaviorSubject<MonthYear>({ month: this.selectedMonth, year: this.selectedYear });
 
@@ -178,8 +242,69 @@ export class PaymentsComponent {
   });
 
   onPeriodChange(): void {
-    this.period$.next({ service: this.selectedService, month: this.selectedMonth, year: this.selectedYear });
+    this.period$.next({
+      service: this.selectedService,
+      month: this.selectedMonth,
+      year: this.selectedYear,
+      periodId: this.selectedService === 'Agua' ? this.selectedPeriodId : null,
+    });
     this.ownerPeriod$.next({ month: this.selectedMonth, year: this.selectedYear });
+  }
+
+  /** Only fills a row that has nothing of its own yet - a charge already recorded in Pagos (post-
+   *  confirm, or admin-typed) is always trusted over the live Lecturas figure, matching 027's own
+   *  "re-sync only on a fresh Confirm" precedent (a correction made after confirming intentionally
+   *  doesn't retroactively change Pagos until re-confirmed). */
+  private withLiveAguaAmounts(rows: OwnerRow[], bill: WaterBillDto | null): OwnerRow[] {
+    if (!bill) {
+      return rows;
+    }
+    const liveAmounts = new Map(
+      bill.readings.filter((r) => r.apartmentId !== null).map((r) => [r.apartmentId as number, r.finalAmount]),
+    );
+    return rows.map((row) => (row.amount ? row : { ...row, amount: liveAmounts.get(row.apartmentId) ?? row.amount }));
+  }
+
+  /** Servicio select's own change handler: Agua defers to the Periodo picker's own plumbing
+   *  (which resolves Mes/Año and calls onPeriodChange itself); every other service keeps calling
+   *  onPeriodChange directly, exactly as before this feature. */
+  onServicioChange(): void {
+    if (this.selectedService === 'Agua') {
+      this.selectedPeriodId = null; // forces the aguaPeriods$ subscription to re-pick + reload
+      this.refreshAguaPeriods();
+    } else {
+      this.onPeriodChange();
+    }
+  }
+
+  /** Periodo select's own change handler. */
+  onAguaPeriodChange(periodId: number): void {
+    this.applyAguaPeriod(periodId);
+  }
+
+  /** Re-fetches the Periodo list - called on Servicio→Agua and whenever the Periodo dropdown is
+   *  opened, so a bill confirmed in Lecturas (often a different tab) shows up without a full
+   *  Pagos reload, without re-fetching on every unrelated Pagos edit the way a period$-driven
+   *  stream would have. */
+  refreshAguaPeriods(): void {
+    this.aguaPeriodsRefresh$.next();
+  }
+
+  private periodStartsIn(period: WaterBillPeriodDto, month: number, year: number): boolean {
+    const start = new Date(period.startDate);
+    return start.getMonth() + 1 === month && start.getFullYear() === year;
+  }
+
+  private applyAguaPeriod(periodId: number): void {
+    const period = this.aguaPeriodsSnapshot.find((p) => p.id === periodId);
+    if (!period) {
+      return;
+    }
+    this.selectedPeriodId = periodId;
+    const start = new Date(period.startDate);
+    this.selectedMonth = start.getMonth() + 1;
+    this.selectedYear = start.getFullYear();
+    this.onPeriodChange();
   }
 
   saveDeadline(newDate: Date): void {

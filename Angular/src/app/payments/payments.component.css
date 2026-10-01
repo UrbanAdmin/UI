@@ -102,11 +102,16 @@
 .filters mat-form-field {
   width: 160px;
 }
+/* Wide enough for "dd/mm/yyyy - dd/mm/yyyy · Confirmado" without wrapping, but never wider than
+   the viewport - .filters already wraps fields onto their own line past that. */
+.filters mat-form-field.periodo-field {
+  width: min(300px, 100%);
+}
 .save-deadline {
   height: 48px;
 }
 
-.arriendo-hint {
+.service-hint {
   margin: -8px 0 16px;
   font-size: 13px;
   color: var(--color-neutral-600);
