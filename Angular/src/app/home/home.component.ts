@@ -19,11 +19,44 @@ import { PageHeaderComponent } from '../shared/page-header/page-header.component
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
 import { CopCurrencyPipe } from '../shared/cop-currency.pipe';
 import { formatCop } from '../shared/cop-currency';
-import { hasRealDueDate } from '../owner-payments/owner-payment.model';
+import { CarteraService, CarteraChargeDto } from '../cartera/cartera.service';
 
 const TRACKED_SERVICES: ServiceName[] = ['Agua', 'Luz', 'Gas', 'Arriendo'];
 
 type CarteraRow = OwnerPayment & { status: NotificationStatus };
+
+/** One row of the admin "Cartera del mes" table - sourced from GET /admin/cartera, which already
+ *  spans every period with real data (not just the current month) and only ever returns unpaid
+ *  charges, so there's no paid/placeholder filtering to do on this side (unlike CarteraRow). */
+interface AdminCarteraRow {
+  apartment: string;
+  service: string;
+  dueDate: Date;
+  status: NotificationStatus;
+  amount: number | null;
+}
+
+function toAdminCarteraRow(charge: CarteraChargeDto, status: NotificationStatus): AdminCarteraRow {
+  return {
+    apartment: charge.apartmentNumber,
+    service: charge.service,
+    dueDate: new Date(charge.dueDate),
+    status,
+    amount: charge.amount,
+  };
+}
+
+/** Mirrors getNotificationStatus's thresholds for an upcoming (not yet overdue) charge, from the
+ *  days-until-due GET /admin/cartera already computed server-side. */
+function dueSoonStatus(daysUntilDue: number | null): NotificationStatus {
+  if (daysUntilDue === 0) {
+    return 'due-today';
+  }
+  if (daysUntilDue === 1 || daysUntilDue === 2) {
+    return 'due-soon';
+  }
+  return 'not-due';
+}
 
 interface QuickAccessCard {
   path: string;
@@ -54,6 +87,7 @@ export class HomeComponent {
   private readonly authService = inject(AuthService);
   private readonly apartmentsService = inject(ApartmentsService);
   private readonly usersService = inject(UsersService);
+  private readonly carteraService = inject(CarteraService);
 
   readonly isAdmin = this.authService.isAdmin();
 
@@ -159,13 +193,10 @@ export class HomeComponent {
     return rows.reduce((earliest, n) => (n.dueDate < earliest ? n.dueDate : earliest), rows[0].dueDate);
   });
 
-  // "Cartera del mes" (admin) / "Tus conceptos del mes" (owner): unlike
-  // activeNotifications above (which only covers deadlines that exist and
-  // excludes paid/not-due rows), this needs every tracked service's row for
-  // the current month regardless of paid status - the owner's statement
-  // shows what's already paid too. getOwnerPayments() is already
-  // server-scoped (an Owner only ever gets their own apartment's rows), so
-  // the same call serves both roles.
+  // "Tus conceptos del mes" (owner): every tracked service's row for the
+  // current month regardless of paid status - the owner's statement shows
+  // what's already paid too. getOwnerPayments() is already server-scoped (an
+  // Owner only ever gets their own apartment's rows).
   private readonly currentMonthByService = toSignal(
     forkJoin(
       TRACKED_SERVICES.map((service) => {
@@ -176,16 +207,34 @@ export class HomeComponent {
     { initialValue: [] as CarteraRow[] },
   );
 
-  /** Admin: only the not-yet-paid rows with a real charge - a receivables
-   *  ledger of what's actually owed, not every tracked service synthesized
-   *  for every apartment regardless of whether it's been billed yet (a row
-   *  with no Deadline/contract-start-date is excluded the same way it's
-   *  already excluded from Cartera/Notificaciones elsewhere in the app). */
-  readonly carteraDelMes = computed<CarteraRow[]>(() =>
-    this.currentMonthByService()
-      .filter((row) => !row.paid && hasRealDueDate(row.dueDate))
-      .sort((a, b) => a.apartment.localeCompare(b.apartment)),
-  );
+  // "Cartera del mes" (admin): the building-wide receivables ledger, spanning
+  // every period with real data - not just the current month, so a Servicio
+  // or Arriendo charge left unpaid since an earlier month still shows up.
+  // GET /admin/cartera already does this scan server-side (the same one the
+  // Mobile admin Cartera tab uses) and only ever returns unpaid charges, so
+  // there's no client-side paid/placeholder filtering left to do.
+  private readonly carteraData = toSignal(this.isAdmin ? this.carteraService.getCartera() : of(null), {
+    initialValue: null,
+  });
+
+  readonly carteraDelMes = computed<AdminCarteraRow[]>(() => {
+    const data = this.carteraData();
+    if (!data) {
+      return [];
+    }
+    const rows: AdminCarteraRow[] = [];
+    for (const year of data.years) {
+      for (const month of year.months) {
+        for (const charge of month.charges) {
+          rows.push(toAdminCarteraRow(charge, 'overdue'));
+        }
+        for (const charge of month.upcomingCharges) {
+          rows.push(toAdminCarteraRow(charge, dueSoonStatus(charge.daysUntilDue)));
+        }
+      }
+    }
+    return rows.sort((a, b) => a.apartment.localeCompare(b.apartment));
+  });
 
   /** Owner: every row, paid or not - their own statement for the month. */
   readonly misConceptosDelMes = computed<CarteraRow[]>(() =>
