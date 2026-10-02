@@ -16,6 +16,16 @@ public class LecturasViewModelTests
     }
 
     [Fact]
+    public void DefaultsToAgua_TheFirstServiceInTheEstablishedOrdering()
+    {
+        // Matches counter-utilities.component.ts's/payments.component.ts's own
+        // services: ServiceName[] = ['Agua', 'Luz', 'Gas', ...] ordering.
+        var vm = new LecturasViewModel(new FakeTenantApiClient(), new FakeTokenStore(), new FakeCrashDiagnosticsService());
+
+        Assert.Equal("Agua", vm.SelectedService);
+    }
+
+    [Fact]
     public async Task LoadAsync_LoadsTheHeaderKickerFromPerfilOnce()
     {
         var apiClient = new FakeTenantApiClient { Perfil = new PerfilModel { ApartmentNumber = "304", OwnerName = "María Fernández" } };
@@ -53,6 +63,30 @@ public class LecturasViewModelTests
         Assert.Equal("ready", vm.Statement?.State);
         Assert.Equal("Septiembre 2026", vm.PeriodLabel);
         Assert.False(vm.IsEmpty);
+    }
+
+    [Fact]
+    public async Task LoadAsync_Luz_LoadsTheStatementForTheSelectedMonthAndYear()
+    {
+        // The simplest honest display of what Luz's legacy pipeline actually has: a current
+        // reading and a total, no previous reading/percentage/breakdown (full parity is a later,
+        // separate feature - see research.md's re-scope note).
+        var apiClient = new FakeTenantApiClient
+        {
+            Lecturas = new LecturasModel { State = "ready", Unit = "kWh", CurrentReading = "4532", Total = "85000" },
+        };
+        var vm = new LecturasViewModel(apiClient, await TokenAsync(), new FakeCrashDiagnosticsService())
+        {
+            SelectedService = "Luz",
+            Month = 9,
+            Year = 2026,
+        };
+
+        await vm.LoadAsync();
+
+        Assert.Equal(("Luz", (int?)9, (int?)2026, (long?)null), apiClient.LastGetLecturasArgs);
+        Assert.Equal("ready", vm.Statement?.State);
+        Assert.Equal("Septiembre 2026", vm.PeriodLabel);
     }
 
     [Fact]

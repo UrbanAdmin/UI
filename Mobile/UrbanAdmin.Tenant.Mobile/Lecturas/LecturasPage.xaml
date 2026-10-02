@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
   029-tenant-mobile-lecturas: built to the approved mockup
-  (Mockups/tenant-mobile-lecturas/index.html): service pills, Gas's Mes/Año vs. Agua's real period
-  picker (a native Picker here, in place of the mockup's expandable list - same functional outcome:
-  the tenant picks from a list of real periods, newest-first, each showing its confirmed state),
-  the dark summary hero, the meter-reading card and the share card. Read-only by design: no
-  Entry/Button/Save control of any kind for any figure - only the two pickers and the header's
-  logout/pills gestures.
+  (Mockups/tenant-mobile-lecturas/index.html): service pills, Gas/Luz's Mes/Año vs. Agua's real
+  period picker (a native Picker here, in place of the mockup's expandable list - same functional
+  outcome: the tenant picks from a list of real periods, newest-first, each showing its confirmed
+  state), the dark summary hero, the meter-reading card and the share card. Luz was added after the
+  mockup's approval, per explicit user request, showing only what its legacy CounterUtility
+  pipeline actually has (current reading + total, no previous reading/percentage/breakdown) - the
+  meter and share cards' sub-parts hide themselves when that data is absent (RenderStatement()).
+  Read-only by design: no Entry/Button/Save control of any kind for any figure - only the pickers
+  and the header's logout/pills gestures.
 -->
 <ContentPage
     x:Class="UrbanAdmin.Tenant.Mobile.Lecturas.LecturasPage"
@@ -20,13 +23,14 @@
         <VerticalStackLayout Padding="22,0,22,28" Spacing="0">
             <controls:TenantHeader x:Name="Header" Title="Lecturas" />
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,0,0,14">
-                <Button x:Name="AguaPillButton" Grid.Column="0" Text="Agua" Style="{StaticResource ButtonSecondary}" Clicked="OnAguaTapped" />
-                <Button x:Name="GasPillButton" Grid.Column="1" Text="Gas" Style="{StaticResource ButtonSecondary}" Clicked="OnGasTapped" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="0,0,0,14">
+                <Button x:Name="AguaPillButton" Grid.Column="0" Text="Agua" Style="{StaticResource ButtonSecondary}" Clicked="OnAguaTapped" Padding="8,12" />
+                <Button x:Name="LuzPillButton" Grid.Column="1" Text="Luz" Style="{StaticResource ButtonSecondary}" Clicked="OnLuzTapped" Padding="8,12" />
+                <Button x:Name="GasPillButton" Grid.Column="2" Text="Gas" Style="{StaticResource ButtonSecondary}" Clicked="OnGasTapped" Padding="8,12" />
             </Grid>
 
-            <!-- Gas: plain Mes/Año, same calendar-month billing as today's other services. -->
-            <Grid x:Name="GasPickersGrid" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,0,0,8">
+            <!-- Gas and Luz: plain Mes/Año, same calendar-month billing. -->
+            <Grid x:Name="MesAnoPickersGrid" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,0,0,8">
                 <Border Grid.Column="0" Style="{StaticResource FieldBorder}" StrokeShape="RoundRectangle 999" Padding="20,2">
                     <Picker x:Name="MonthPicker" Title="Mes" SelectedIndexChanged="OnMonthChanged" />
                 </Border>
@@ -75,16 +79,19 @@
             </VerticalStackLayout>
 
             <VerticalStackLayout x:Name="ContentPanel" IsVisible="False" Spacing="12">
-                <!-- Dark summary card: the total and its real breakdown lines. -->
-                <Border Style="{StaticResource HeroBorder}" Padding="24,22,24,20">
+                <!-- Dark summary card: just the total - no breakdown line items, per explicit
+                     user request (2026-10-01). Meter and share cards below are unchanged. -->
+                <Border Style="{StaticResource HeroBorder}" Padding="18,14">
                     <Grid>
+                        <!-- Small enough that it never drives the Grid's (and therefore the card's)
+                             measured height - a decorative corner accent, not a sizing input. -->
                         <Ellipse
-                            WidthRequest="170"
-                            HeightRequest="170"
+                            WidthRequest="60"
+                            HeightRequest="60"
                             HorizontalOptions="End"
                             VerticalOptions="End"
-                            TranslationX="60"
-                            TranslationY="90"
+                            TranslationX="22"
+                            TranslationY="22"
                             Fill="{StaticResource White}"
                             Opacity="0.07" />
                         <VerticalStackLayout Spacing="0">
@@ -92,31 +99,34 @@
                             <Label
                                 x:Name="TotalLabel"
                                 FontFamily="CaprasimoRegular"
-                                FontSize="38"
+                                FontSize="26"
+                                LineBreakMode="NoWrap"
                                 TextColor="{StaticResource SuccessBg}"
-                                Margin="0,10,0,14" />
-                            <VerticalStackLayout x:Name="BreakdownList" Spacing="0" />
+                                Margin="0,6,0,0" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
 
-                <!-- Meter-reading card: anterior -> actual, consumo chip. -->
+                <!-- Meter-reading card: anterior -> actual (hidden when there is no previous reading -
+                     Luz's legacy pipeline only ever has a current reading), consumo chip (hidden when
+                     there is no consumption delta to show). -->
                 <Border Padding="18,16">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Lectura del medidor" Style="{StaticResource Kicker}" />
                         <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
                             <Label x:Name="PreviousReadingLabel" Grid.Column="0" FontFamily="CaprasimoRegular" FontSize="19" />
-                            <Label Grid.Column="1" Text="→" FontSize="18" TextColor="{StaticResource Primary}" />
+                            <Label x:Name="ArrowLabel" Grid.Column="1" Text="→" FontSize="18" TextColor="{StaticResource Primary}" />
                             <Label x:Name="CurrentReadingLabel" Grid.Column="2" FontFamily="CaprasimoRegular" FontSize="19" />
                         </Grid>
-                        <Border Style="{StaticResource ChipBorder}" BackgroundColor="{StaticResource SuccessBg}" HorizontalOptions="Start">
+                        <Border x:Name="ConsumoChipBorder" Style="{StaticResource ChipBorder}" BackgroundColor="{StaticResource SuccessBg}" HorizontalOptions="Start">
                             <Label x:Name="ConsumoLabel" Style="{StaticResource ChipLabel}" TextColor="{StaticResource Success}" />
                         </Border>
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Share card: % of the building's consumption, as a number and a bar. -->
-                <Border Padding="18,16">
+                <!-- Share card: % of the building's consumption, as a number and a bar. Hidden
+                     entirely when no percentage exists (Luz's legacy pipeline has none). -->
+                <Border x:Name="ShareCardBorder" Padding="18,16">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Tu parte del edificio" Style="{StaticResource Kicker}" />
                         <Label x:Name="ShareLabel" FontFamily="CaprasimoRegular" FontSize="22" TextColor="{StaticResource Primary}" />

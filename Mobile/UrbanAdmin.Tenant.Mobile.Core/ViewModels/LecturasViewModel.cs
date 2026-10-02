@@ -25,7 +25,9 @@ public class LecturasViewModel
         Year = now.Year;
     }
 
-    public string SelectedService { get; set; } = "Gas";
+    // Agua is first, matching counter-utilities.component.ts's/payments.component.ts's own
+    // services: ServiceName[] = ['Agua', 'Luz', 'Gas', ...] ordering.
+    public string SelectedService { get; set; } = "Agua";
     public int Month { get; set; }
     public int Year { get; set; }
     public List<LecturasPeriodoModel> Periods { get; private set; } = [];
@@ -71,7 +73,8 @@ public class LecturasViewModel
             }
             else
             {
-                Statement = await _apiClient.GetLecturasAsync(token, "Gas", Month, Year, null);
+                // Gas and Luz both use a plain Mes/Año pair, no period list.
+                Statement = await _apiClient.GetLecturasAsync(token, SelectedService, Month, Year, null);
             }
         }
         catch (Exception ex)

@@ -39,6 +39,16 @@ public partial class LecturasPage : ContentPage
         await ReloadAsync();
     }
 
+    private async void OnLuzTapped(object? sender, EventArgs e)
+    {
+        if (_viewModel.SelectedService == "Luz")
+        {
+            return;
+        }
+        _viewModel.SelectedService = "Luz";
+        await ReloadAsync();
+    }
+
     private async void OnGasTapped(object? sender, EventArgs e)
     {
         if (_viewModel.SelectedService == "Gas")
@@ -135,19 +145,24 @@ public partial class LecturasPage : ContentPage
         var white = (Color)resources["White"];
         var ink = (Color)resources["Ink"];
 
-        var isAgua = _viewModel.SelectedService == "Agua";
-        AguaPillButton.BackgroundColor = isAgua ? accent2Deep : Colors.Transparent;
-        AguaPillButton.TextColor = isAgua ? white : ink;
-        GasPillButton.BackgroundColor = !isAgua ? accent2Deep : Colors.Transparent;
-        GasPillButton.TextColor = !isAgua ? white : ink;
+        SetPillState(AguaPillButton, _viewModel.SelectedService == "Agua", accent2Deep, white, ink);
+        SetPillState(LuzPillButton, _viewModel.SelectedService == "Luz", accent2Deep, white, ink);
+        SetPillState(GasPillButton, _viewModel.SelectedService == "Gas", accent2Deep, white, ink);
 
-        GasPickersGrid.IsVisible = !isAgua;
+        var isAgua = _viewModel.SelectedService == "Agua";
+        MesAnoPickersGrid.IsVisible = !isAgua; // Gas and Luz both use the plain Mes/Año pair.
         PeriodoBorder.IsVisible = isAgua;
+    }
+
+    private static void SetPillState(Button button, bool isSelected, Color accent2Deep, Color white, Color ink)
+    {
+        button.BackgroundColor = isSelected ? accent2Deep : Colors.Transparent;
+        button.TextColor = isSelected ? white : ink;
     }
 
     private void RenderPickers()
     {
-        if (_viewModel.SelectedService == "Gas")
+        if (_viewModel.SelectedService != "Agua")
         {
             MonthPicker.SelectedIndex = _viewModel.Month - 1;
             var yearIndex = ((List<string>)YearPicker.ItemsSource).IndexOf(_viewModel.Year.ToString());
@@ -166,40 +181,35 @@ public partial class LecturasPage : ContentPage
     private void RenderStatement()
     {
         var statement = _viewModel.Statement;
+        // No breakdown line items shown - per explicit user request (2026-10-01). LecturasModel
+        // still carries Breakdown (Backend/ViewModel unchanged); this page simply doesn't render it.
         TotalLabel.Text = statement?.Total is string total ? CopCurrencyFormatter.Format(total) : string.Empty;
 
-        BreakdownList.Children.Clear();
-        foreach (var line in statement?.Breakdown ?? [])
-        {
-            BreakdownList.Children.Add(BuildBreakdownRow(line.Label, CopCurrencyFormatter.Format(line.Value)));
-        }
-
+        // Luz's legacy pipeline has no previous reading and no consumption delta - hide those
+        // sub-parts entirely rather than show a blank arrow or an empty chip.
+        var hasPreviousReading = !string.IsNullOrEmpty(statement?.PreviousReading);
+        PreviousReadingLabel.IsVisible = hasPreviousReading;
+        ArrowLabel.IsVisible = hasPreviousReading;
         PreviousReadingLabel.Text = LecturasFormatting.FormatDecimal(statement?.PreviousReading);
         CurrentReadingLabel.Text = LecturasFormatting.FormatDecimal(statement?.CurrentReading);
+
+        var hasConsumption = !string.IsNullOrEmpty(statement?.Consumption);
+        ConsumoChipBorder.IsVisible = hasConsumption;
         ConsumoLabel.Text = LecturasFormatting.FormatConsumption(statement?.Consumption, statement?.Unit);
 
-        ShareLabel.Text = LecturasFormatting.FormatPercentage(statement?.Percentage);
-        var pct = (double)Math.Min(100m, Math.Max(0m, ParsePercent(statement?.Percentage)));
-        ShareBarTrack.ColumnDefinitions[0].Width = new GridLength(pct, GridUnitType.Star);
-        ShareBarTrack.ColumnDefinitions[1].Width = new GridLength(100 - pct, GridUnitType.Star);
+        // No percentage exists for Luz at all - the whole share card disappears rather than
+        // showing an empty "0%"/zero-width bar.
+        var hasPercentage = !string.IsNullOrEmpty(statement?.Percentage);
+        ShareCardBorder.IsVisible = hasPercentage;
+        if (hasPercentage)
+        {
+            ShareLabel.Text = LecturasFormatting.FormatPercentage(statement?.Percentage);
+            var pct = (double)Math.Min(100m, Math.Max(0m, ParsePercent(statement?.Percentage)));
+            ShareBarTrack.ColumnDefinitions[0].Width = new GridLength(pct, GridUnitType.Star);
+            ShareBarTrack.ColumnDefinitions[1].Width = new GridLength(100 - pct, GridUnitType.Star);
+        }
     }
 
     private static decimal ParsePercent(string? value) =>
         decimal.TryParse(value, out var parsed) ? parsed * 100 : 0m;
-
-    private static View BuildBreakdownRow(string label, string value)
-    {
-        var grid = new Grid
-        {
-            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
-            Margin = new Thickness(0, 6, 0, 0),
-        };
-        var labelView = new Label { Text = label, TextColor = Colors.White, Opacity = 0.75, FontSize = 13 };
-        var valueView = new Label { Text = value, TextColor = Colors.White, FontAttributes = FontAttributes.Bold, FontSize = 13, HorizontalTextAlignment = TextAlignment.End };
-        Grid.SetColumn(labelView, 0);
-        Grid.SetColumn(valueView, 1);
-        grid.Children.Add(labelView);
-        grid.Children.Add(valueView);
-        return grid;
-    }
 }
