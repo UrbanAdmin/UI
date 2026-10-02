@@ -73,7 +73,10 @@ jobs:
         run: rm -f UrbanAdmin.Tenant.Mobile/google-services.json
 
   build-ios:
-    runs-on: macos-latest
+    # dotnet/macios 10.0.401.1+ bundles .NET for iOS 27.0.10722, which requires Xcode 27 -
+    # macos-latest (macos-26 image) still defaults to Xcode 26.6, so pin to GitHub's
+    # xcode-27 preview runner label until macos-latest itself defaults to Xcode 27.
+    runs-on: xcode-27
     defaults:
       run:
         working-directory: Mobile
@@ -105,7 +108,9 @@ jobs:
   build-maccatalyst:
     # Compile check only: the interactive Organic-theme walkthrough (011 T021)
     # still needs a Mac running a current Xcode, which local development lacks.
-    runs-on: macos-latest
+    # Same Xcode-27 requirement as build-ios (dotnet/macios 10.0.401.1+ needs it for
+    # .NET for macOS/MacCatalyst too) - see build-ios's comment above.
+    runs-on: xcode-27
     defaults:
       run:
         working-directory: Mobile
