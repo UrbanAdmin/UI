@@ -1,0 +1,300 @@
+@if (!isReadOnly) {
+  <p class="electricity-hint">Un cargo variable por consumo en kWh, sin cargo fijo, más Aseo repartido solo entre los apartamentos Arrendado.</p>
+}
+
+<div class="period-picker">
+  <div class="field">
+    <label>Mes</label>
+    <mat-form-field appearance="outline" class="flat-field">
+      <mat-select [(ngModel)]="selectedMonth" (selectionChange)="onPeriodChanged()">
+        @for (name of monthNames; track name; let i = $index) {
+          <mat-option [value]="i + 1">{{ name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="field">
+    <label>Año</label>
+    <mat-form-field appearance="outline" class="flat-field">
+      <mat-select [(ngModel)]="selectedYear" (selectionChange)="onPeriodChanged()">
+        @for (year of years; track year) {
+          <mat-option [value]="year">{{ year }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  @if (isReadOnly) {
+    <span class="readonly-tag" data-testid="readonly-tag">Solo lectura</span>
+  }
+</div>
+
+@if (loadingService.isLoading()) {
+  <app-loading-indicator [loading]="loadingService.isLoading()" />
+} @else {
+  @if (!isReadOnly) {
+    <section class="bill-fields">
+      <h3>Datos de la factura</h3>
+      <p class="bill-fields-hint">Se guardan al instante, campo por campo — no hace falta terminar todo antes de que quede guardado.</p>
+      <div class="fields-grid">
+        <div class="field">
+          <label>Consumo total (kWh)</label>
+          <mat-form-field appearance="outline" class="flat-field rect-field">
+            <input matInput type="text" [(ngModel)]="billDraft.totalConsumptionKwh" (change)="saveBillFields()" data-testid="total-consumption-kwh" />
+          </mat-form-field>
+          <p class="field-hint">Suma esperada de todos los medidores</p>
+        </div>
+        <div class="field">
+          <label>Valor consumo eléctrico</label>
+          <mat-form-field appearance="outline" class="flat-field rect-field">
+            <input matInput type="text" [(ngModel)]="billDraft.electricityConsumptionValue" (change)="saveBillFields()" data-testid="electricity-consumption-value" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Valor Aseo</label>
+          <mat-form-field appearance="outline" class="flat-field rect-field">
+            <input matInput type="text" [(ngModel)]="billDraft.aseoValue" (change)="saveBillFields()" data-testid="aseo-value" />
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label>Total de la factura</label>
+          <mat-form-field appearance="outline" class="flat-field rect-field">
+            <input matInput type="text" [value]="bill?.totalAmount" disabled />
+          </mat-form-field>
+        </div>
+      </div>
+      <p class="no-fixed-note"><span class="dot"></span>Luz no tiene cargo fijo — todo el costo (salvo Aseo) sale del consumo en kWh.</p>
+
+      @if (bill && hasZeroArrendado) {
+        <div class="critical-banner" data-testid="zero-arrendado-banner">
+          <mat-icon>warning</mat-icon>
+          <div class="txt">
+            <b>Aseo no se puede repartir sin al menos un apartamento Arrendado.</b>
+            <span>No hay ningún apartamento Arrendado en este período — la factura no se puede confirmar hasta que exista uno.</span>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  @if (!isReadOnly) {
+  <h3 class="table-heading">Lecturas por medidor</h3>
+  <div class="table-scroll">
+  <table mat-table [dataSource]="rows" class="readings-table">
+    <ng-container matColumnDef="apartamento">
+      <th mat-header-cell *matHeaderCellDef>Apartamento</th>
+      <td mat-cell *matCellDef="let row">
+        <span class="apt-number">{{ row.apartmentId === null ? row.label : 'Apto ' + row.label }}</span>
+        @if (row.status) {
+          <span class="status">{{ row.status }}</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="lecturaAnterior">
+      <th mat-header-cell *matHeaderCellDef>Lect. anterior</th>
+      <td mat-cell *matCellDef="let row">
+        @if (!isReadOnly && (!row.reading || row.reading.previousReading === null)) {
+          <input
+            type="text"
+            class="cell-input"
+            [(ngModel)]="row.previousReading"
+            (change)="saveReading(row)"
+            [attr.data-testid]="'previous-reading-' + (row.apartmentId ?? 'zc')"
+          />
+        } @else {
+          <span class="cell-pill cell-pill--muted">{{ row.reading?.previousReading | esNumber }}</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="lecturaActual">
+      <th mat-header-cell *matHeaderCellDef>Lect. actual</th>
+      <td mat-cell *matCellDef="let row">
+        @if (isReadOnly) {
+          {{ row.currentReading ?? '—' }}
+        } @else {
+          <input
+            type="text"
+            class="cell-input"
+            [(ngModel)]="row.currentReading"
+            (change)="saveReading(row)"
+            [attr.data-testid]="'current-reading-' + (row.apartmentId ?? 'zc')"
+          />
+        }
+        @if (row.reading?.validationError === 'MissingReading') {
+          <span class="row-error">Falta la lectura</span>
+        } @else if (row.reading?.validationError === 'ReadingBelowPrevious') {
+          <span class="row-error">Menor que la anterior</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="consumo">
+      <th mat-header-cell *matHeaderCellDef>Consumo</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumption | esNumber }}{{ row.reading?.consumption ? ' kWh' : '' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="porcentaje">
+      <th mat-header-cell *matHeaderCellDef>%</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.consumptionPercentage | esNumber:'percent' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="costoElectrico">
+      <th mat-header-cell *matHeaderCellDef>Costo eléctrico</th>
+      <td mat-cell *matCellDef="let row">{{ row.reading?.allocatedElectricityCost | copCurrency }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="aseo">
+      <th mat-header-cell *matHeaderCellDef>Aseo</th>
+      <td mat-cell *matCellDef="let row">{{ row.status === 'Arrendado' ? (row.reading?.aseoShare | copCurrency) : '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="total">
+      <th mat-header-cell *matHeaderCellDef>Total a pagar</th>
+      <td mat-cell *matCellDef="let row">
+        {{ row.reading?.finalAmount | copCurrency }}
+        @if (!isReadOnly && row.status !== 'Arrendado' && row.reading && !row.reading.validationError) {
+          <span class="zero-note">redistribuido a Arrendado</span>
+        }
+        @if (!isReadOnly && row.status === 'Arrendado' && row.reading && !row.reading.validationError) {
+          <span class="breakdown-note">
+            {{ row.reading.allocatedElectricityCost | copCurrency }} + aseo {{ row.reading.aseoShare | copCurrency }}
+            + no arr. {{ row.reading.nonRentedCostShare | copCurrency }} + zona {{ row.reading.commonAreaCostShare | copCurrency }}
+          </span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="comentario">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let row">
+        @if (!isReadOnly && row.reading) {
+          <button mat-icon-button class="comment-button" (click)="addReadingComment(row)" [attr.data-testid]="'comment-' + (row.apartmentId ?? 'zc')" aria-label="Comentario">
+            <mat-icon>chat_bubble_outline</mat-icon>
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.row-invalid]="row.reading?.validationError"></tr>
+  </table>
+  </div>
+  } @else {
+    <app-tenant-statement [statement]="tenantStatement" />
+  }
+
+  @if (!isReadOnly) {
+    <h3 class="verifiers-heading">Verificadores</h3>
+    <div class="verifiers">
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Suma de porcentajes</span>
+          <span class="chip" [class.pass]="bill?.percentagePasses === true" [class.fail]="bill?.percentagePasses === false" [class.pending]="!bill" data-testid="verifier-percentage-chip">
+            {{ !bill ? 'Sin datos' : (bill.percentagePasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.percentagePasses) {
+          <p class="vdetail">Diferencia de {{ bill.percentageDifference }} puntos porcentuales.</p>
+        } @else if (bill) {
+          <p class="vdetail">La suma de porcentajes está dentro del margen esperado.</p>
+        }
+      </div>
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Medido vs. factura (kWh)</span>
+          <span class="chip" [class.pass]="bill?.meterVsBillPasses === true" [class.fail]="bill?.meterVsBillPasses === false" [class.pending]="!bill" data-testid="verifier-kwh-chip">
+            {{ !bill ? 'Sin datos' : (bill.meterVsBillPasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.meterVsBillPasses) {
+          <p class="vdetail">Diferencia de {{ bill.meterVsBillDifference }} kWh respecto a la factura.</p>
+        } @else if (bill) {
+          <p class="vdetail">El consumo medido coincide con el kWh de la factura.</p>
+        }
+      </div>
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Asignación eléctrica</span>
+          <span class="chip" [class.pass]="bill?.allocationPasses === true" [class.fail]="bill?.allocationPasses === false" [class.pending]="!bill" data-testid="verifier-allocation-chip">
+            {{ !bill ? 'Sin datos' : (bill.allocationPasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.allocationPasses) {
+          <p class="vdetail">Diferencia de {{ bill.allocationDifference | copCurrency }}.</p>
+        } @else if (bill) {
+          <p class="vdetail">La suma del costo eléctrico asignado coincide con el valor de la factura.</p>
+        }
+      </div>
+      <div class="verifier">
+        <div class="vh">
+          <span class="vname">Total final vs. factura</span>
+          <span class="chip" [class.pass]="bill?.finalPasses === true" [class.fail]="bill?.finalPasses === false" [class.pending]="!bill" data-testid="verifier-final-chip">
+            {{ !bill ? 'Sin datos' : (bill.finalPasses ? 'Cumple' : 'Falla') }}
+          </span>
+        </div>
+        @if (bill && !bill.finalPasses) {
+          <p class="vdetail">Diferencia de {{ bill.finalDifference | copCurrency }} respecto al total de la factura.</p>
+        } @else if (bill) {
+          <p class="vdetail">La suma de los apartamentos Arrendado coincide con el total de la factura (dentro del margen de redondeo).</p>
+        }
+      </div>
+    </div>
+
+    <div class="redistribution">
+      <div class="redist-card" data-testid="non-rented-cost">
+        <span class="lbl">Costo eléctrico total no arrendados</span>
+        <div class="val">{{ bill?.nonRentedElectricityCost | copCurrency }}</div>
+        <p class="note">Se calcula igual que cualquier medidor y se divide en partes iguales entre los apartamentos Arrendado.</p>
+      </div>
+      <div class="redist-card" data-testid="common-area-cost">
+        <span class="lbl">Costo eléctrico total Zona Común</span>
+        <div class="val">{{ bill?.commonAreaElectricityCost | copCurrency }}</div>
+        <p class="note">Nunca lo paga Zona Común directamente — se reparte igual que el costo de los no arrendados.</p>
+      </div>
+    </div>
+  }
+
+  @if (!isReadOnly || (bill && bill.comments.length > 0)) {
+    <div class="comments-section">
+      <h3>Comentarios</h3>
+      @for (comment of (bill?.comments ?? []); track comment.id) {
+        <div class="comment-line">
+          <b>{{ comment.electricityMeterReadingId ? 'Medidor' : 'Factura' }}</b>
+          {{ comment.text }}
+        </div>
+      }
+      @if (!isReadOnly) {
+        <div class="comment-add">
+          <input type="text" [(ngModel)]="newCommentText" placeholder="Agregar un comentario a la factura…" data-testid="new-comment-input" />
+          <button mat-stroked-button (click)="addBillComment()" data-testid="add-comment-button">Agregar</button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!isReadOnly) {
+    <div class="footer-bar">
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="!bill || hasBlockingErrors"
+        (click)="confirm()"
+        data-testid="confirm-button"
+      >
+        Confirmar factura
+      </button>
+      @if (bill && hasZeroArrendado) {
+        <span class="confirm-message critical" data-testid="confirm-hint">
+          No hay apartamentos arrendados — no se puede confirmar la factura.
+        </span>
+      } @else if (bill && blockedMeterLabels.length > 0) {
+        <span class="confirm-message" data-testid="confirm-hint">
+          No se puede confirmar: revisa {{ blockedMeterLabels.join(', ') }}.
+        </span>
+      } @else if (confirmMessage) {
+        <span [class.ok]="confirmSucceeded" class="confirm-message">{{ confirmMessage }}</span>
+      }
+    </div>
+  }
+}

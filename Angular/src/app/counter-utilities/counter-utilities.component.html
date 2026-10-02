@@ -25,32 +25,5 @@
 } @else if (selectedService === 'Agua') {
   <app-agua-billing />
 } @else {
-  @if (!isReadOnly) {
-    <div class="period-picker">
-      <div class="field">
-        <label>Mes</label>
-        <mat-form-field appearance="outline" class="flat-field">
-          <mat-select [(ngModel)]="selectedReceiptMonth">
-            @for (name of monthNames; track name; let i = $index) {
-              <mat-option [value]="i + 1">{{ name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <div class="field">
-        <label>Año</label>
-        <mat-form-field appearance="outline" class="flat-field">
-          <mat-select [(ngModel)]="selectedReceiptYear">
-            @for (year of years; track year) {
-              <mat-option [value]="year">{{ year }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-
-    <app-receipt-card [service]="selectedService" [month]="selectedReceiptMonth" [year]="selectedReceiptYear" />
-  }
-
-  <app-reading-table [service]="selectedService" [isReadOnly]="isReadOnly" />
+  <app-electricity-billing />
 }
